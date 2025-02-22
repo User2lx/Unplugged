@@ -36,18 +36,30 @@
             background-size: contain;
             z-index: 1000;
         }
+        .cute-cat {
+            display: block;
+            margin: 20px auto;
+        }
+        #games {
+            margin-top: 200px;
+            font-size: 2em;
+            color: gold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="glitter-border">
         <h1>Welcome to Unplugged!</h1>
         <p>This is a cute pink and glittery themed page!</p>
+        <img src="https://example.com/cute-cat.png" alt="Cute Cat" class="cute-cat">
     </div>
+    <div id="games" onclick="showJumpscare()">Games</div>
     <div class="jumpscare" id="jumpscare"></div>
     <script>
-        setTimeout(() => {
+        function showJumpscare() {
             document.getElementById('jumpscare').style.display = 'block';
-        }, 5000); // Show jumpscare after 5 seconds
+        }
     </script>
 </body>
 </html>
