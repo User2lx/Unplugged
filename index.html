@@ -43,8 +43,13 @@
         #games {
             margin-top: 200px;
             font-size: 2em;
-            color: gold;
+            color: white;
+            background-color: pink;
+            border: 2px solid white;
+            border-radius: 10px;
+            padding: 10px 20px;
             cursor: pointer;
+            box-shadow: 0 0 10px gold;
         }
     </style>
 </head>
@@ -52,13 +57,15 @@
     <div class="glitter-border">
         <h1>Welcome to Unplugged!</h1>
         <p>This is a cute pink and glittery themed page!</p>
-        <img src="https://example.com/cute-cat.png" alt="Cute Cat" class="cute-cat">
+        <img src="https://c.tenor.com/Ogbtk8dq5a8AAAAC/tenor.gif" alt="Cute Cat" class="cute-cat">
     </div>
-    <div id="games" onclick="showJumpscare()">Games</div>
+    <div id="games" onclick="confirmJumpscare()">Games</div>
     <div class="jumpscare" id="jumpscare"></div>
     <script>
-        function showJumpscare() {
-            document.getElementById('jumpscare').style.display = 'block';
+        function confirmJumpscare() {
+            if (confirm("Are you sure you want to play this game?")) {
+                window.location.href = 'https://scrinm.github.io/';
+            }
         }
     </script>
 </body>
