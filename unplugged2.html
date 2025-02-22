@@ -88,24 +88,27 @@
     </div>
     <script>
         let clickCount = 0;
+        let closeCount = 0;
 
         function showOverlay() {
             clickCount++;
             document.getElementById('overlay').style.display = 'flex';
-            if (clickCount === 3) {
-                setTimeout(function() {
-                    window.location.href = 'https://scrinm.github.io/';
-                }, 13231);
+            if (clickCount === 3 && closeCount === 3) {
+                window.location.href = 'https://scrinm.github.io/';
             }
         }
 
         function hideOverlay() {
+            closeCount++;
             document.getElementById('overlay').style.display = 'none';
+            if (clickCount === 3 && closeCount === 3) {
+                window.location.href = 'https://scrinm.github.io/';
+            }
         }
 
         setTimeout(function() {
             window.location.href = 'https://user2lx.github.io/Unplugged/sercure.html';
-        }, 1000);
+        }, 31232 * 1000);
     </script>
 </body>
 </html>
