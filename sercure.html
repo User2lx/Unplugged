@@ -23,9 +23,11 @@
             background-color: pink;
             box-shadow: 0 0 10px gold;
         }
-        .captcha img {
+        .captcha-text {
             display: block;
             margin: 0 auto;
+            padding: 10px;
+            font-size: 20px;
         }
         .captcha input {
             margin-top: 10px;
@@ -52,23 +54,51 @@
     </div>
     <div class="captcha-container">
         <div class="captcha">
-            <img src="path-to-your-captcha-image" alt="CAPTCHA">
+            <div id="captcha-text" class="captcha-text"></div>
             <input type="text" id="captcha-input" placeholder="Enter CAPTCHA">
         </div>
         <div id="verify-button" onclick="verifyCaptcha()">Verify</div>
     </div>
     <script>
+        function getRandomWord() {
+            const words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape"];
+            return words[Math.floor(Math.random() * words.length)];
+        }
+
+        function getRandomFontSize() {
+            return Math.floor(Math.random() * 20) + 20; // Random size between 20px and 40px
+        }
+
+        function getRandomFontFamily() {
+            const fonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia"];
+            return fonts[Math.floor(Math.random() * fonts.length)];
+        }
+
+        function generateCaptcha() {
+            let captchaText = "";
+            for (let i = 0; i < 5; i++) {
+                const word = getRandomWord();
+                const fontSize = getRandomFontSize();
+                const fontFamily = getRandomFontFamily();
+                captchaText += `<span style="font-size: ${fontSize}px; font-family: ${fontFamily};">${word}</span>`;
+            }
+            document.getElementById('captcha-text').innerHTML = captchaText;
+        }
+
         function verifyCaptcha() {
             const userInput = document.getElementById('captcha-input').value;
-            // Add your CAPTCHA verification logic here
-            if (userInput === "expected-captcha-value") {
+            const captchaText = document.getElementById('captcha-text').innerText.replace(/\s+/g, '');
+            if (userInput === captchaText) {
                 alert("Verification successful!");
                 window.location.href = 'your-next-page-url';
             } else {
                 alert("Verification failed. Please try again.");
+                generateCaptcha();
             }
         }
+
+        // Generate the CAPTCHA when the page loads
+        window.onload = generateCaptcha;
     </script>
 </body>
 </html>
-
