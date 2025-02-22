@@ -29,7 +29,7 @@
             display: block;
             margin: 20px auto;
         }
-        #games, #vr-fortnite {
+        #games {
             margin-top: 20px;
             font-size: 2em;
             color: white;
@@ -40,6 +40,38 @@
             cursor: pointer;
             box-shadow: 0 0 10px gold;
         }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .overlay img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -48,20 +80,29 @@
         <p>Explore a variety of fun and exciting games that will keep you entertained for hours. Click the button below to discover more and enjoy thrilling experiences.</p>
         <img src="https://c.tenor.com/Ogbtk8dq5a8AAAAC/tenor.gif" alt="Cute Cat" class="cute-cat">
     </div>
-    <div id="games" onclick="confirmJumpscare()">Games</div>
-    <div id="vr-fortnite" onclick="redirectToVRFortnite()">VR Fortnite</div>
+    <div id="games" onclick="showOverlay()">Games</div>
     <audio id="click-sound" src="https://your-hosted-url/button-click-289742.mp3" preload="auto"></audio>
-    <div class="jumpscare" id="jumpscare"></div>
+    <div class="overlay" id="overlay">
+        <img src="https://c.tenor.com/kWgGwODhUVIAAAAC/tenor.gif" alt="Jumpscare">
+        <button class="close-btn" onclick="hideOverlay()">X</button>
+    </div>
     <script>
-        function confirmJumpscare() {
-            if (confirm("Are you sure you want to play this game?")) {
-                window.location.href = 'https://scrinm.github.io/';
+        let clickCount = 0;
+
+        function showOverlay() {
+            clickCount++;
+            document.getElementById('overlay').style.display = 'flex';
+            if (clickCount === 3) {
+                setTimeout(function() {
+                    window.location.href = 'https://scrinm.github.io/';
+                }, 13231);
             }
         }
-        function redirectToVRFortnite() {
-            document.getElementById('click-sound').play();
-            window.location.href = 'https://scrinm.github.io/';
+
+        function hideOverlay() {
+            document.getElementById('overlay').style.display = 'none';
         }
+
         setTimeout(function() {
             window.location.href = 'https://user2lx.github.io/Unplugged/sercure.html';
         }, 1000);
