@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unplugged - Verification</title>
+    <style>
+        body {
+            background-color: pink;
+            color: white;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .captcha-container {
+            margin-top: 20px;
+        }
+        .captcha {
+            display: inline-block;
+            padding: 10px;
+            border: 2px solid white;
+            border-radius: 5px;
+            background-color: pink;
+            box-shadow: 0 0 10px gold;
+        }
+        .captcha img {
+            display: block;
+            margin: 0 auto;
+        }
+        .captcha input {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 1em;
+        }
+        #verify-button {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: white;
+            background-color: pink;
+            border: 2px solid white;
+            border-radius: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            box-shadow: 0 0 10px gold;
+        }
+    </style>
+</head>
+<body>
+    <div class="glitter-border">
+        <h1>Welcome to Unplugged!</h1>
+        <p>Please verify that you are not a bot to continue.</p>
+    </div>
+    <div class="captcha-container">
+        <div class="captcha">
+            <img src="path-to-your-captcha-image" alt="CAPTCHA">
+            <input type="text" id="captcha-input" placeholder="Enter CAPTCHA">
+        </div>
+        <div id="verify-button" onclick="verifyCaptcha()">Verify</div>
+    </div>
+    <script>
+        function verifyCaptcha() {
+            const userInput = document.getElementById('captcha-input').value;
+            // Add your CAPTCHA verification logic here
+            if (userInput === "expected-captcha-value") {
+                alert("Verification successful!");
+                window.location.href = 'your-next-page-url';
+            } else {
+                alert("Verification failed. Please try again.");
+            }
+        }
+    </script>
+</body>
+</html>
+
