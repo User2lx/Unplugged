@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unplugged</title>
+    <style>
+        body {
+            background-color: pink;
+            color: white;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .glitter-border {
+            border: 5px solid;
+            border-image: linear-gradient(to right, pink, gold, pink);
+            border-image-slice: 1;
+            padding: 20px;
+            box-shadow: 0 0 10px gold;
+            animation: glitter 1s infinite;
+        }
+        @keyframes glitter {
+            0% { box-shadow: 0 0 10px gold; }
+            50% { box-shadow: 0 0 20px gold; }
+            100% { box-shadow: 0 0 10px gold; }
+        }
+        .cute-cat {
+            display: block;
+            margin: 20px auto;
+        }
+        #redirect-button {
+            margin-top: 20px;
+            font-size: 2em;
+            color: white;
+            background-color: pink;
+            border: 2px solid white;
+            border-radius: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            box-shadow: 0 0 10px gold;
+        }
+    </style>
+</head>
+<body>
+    <div class="glitter-border">
+        <h1>Welcome to Unplugged!</h1>
+        <p>Explore a variety of fun and exciting games that will keep you entertained for hours. Click the button below to discover more and enjoy thrilling experiences.</p>
+        <img src="https://c.tenor.com/Ogbtk8dq5a8AAAAC/tenor.gif" alt="Cute Cat" class="cute-cat">
+    </div>
+    <div id="redirect-button" onclick="window.location.href='https://user2lx.github.io/Unplugged/unplugged1.html'">Go to Unplugged1</div>
+</body>
+</html>
