@@ -1,106 +1,239 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>Pacman</title>
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Permanent+Marker">
-    <style type="text/css">
-        body {
-            background-color: black;
-            width: 342px;
-            margin: 0 auto;
-            font-family: sans-serif;
-        }
-        #pacman {
-            height: 470px;
-            width: 382px;
-            border-radius: 5px;
-            margin: 20px auto;
-        }
-        #shim {
-            font-family: 'Permanent Marker', cursive;
-            position: absolute;
-            visibility: hidden;
-        }
-        h1 {
-            font-family: 'Permanent Marker', cursive;
-            text-align: center;
-            color: yellow;
-        }
-        p {
-            text-decoration: none;
-            color: #0000FF;
-        }
-        #gui-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        #gui {
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 0 auto;
-            width: 300px;
-        }
-        .button {
-            padding: 10px;
-            margin: 5px;
-            background-color: #444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+    <link rel="icon" type="image/svg+xml" href="./sprites/actors/pacman/pacman_right.svg">
+    <link rel="stylesheet" href="./css/combined.css">
+    <script type="module" src="./js/combined.js"></script>
 </head>
+
 <body>
-    <div id="shim">shim for font face</div>
-    <h1>Maintenance</h1>
-    <p style="text-align:center;">enjoy :)</p>
-    <div id="pacman"></div>
 
-    <div id="gui-container">
-        <div id="gui">
-            <button id="close-gui" class="button">X</button>
-            <button id="godmode" class="button">God Mode</button>
-            <button id="infinite-lives" class="button">Infinite Lives</button>
+    <nav class="menuBar">
+        <button class="buttonMobileMenu">Menu</button>
+        <ul>
+            <li class="currentSite"><a href="#">Game</a></li>
+            <li><a href="./html/customLevelSelection.html">Custom Level</a></li>
+            <li><a href="./html/editor.html">Level Editor</a></li>
+            <li><a href="#">Instructions</a></li>
+            <li><a href="#">About</a></li>
+        </ul>
+    </nav>
+
+    <br>
+
+    <main>
+        <canvas id="gameCanvas"></canvas>
+        <canvas id="backgroundCanvas" class="invisible"></canvas>
+
+        <!-- svg sprites to prevent pre-loading issues in canvas -->
+        <div class="invisible">
+            <img id="emptySpace" src="./sprites/background/emptySpace.svg">
+            <img id="wall" src="./sprites/background/wall.svg">
+            <img id="undefinedTile" src="./sprites/background/undefined_tile.svg">
+            <img id="teleporter1" src="./sprites/background/teleporters/teleporter1.svg">
+            <img id="teleporter2" src="./sprites/background/teleporters/teleporter2.svg">
+            <img id="teleporter3" src="./sprites/background/teleporters/teleporter3.svg">
+            <img id="ghostDoorHorizontal" src="./sprites/background/door/ghost_door_horizontal.svg">
+            <img id="ghostDoorVertical" src="./sprites/background/door/ghost_door_vertical.svg">
+            <img id="ghostDoorDiagonal" src="./sprites/background/door/ghost_door_diagonal.svg">
+            <img id="point" src="./sprites/background/consumables/point.svg">
+            <img id="powerUp" src="./sprites/background/consumables/powerUp.svg">
+            <img id="pacmanUp" src="./sprites/actors/pacman/pacman_up.svg">
+            <img id="pacmanRight" src="./sprites/actors/pacman/pacman_right.svg">
+            <img id="pacmanDown" src="./sprites/actors/pacman/pacman_down.svg">
+            <img id="pacmanLeft" src="./sprites/actors/pacman/pacman_left.svg">
+            <img id="pacmanMouthClosed" src="./sprites/actors/pacman/pacman_mouth_closed.svg">
+            <img id="blinkyUp" src="./sprites/actors/ghost_blinky/blinky_up.svg">
+            <img id="blinkyUpAlternate" src="./sprites/actors/ghost_blinky/blinky_up_alternate.svg">
+            <img id="blinkyRight" src="./sprites/actors/ghost_blinky/blinky_right.svg">
+            <img id="blinkyRightAlternate" src="./sprites/actors/ghost_blinky/blinky_right_alternate.svg">
+            <img id="blinkyDown" src="./sprites/actors/ghost_blinky/blinky_down.svg">
+            <img id="blinkyDownAlternate" src="./sprites/actors/ghost_blinky/blinky_down_alternate.svg">
+            <img id="blinkyLeft" src="./sprites/actors/ghost_blinky/blinky_left.svg">
+            <img id="blinkyLeftAlternate" src="./sprites/actors/ghost_blinky/blinky_left_alternate.svg">
+            <img id="inkyUp" src="./sprites/actors/ghost_inky/inky_up.svg">
+            <img id="inkyUpAlternate" src="./sprites/actors/ghost_inky/inky_up_alternate.svg">
+            <img id="inkyRight" src="./sprites/actors/ghost_inky/inky_right.svg">
+            <img id="inkyRightAlternate" src="./sprites/actors/ghost_inky/inky_right_alternate.svg">
+            <img id="inkyDown" src="./sprites/actors/ghost_inky/inky_down.svg">
+            <img id="inkyDownAlternate" src="./sprites/actors/ghost_inky/inky_down_alternate.svg">
+            <img id="inkyLeft" src="./sprites/actors/ghost_inky/inky_left.svg">
+            <img id="inkyLeftAlternate" src="./sprites/actors/ghost_inky/inky_left_alternate.svg">
+            <img id="pinkyUp" src="./sprites/actors/ghost_pinky/pinky_up.svg">
+            <img id="pinkyUpAlternate" src="./sprites/actors/ghost_pinky/pinky_up_alternate.svg">
+            <img id="pinkyRight" src="./sprites/actors/ghost_pinky/pinky_right.svg">
+            <img id="pinkyRightAlternate" src="./sprites/actors/ghost_pinky/pinky_right_alternate.svg">
+            <img id="pinkyDown" src="./sprites/actors/ghost_pinky/pinky_down.svg">
+            <img id="pinkyDownAlternate" src="./sprites/actors/ghost_pinky/pinky_down_alternate.svg">
+            <img id="pinkyLeft" src="./sprites/actors/ghost_pinky/pinky_left.svg">
+            <img id="pinkyLeftAlternate" src="./sprites/actors/ghost_pinky/pinky_left_alternate.svg">
+            <img id="clydeUp" src="./sprites/actors/ghost_clyde/clyde_up.svg">
+            <img id="clydeUpAlternate" src="./sprites/actors/ghost_clyde/clyde_up_alternate.svg">
+            <img id="clydeRight" src="./sprites/actors/ghost_clyde/clyde_right.svg">
+            <img id="clydeRightAlternate" src="./sprites/actors/ghost_clyde/clyde_right_alternate.svg">
+            <img id="clydeDown" src="./sprites/actors/ghost_clyde/clyde_down.svg">
+            <img id="clydeDownAlternate" src="./sprites/actors/ghost_clyde/clyde_down_alternate.svg">
+            <img id="clydeLeft" src="./sprites/actors/ghost_clyde/clyde_left.svg">
+            <img id="clydeLeftAlternate" src="./sprites/actors/ghost_clyde/clyde_left_alternate.svg">
+            <img id="scaredUp" src="./sprites/actors/ghost_scared/ghost_scared_up.svg">
+            <img id="scaredUpAlternate" src="./sprites/actors/ghost_scared/ghost_scared_up_alternate.svg">
+            <img id="scaredRight" src="./sprites/actors/ghost_scared/ghost_scared_right.svg">
+            <img id="scaredRightAlternate" src="./sprites/actors/ghost_scared/ghost_scared_right_alternate.svg">
+            <img id="scaredDown" src="./sprites/actors/ghost_scared/ghost_scared_down.svg">
+            <img id="scaredDownAlternate" src="./sprites/actors/ghost_scared/ghost_scared_down_alternate.svg">
+            <img id="scaredLeft" src="./sprites/actors/ghost_scared/ghost_scared_left.svg">
+            <img id="scaredLeftAlternate" src="./sprites/actors/ghost_scared/ghost_scared_left_alternate.svg">
+            <img id="transitionUp" src="./sprites/actors/ghost_transition_end_scared/ghost_transition_up.svg">
+            <img id="transitionRight" src="./sprites/actors/ghost_transition_end_scared/ghost_transition_right.svg">
+            <img id="transitionDown" src="./sprites/actors/ghost_transition_end_scared/ghost_transition_down.svg">
+            <img id="transitionLeft" src="./sprites/actors/ghost_transition_end_scared/ghost_transition_left.svg">
+            <img id="deadUp" src="./sprites/actors/ghost_dead/ghost_dead_up.svg">
+            <img id="deadRight" src="./sprites/actors/ghost_dead/ghost_dead_right.svg">
+            <img id="deadDown" src="./sprites/actors/ghost_dead/ghost_dead_down.svg">
+            <img id="deadLeft" src="./sprites/actors/ghost_dead/ghost_dead_left.svg">
+            <img id="bonusCherry" src="./sprites/background/consumables/bonus_elements/bonusCherry.svg">
+            <img id="bonusStrawberry" src="./sprites/background/consumables/bonus_elements/bonusStrawberry.svg">
+            <img id="bonusPeach" src="./sprites/background/consumables/bonus_elements/bonusPeach.svg">
+            <img id="bonusApple" src="./sprites/background/consumables/bonus_elements/bonusApple.svg">
+            <img id="bonusGrape" src="./sprites/background/consumables/bonus_elements/bonusGrape.svg">
+            <img id="bonusGalaxian" src="./sprites/background/consumables/bonus_elements/bonusGalaxian.svg">
+            <img id="bonusBell" src="./sprites/background/consumables/bonus_elements/bonusBell.svg">
+            <img id="bonusKey" src="./sprites/background/consumables/bonus_elements/bonusKey.svg">
         </div>
-    </div>
 
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script type="text/javascript">
-        document.getElementById('gui').style.display = 'block';
+        <!-- Custom Level Selection -->
+        <div id="levelRotationItemContainer"></div>
+        <div id="indexedDBWarning" class="invisible">
+            <div id="warningFlexContainer">
+                <img id="warningIcon" src="../icon/warning.svg">
+                <div id="warningText">
+                    <div>
+                        <p>Unable to access browser database indexedDB.</p>
+                        <br>
+                        <p>Make sure that your browser is not in restrictive mode (incognito / private).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="templateLevelRotationItem" class="levelRotationItem invisible">
+            <img class="previewArea"></img>
+            <div class="overlay invisible">
+                <div class="levelRotationName"></div>
+                <div class="optionBar">
+                    <image class="option" src="../icon/play.svg" title="play"></image>
+                    <image class="option" src="../icon/edit.svg" title="edit"></image>
+                    <image class="option" src="../icon/delete.svg" title="delete"></image>
+                </div>
+            </div>
+        </div>
 
-        document.getElementById('close-gui').addEventListener('click', function() {
-            document.getElementById('gui').style.display = 'none';
-        });
-
-        document.getElementById('godmode').addEventListener('click', function() {
-            // Implement God Mode functionality here
-        });
-
-        document.getElementById('infinite-lives').addEventListener('click', function() {
-            // Implement Infinite Lives functionality here
-        });
-
-        // Example Pacman implementation
-        var NONE = 4,
-            UP = 3,
-            LEFT = 2,
-            DOWN = 1,
-            RIGHT = 11,
-            WAITING = 5,
-            PAUSE = 6,
-            PLAYING = 7,
-            COUNTDOWN = 8,
-            EATEN_PAUSE = 9,
-            DYING = 10,
-            Pacman = {};
-
-        Pacman.FPS = 30;
-        // ... (remaining game code)
-    </script>
-</body>
-</html>
+        <!-- Level Editor -->
+        <section class="selectorContainer">
+            <div class="selectionBar">
+                <label class="selector wallTile" for="wallTile" title="Wall Tile"></label>
+                <input id="wallTile" type="radio" name="selectors">
+                <label class="selector emptyTile" for="emptyTile" title="Empty Tile (accessible)"></label>
+                <input id="emptyTile" type="radio" name="selectors">
+                <label class="selector pointTile" for="pointTile" title="Point Tile (consumable)"></label>
+                <input id="pointTile" type="radio" name="selectors">
+                <label class="selector powerupTile" for="powerupTile" title="Powerup Tile (consumable)"></label>
+                <input id="powerupTile" type="radio" name="selectors">
+                <label class="selector ghostDoorHorizontalTile" for="ghostDoorHorizontalTile" title="Ghost Door (unaccessible for Pacman)"></label>
+                <input id="ghostDoorHorizontalTile" type="radio" name="selectors">
+                <label class="selector ghostDoorVerticalTile" for="ghostDoorVerticalTile" title="Ghost Door (unaccessible for Pacman)"></label>
+                <input id="ghostDoorVerticalTile" type="radio" name="selectors">
+                <label class="selector ghostDoorCrossingTile" for="ghostDoorCrossingTile" title="Ghost Door (unaccessible for Pacman)"></label>
+                <input id="ghostDoorCrossingTile" type="radio" name="selectors">
+                <label class="selector teleporter1Tile" for="teleporter1Tile" title="Teleporter 1 Tile (requires destination of same type)"></label>
+                <input id="teleporter1Tile" type="radio" name="selectors">
+                <label class="selector teleporter2Tile" for="teleporter2Tile" title="Teleporter 2 Tile (requires destination of same type)"></label>
+                <input id="teleporter2Tile" type="radio" name="selectors">
+                <label class="selector teleporter3Tile" for="teleporter3Tile" title="Teleporter 3 Tile (requires destination of same type)"></label>
+                <input id="teleporter3Tile" type="radio" name="selectors">
+                <label class="selector bonusSpawnTile" for="bonusSpawnTile" title="Spawn Tile For Bonus (consumable)"></label>
+                <input id="bonusSpawnTile" type="radio" name="selectors">
+            </div>
+            <div class="selectionBar">
+                <label class="selector pacmanTile" for="pacmanTile" title="Pacman"></label>
+                <input id="pacmanTile" type="radio" name="selectors">
+                <label class="selector ghostBlinkyTile" for="ghostBlinkyTile" title="Ghost Blinky"></label>
+                <input id="ghostBlinkyTile" type="radio" name="selectors">
+                <label class="selector ghostPinkyTile" for="ghostPinkyTile" title="Ghost Pinky"></label>
+                <input id="ghostPinkyTile" type="radio" name="selectors">
+                <label class="selector ghostInkyTile" for="ghostInkyTile" title="Ghost Inky"></label>
+                <input id="ghostInkyTile" type="radio" name="selectors">
+                <label class="selector ghostClydeTile" for="ghostClydeTile" title="Ghost Clyde"></label>
+                <input id="ghostClydeTile" type="radio" name="selectors">
+                <label class="selector eraserTile" for="undefinedTile" title="Eraser"></label>
+                <input id="undefinedTile" type="radio" name="selectors">
+            </div>
+        </section>
+        <section id="editorContainer" class="editorContainer"></section>
+        <section class="controlContainer">
+            <fieldset>
+                <legend>Level Rotation</legend>
+                <div class="controlGroup">
+                    <label for="levelRotationName">Name</label>
+                    <input id="levelRotationName" type="text" required>
+                </div>
+                <div class="controlGroup">
+                    <label for="initialLifeInput">Lives</label>
+                    <input id="initialLifeInput" type="number" required>
+                </div>
+                <button id="playLevel">Play</button>
+            </fieldset>
+            <fieldset>
+                <legend>Level</legend>
+                <div class="controlGroup">
+                    <label for="mapWidth">Width</label>
+                    <input id="mapWidth" type="number">
+                </div>
+                <div class="controlGroup">
+                    <label for="mapHeight">Height</label>
+                    <input id="mapHeight" type="number">
+                </div>
+                <div class="controlGroup">
+                    <label for="iterationNumberInput">Iterations</label>
+                    <input id="iterationNumberInput" type="text" value="1" required>
+                </div>
+                <fieldset id="scatterPositionFieldset" class="invisible">
+                    <legend>Scatter Positions</legend>
+                    <div id="scatterControlGhostBlinky" class="scatterSpawnControlGroup invisible">
+                        <img src="../sprites/actors/ghost_blinky/blinky_down.svg">
+                        <input id="scatterPositionGhostBlinky" class="inputPosition" type="text" readonly>
+                        <button id="selectScatterPositionGhostBlinky" name="buttonScatterPosition">Select</button>
+                    </div>
+                    <div id="scatterControlGhostPinky" class="scatterSpawnControlGroup invisible">
+                        <img src="../sprites/actors/ghost_pinky/pinky_down.svg">
+                        <input id="scatterPositionGhostPinky" class="inputPosition" type="text" readonly>
+                        <button id="selectScatterPositionGhostPinky" name="buttonScatterPosition">Select</button>
+                    </div>
+                    <div id="scatterControlGhostInky" class="scatterSpawnControlGroup invisible">
+                        <img src="../sprites/actors/ghost_inky/inky_down.svg">
+                        <input id="scatterPositionGhostInky" class="inputPosition" type="text" readonly>
+                        <button id="selectScatterPositionGhostInky" name="buttonScatterPosition">Select</button>
+                    </div>
+                    <div id="scatterControlGhostClyde" class="scatterSpawnControlGroup invisible">
+                        <img src="../sprites/actors/ghost_clyde/clyde_down.svg">
+                        <input id="scatterPositionGhostClyde" class="inputPosition" type="text" readonly>
+                        <button id="selectScatterPositionGhostClyde" name="buttonScatterPosition">Select</button>
+                    </div>
+                </fieldset>
+                <fieldset id="spawnPositionFieldset" class="invisible">
+                    <legend>Optional Spawn Positions</legend>
+                    <div id="spawnControlGhostBlinky" class="scatterSpawnControlGroup invisible">
+                        <img src="../sprites/actors/ghost_blinky/blinky_down.svg">
+                        <input id="spawnPositionGhostBlinky" class="inputPosition" type="text" readonly>
+                        <button id="selectSpawnPositionGhostBlinky" name="buttonSpawnPosition">Select</button>
+                    </div>
+                    <div id="spawnControlGhostPinky" class="scatterSpawnControlGroup invisible">
+                        <img src="../sprites/actors/ghost_pinky/pinky_down.svg">
+                        <input id="spawnPositionGhostPinky" class="inputPosition" type="text" readonly>
+                        <button id="selectSpawnPositionGhostPinky" name="buttonSpawnPosition">Select</button>
+                    </div>
+                    <div id="spawnControlGhostInky" class="scatterSpawnControlGroup invisible">
+                        <img src="../
