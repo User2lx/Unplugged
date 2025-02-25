@@ -38,14 +38,26 @@
             transform: scale(1.1);
         }
 
+        .big-text {
+            font-size: 50px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+            animation: swing 2s infinite alternate;
+        }
+
+        @keyframes swing {
+            0% { transform: rotate(-10deg); }
+            100% { transform: rotate(10deg); }
+        }
+
         #not-done {
             background-color: #f44336;
         }
     </style>
 </head>
 <body>
+    <div class="big-text">Welcome to Unplugged</div>
     <div class="game-square" id="pacman">Pacman</div>
-    <div class="game-square">Not Done</div>
     <div class="game-square">Not Done</div>
     <div class="game-square">Not Done</div>
     <div class="game-square">Not Done</div>
