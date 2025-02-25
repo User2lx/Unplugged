@@ -27,13 +27,13 @@
             border-radius: 5px;
         }
 
-        #shop {
+        #shop, #gamble {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
         }
 
-        .item {
+        .item, .gamble-item {
             padding: 10px;
             margin: 5px;
             background-color: #2196F3;
@@ -41,6 +41,10 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+        }
+
+        .item.fade-in, .gamble-item.fade-in {
+            animation: fadeIn 1s;
         }
 
         #end-screen {
@@ -68,6 +72,9 @@
     <button id="clicker">Click me!</button>
     <div id="clicks">Clicks: 0</div>
     <div id="shop"></div>
+    <div id="gamble">
+        <button class="gamble-item" id="coin-flip">Coin Flip</button>
+    </div>
     <div id="end-screen">Thanks for playing!</div>
     <script>
         let clicks = 0;
@@ -75,6 +82,7 @@
         const clickerButton = document.getElementById('clicker');
         const clicksDisplay = document.getElementById('clicks');
         const shop = document.getElementById('shop');
+        const gambleButton = document.getElementById('coin-flip');
         const endScreen = document.getElementById('end-screen');
 
         clickerButton.addEventListener('click', () => {
@@ -83,25 +91,27 @@
         });
 
         function updateClicks() {
-            clicksDisplay.textContent = `Clicks: ${clicks}`;
+            clicksDisplay.textContent = \`Clicks: \${clicks}\`;
+            checkShopItems();
         }
 
         const items = [
             { name: 'CPS +1', cost: 10, increment: 1 },
             { name: 'CPS +2', cost: 50, increment: 2 },
-            // Add 48 more items with increasing cost and increment
+            // Add more items here as needed
             { name: 'The End', cost: 500000, increment: 0 }
         ];
 
         items.forEach((item, index) => {
             const itemButton = document.createElement('button');
             itemButton.className = 'item';
-            itemButton.textContent = `${item.name} - ${item.cost} clicks`;
+            itemButton.textContent = \`\${item.name} - \${item.cost} clicks\`;
+            itemButton.style.display = 'none'; // Initially hidden
             itemButton.addEventListener('click', () => {
                 if (clicks >= item.cost) {
                     clicks -= item.cost;
                     clickRate += item.increment;
-                    if (index === 50) {
+                    if (index === items.length - 1) {
                         triggerEndScreen();
                     }
                     updateClicks();
@@ -109,6 +119,17 @@
             });
             shop.appendChild(itemButton);
         });
+
+        function checkShopItems() {
+            const shopItems = document.querySelectorAll('.item');
+            shopItems.forEach((item, index) => {
+                const cost = items[index].cost;
+                if (clicks >= cost && item.style.display === 'none') {
+                    item.style.display = 'block';
+                    item.classList.add('fade-in');
+                }
+            });
+        }
 
         function triggerEndScreen() {
             endScreen.style.display = 'flex';
@@ -122,6 +143,36 @@
                 endScreen.innerHTML = `<div>Thanks for playing!</div>`;
             }, 4000);
         }
+
+        gambleButton.addEventListener('click', () => {
+            const bet = prompt('How many clicks do you want to bet? (Minimum 20,000 clicks)');
+            const betAmount = parseInt(bet, 10);
+            if (isNaN(betAmount) || betAmount < 20000) {
+                alert('Invalid bet amount. Minimum bet is 20,000 clicks.');
+                return;
+            }
+            if (betAmount > clicks) {
+                alert('You do not have enough clicks to make this bet.');
+                return;
+            }
+            const confirmBet = confirm(\`Are you sure you want to bet \${betAmount} clicks?\`);
+            if (confirmBet) {
+                const choice = prompt('Choose heads or tails:').toLowerCase();
+                if (choice !== 'heads' && choice !== 'tails') {
+                    alert('Invalid choice. Please choose heads or tails.');
+                    return;
+                }
+                const result = Math.random() < 0.5 ? 'heads' : 'tails';
+                if (choice === result) {
+                    clicks += betAmount;
+                    alert(\`You won! The coin landed on \${result}. You gain \${betAmount} clicks.\`);
+                } else {
+                    clicks -= betAmount;
+                    alert(\`You lost. The coin landed on \${result}. You lose \${betAmount} clicks.\`);
+                }
+                updateClicks();
+            }
+        });
 
         setInterval(() => {
             clicks += clickRate;
