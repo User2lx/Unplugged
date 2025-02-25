@@ -28,19 +28,20 @@
             color: white;
             font-size: 20px;
             border-radius: 10px;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
-            box-shadow: 0 0 10px 3px rgba(255, 255, 0, 0.8); /* Neon yellow LED-like outline */
+            box-shadow: 0 0 10px 3px rgba(0, 255, 255, 0.8); /* Neon cyan LED-like outline */
         }
 
         .game-square:hover {
             transform: scale(1.1);
+            box-shadow: 0 0 20px 6px rgba(0, 255, 255, 1);
         }
 
         .big-text {
             font-size: 50px;
-            color: #fff;
-            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+            color: #0000FF; /* LED blue color */
+            text-shadow: 0 0 10px rgba(0, 0, 255, 0.8);
             animation: swing 2s infinite alternate;
         }
 
@@ -66,7 +67,6 @@
     <div class="big-text">Welcome to Unplugged</div>
     <div class="game-square" id="pacman">Pacman</div>
     <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/clicks.html'">klicker</div>
-    <div class="game-square">Not Done</div>
     <div class="game-square">Not Done</div>
     <div class="game-square">Not Done</div>
     <div class="game-square">Not Done</div>
