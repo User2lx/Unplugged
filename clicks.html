@@ -85,23 +85,23 @@
             const shop = document.getElementById('shop');
             const gambleButton = document.getElementById('coin-flip');
             const endScreen = document.getElementById('end-screen');
-
+    
             clickerButton.addEventListener('click', () => {
                 clicks++;
                 updateClicks();
             });
-
+    
             function updateClicks() {
                 clicksDisplay.textContent = `Clicks: ${clicks}`;
                 checkShopItems();
             }
-
+    
             const items = [
                 { name: 'CPS +1', cost: 10, increment: 1 },
                 { name: 'CPS +2', cost: 50, increment: 2 },
                 { name: 'The End', cost: 500000, increment: 0 }
             ];
-
+    
             items.forEach((item, index) => {
                 const itemButton = document.createElement('button');
                 itemButton.className = 'item';
@@ -119,7 +119,7 @@
                 });
                 shop.appendChild(itemButton);
             });
-
+    
             function checkShopItems() {
                 const shopItems = document.querySelectorAll('.item');
                 shopItems.forEach((item, index) => {
@@ -130,7 +130,7 @@
                     }
                 });
             }
-
+    
             function triggerEndScreen() {
                 endScreen.style.display = 'flex';
                 endScreen.innerHTML = `<div>Thanks for playing!</div>`;
@@ -143,12 +143,12 @@
                     endScreen.innerHTML = `<div>Thanks for playing!</div>`;
                 }, 4000);
             }
-
+    
             gambleButton.addEventListener('click', () => {
-                const bet = prompt('How many clicks do you want to bet? (Minimum 20,000 clicks)');
+                const bet = prompt('How many clicks do you want to bet? (Minimum 20 clicks)');
                 const betAmount = parseInt(bet, 10);
-                if (isNaN(betAmount) || betAmount < 20000) {
-                    alert('Invalid bet amount. Minimum bet is 20,000 clicks.');
+                if (isNaN(betAmount) || betAmount < 20) {
+                    alert('Invalid bet amount. Minimum bet is 20 clicks.');
                     return;
                 }
                 if (betAmount > clicks) {
@@ -173,7 +173,7 @@
                     updateClicks();
                 }
             });
-
+    
             setInterval(() => {
                 clicks += clickRate;
                 updateClicks();
