@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #clicker {
+            padding: 20px;
+            font-size: 24px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #shop {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .item {
+            padding: 10px;
+            margin: 5px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #end-screen {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            color: white;
+            font-size: 48px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: fadeIn 2s forwards;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <button id="clicker">Click me!</button>
+    <div id="clicks">Clicks: 0</div>
+    <div id="shop"></div>
+    <div id="end-screen">Thanks for playing!</div>
+    <script>
+        let clicks = 0;
+        let clickRate = 0;
+        const clickerButton = document.getElementById('clicker');
+        const clicksDisplay = document.getElementById('clicks');
+        const shop = document.getElementById('shop');
+        const endScreen = document.getElementById('end-screen');
+
+        clickerButton.addEventListener('click', () => {
+            clicks++;
+            updateClicks();
+        });
+
+        function updateClicks() {
+            clicksDisplay.textContent = `Clicks: ${clicks}`;
+        }
+
+        const items = [
+            { name: 'CPS +1', cost: 10, increment: 1 },
+            { name: 'CPS +2', cost: 50, increment: 2 },
+            // Add 48 more items with increasing cost and increment
+            { name: 'The End', cost: 500000, increment: 0 }
+        ];
+
+        items.forEach((item, index) => {
+            const itemButton = document.createElement('button');
+            itemButton.className = 'item';
+            itemButton.textContent = `${item.name} - ${item.cost} clicks`;
+            itemButton.addEventListener('click', () => {
+                if (clicks >= item.cost) {
+                    clicks -= item.cost;
+                    clickRate += item.increment;
+                    if (index === 50) {
+                        triggerEndScreen();
+                    }
+                    updateClicks();
+                }
+            });
+            shop.appendChild(itemButton);
+        });
+
+        function triggerEndScreen() {
+            endScreen.style.display = 'flex';
+            endScreen.innerHTML = `<div>Thanks for playing!</div>`;
+            setTimeout(() => {
+                endScreen.style.backgroundColor = 'white';
+                endScreen.innerHTML = '';
+            }, 2000);
+            setTimeout(() => {
+                endScreen.style.backgroundColor = 'black';
+                endScreen.innerHTML = `<div>Thanks for playing!</div>`;
+            }, 4000);
+        }
+
+        setInterval(() => {
+            clicks += clickRate;
+            updateClicks();
+        }, 1000);
+    </script>
+</body>
+</html>
