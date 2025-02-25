@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-square" id="pacman">Pacman</div>
+    <div class="game-square" id="not-done">Not Done</div>
+
+    <script>
+        document.getElementById('pacman').addEventListener('click', function() {
+            window.location.href = 'https://user2lx.github.io/Unplugged/pacman.html';
+        });
+    </script>
+</body>
+</html>
