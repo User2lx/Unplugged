@@ -154,7 +154,20 @@
             const items = [
                 { name: 'CPS +1', cost: 10, increment: 1 },
                 { name: 'CPS +2', cost: 50, increment: 2 },
-                { name: 'The End', cost: 500000, increment: 0 }
+                { name: 'The End', cost: 500000, increment: 0 },
+                { name: 'CPS +3', cost: 100, increment: 3 },
+                { name: 'CPS +4', cost: 200, increment: 4 },
+                { name: 'CPS +5', cost: 500, increment: 5 },
+                { name: 'CPS +6', cost: 1000, increment: 6 },
+                { name: 'CPS +7', cost: 2000, increment: 7 },
+                { name: 'CPS +8', cost: 5000, increment: 8 },
+                { name: 'CPS +9', cost: 10000, increment: 9 },
+                { name: 'CPS +10', cost: 20000, increment: 10 },
+                { name: 'CPS +11', cost: 50000, increment: 11 },
+                { name: 'CPS +12', cost: 100000, increment: 12 },
+                { name: 'CPS +13', cost: 200000, increment: 13 },
+                { name: 'CPS +14', cost: 500000, increment: 14 },
+                { name: 'CPS +15', cost: 1000000, increment: 15 }
             ];
 
             items.forEach((item, index) => {
@@ -188,14 +201,14 @@
 
             function triggerEndScreen() {
                 endScreen.style.display = 'flex';
-                endScreen.innerHTML = `<div>Thanks for playing!</div>`;
+                endScreen.innerHTML = `<div>Thanks for playing! You reached ${clicks} clicks!</div><br/><div>🎉🎉🎉</div>`;
                 setTimeout(() => {
                     endScreen.style.backgroundColor = 'white';
                     endScreen.innerHTML = '';
                 }, 2000);
                 setTimeout(() => {
                     endScreen.style.backgroundColor = 'black';
-                    endScreen.innerHTML = `<div>Thanks for playing!</div>`;
+                    endScreen.innerHTML = `<div>Thanks for playing! You reached ${clicks} clicks!</div><br/><div>🎉🎉🎉</div>`;
                 }, 4000);
             }
 
