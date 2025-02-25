@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clicker Game</title>
+    <title>klicker</title>
     <style>
         body {
             display: flex;
@@ -41,6 +41,19 @@
             color: white;
             border: none;
             border-radius: 5px;
+        }
+
+        #mods {
+            padding: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            background-color: #FF5733;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
         }
 
         #shop, #gamble {
@@ -87,6 +100,7 @@
 <body>
     <button id="clicker">Click me!</button>
     <button id="skins">Change Skin</button>
+    <button id="mods">Mods</button>
     <div id="clicks">Clicks: 0</div>
     <div id="shop"></div>
     <div id="gamble">
@@ -99,6 +113,7 @@
             let clickRate = 0;
             const clickerButton = document.getElementById('clicker');
             const skinsButton = document.getElementById('skins');
+            const modsButton = document.getElementById('mods');
             const clicksDisplay = document.getElementById('clicks');
             const shop = document.getElementById('shop');
             const gambleButton = document.getElementById('coin-flip');
@@ -113,6 +128,22 @@
                 const colors = ['#4CAF50', '#FF5733', '#33FF57', '#3357FF', '#FF33A1'];
                 const randomColor = colors[Math.floor(Math.random() * colors.length)];
                 clickerButton.style.backgroundColor = randomColor;
+            });
+
+            modsButton.addEventListener('click', () => {
+                const password = prompt('Enter password:');
+                if (password === '2012') {
+                    const newTime = prompt('Enter new time (in seconds):');
+                    const newTimeInt = parseInt(newTime, 10);
+                    if (!isNaN(newTimeInt)) {
+                        clicks = newTimeInt;
+                        updateClicks();
+                    } else {
+                        alert('Invalid time entered.');
+                    }
+                } else {
+                    alert('Incorrect password.');
+                }
             });
 
             function updateClicks() {
