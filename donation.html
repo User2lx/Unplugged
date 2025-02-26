@@ -1,121 +1,55 @@
-<!doctype html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link href="/app.css" rel="stylesheet" />
-    <script
-      type="text/javascript"
-      src="https://sandbox.web.squarecdn.com/v1/square.js"
-    ></script>
-    <script>
-      const appId = '{APPLICATION_ID}';
-      const locationId = '{LOCATION_ID}';
-
-      function buildPaymentRequest(payments) {
-        const paymentRequest = payments.paymentRequest({
-          countryCode: 'US',
-          currencyCode: 'USD',
-          total: {
-            amount: '1.00',
-            label: 'Total',
-          },
-        });
-        return paymentRequest;
-      }
-
-      async function initializeCard(payments) {
-        const card = await payments.card();
-        await card.attach('#card-container');
-        return card;
-      }
-
-      async function createPayment(token) {
-        const body = JSON.stringify({
-          locationId,
-          sourceId: token,
-          idempotencyKey: window.crypto.randomUUID(),
-        });
-
-        const paymentResponse = await fetch('/payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body,
-        });
-
-        if (paymentResponse.ok) {
-          return paymentResponse.json();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
         }
-
-        const errorBody = await paymentResponse.text();
-        throw new Error(errorBody);
-      }
-
-      function displayPaymentResults(status) {
-        const statusContainer = document.getElementById('payment-status-container');
-        if (status === 'SUCCESS') {
-          statusContainer.classList.remove('is-failure');
-          statusContainer.classList.add('is-success');
-          statusContainer.textContent = 'Payment Successful!';
-        } else {
-          statusContainer.classList.remove('is-success');
-          statusContainer.classList.add('is-failure');
-          statusContainer.textContent = 'Payment Failed. Please try again.';
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
-        statusContainer.style.visibility = 'visible';
-      }
-
-      document.addEventListener('DOMContentLoaded', async function () {
-        if (!window.Square) {
-          throw new Error('Square.js failed to load properly');
+        .header {
+            font-size: 2em;
+            margin-bottom: 20px;
         }
-
-        let payments;
-        try {
-          payments = window.Square.payments(appId, locationId);
-        } catch {
-          const statusContainer = document.getElementById('payment-status-container');
-          statusContainer.className = 'missing-credentials';
-          statusContainer.style.visibility = 'visible';
-          return;
+        .description {
+            font-size: 1.2em;
+            margin-bottom: 30px;
         }
-
-        let card;
-        try {
-          card = await initializeCard(payments);
-        } catch (e) {
-          console.error('Initializing Card failed', e);
-          return;
+        .donate-button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            color: white;
+            background-color: #28a745;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
-
-        const form = document.getElementById('payment-form');
-        form.addEventListener('submit', async function (event) {
-          event.preventDefault();
-
-          try {
-            const result = await card.tokenize();
-            if (result.status === 'OK') {
-              await createPayment(result.token);
-              displayPaymentResults('SUCCESS');
-            } else {
-              displayPaymentResults('FAILURE');
-            }
-          } catch (e) {
-            displayPaymentResults('FAILURE');
-            console.error(e.message);
-          }
-        });
-      });
-    </script>
-  </head>
-  <body>
-    <form id="payment-form">
-      <h2>Donate $1.00</h2>
-      <div id="card-container"></div>
-      <button type="submit">Pay</button>
-    </form>
-    <div id="payment-status-container"></div>
-  </body>
+        .cash-app-button img {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Support Our Cause</div>
+        <div class="description">Your donation helps us continue our work and provide valuable resources to the community.</div>
+        <a class="donate-button" href="https://www.paypal.com/donate">Donate with PayPal</a>
+        <div class="cash-app-button">
+            <a href="https://cash.app/$User2lxx">
+                <img src="https://images.ctfassets.net/1nw4q0oohfju/5KX62i9wOsL9uVRzULSgeT/c8da4a544f6a553e6bd352e3110301f5/cash-app-pay-button.png?fm=webp" alt="Donate with Cash App">
+            </a>
+        </div>
+    </div>
+</body>
 </html>
