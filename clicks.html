@@ -89,6 +89,7 @@
     <div id="end-screen">Thanks for playing!</div>
 
     <audio id="click-sound" src="click.mp3"></audio>
+    <audio id="klicker-sound" src="klicker-a.mp3"></audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -103,12 +104,29 @@
             const gambleButton = document.getElementById('coin-flip');
             const endScreen = document.getElementById('end-screen');
             const clickSound = document.getElementById('click-sound');
+            const klickerSound = document.getElementById('klicker-sound');
 
             clickerButton.addEventListener('click', () => {
                 clicks++;
                 updateClicks();
                 clickSound.play();
+                playKlickerSound();
             });
+
+            function playKlickerSound() {
+                klickerSound.volume = 0.2; // Set volume to 20%
+                klickerSound.play();
+                klickerSound.addEventListener('timeupdate', fadeOut);
+            }
+
+            function fadeOut() {
+                if (klickerSound.currentTime > klickerSound.duration - 2) { // Start fading out 2 seconds before the end
+                    klickerSound.volume -= 0.01;
+                    if (klickerSound.volume <= 0) {
+                        klickerSound.removeEventListener('timeupdate', fadeOut);
+                    }
+                }
+            }
 
             skinsButton.addEventListener('click', () => {
                 const colors = ['#4CAF50', '#FF5733', '#33FF57', '#3357FF', '#FF33A1'];
