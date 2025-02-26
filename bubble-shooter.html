@@ -36,12 +36,28 @@ const grid = 32;
 // each even row is 8 bubbles long and each odd row is 7 bubbles long.
 // the level consists of 4 rows of bubbles of 4 colors: red, orange,
 // green, and yellow
-const level1 = [
-  ['R','R','Y','Y','B','B','G','G'],
-  ['R','R','Y','Y','B','B','G'],
-  ['B','B','G','G','R','R','Y','Y'],
-  ['B','G','G','R','R','Y','Y']
+const levels = [
+  [
+    ['R','R','Y','Y','B','B','G','G'],
+    ['R','R','Y','Y','B','B','G'],
+    ['B','B','G','G','R','R','Y','Y'],
+    ['B','G','G','R','R','Y','Y']
+  ],
+  // Add more level configurations here
 ];
+let currentLevel = 0;
+
+function saveProgress() {
+  localStorage.setItem('currentLevel', currentLevel);
+}
+
+function loadProgress() {
+  const savedLevel = localStorage.getItem('currentLevel');
+  if (savedLevel !== null) {
+    currentLevel = parseInt(savedLevel);
+  }
+}
+loadProgress();
 
 // create a mapping between color short code (R, G, B, Y) and color name
 const colorMap = {
@@ -77,7 +93,6 @@ function rotatePoint(x, y, angle) {
 }
 
 // get a random integer between the range of [min,max]
-// @see https://stackoverflow.com/a/1527820/2124254
 function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -249,14 +264,18 @@ function dropFloatingBubbles() {
 }
 
 // fill the grid with inactive bubbles
-for (let row = 0; row < 10; row++) {
-  for (let col = 0; col < (row % 2 === 0 ? 8 : 7); col++) {
-    // if the level has a bubble at the location, create an active
-    // bubble rather than an inactive one
-    const color = level1[row]?.[col];
-    createBubble(col * grid, row * grid, colorMap[color]);
+function fillGrid() {
+  const level = levels[currentLevel];
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < (row % 2 === 0 ? 8 : 7); col++) {
+      // if the level has a bubble at the location, create an active
+      // bubble rather than an inactive one
+      const color = level[row]?.[col];
+      createBubble(col * grid, row * grid, colorMap[color]);
+    }
   }
 }
+fillGrid();
 
 const curBubblePos = {
   // place the current bubble horizontally in the middle of the screen
@@ -275,6 +294,13 @@ const curBubble = {
   // bubble velocity
   dx: 0,
   dy: 0
+};
+
+const nextBubble = {
+  x: curBubblePos.x + grid,
+  y: curBubblePos.y,
+  color: colors[getRandomInt(0, colors.length - 1)],
+  radius: grid / 2,
 };
 
 // angle (in radians) of the shooting arrow
@@ -297,11 +323,17 @@ function getNewBubble() {
   curBubble.color = colors[randInt];
 }
 
-// handle collision between the current bubble and another bubble
+function swapBubbles() {
+  const tempColor = curBubble.color;
+  curBubble.color = nextBubble.color;
+  nextBubble.color = tempColor;
+}
+
 function handleCollision(bubble) {
   bubble.color = curBubble.color;
   bubble.active = true;
   getNewBubble();
+  nextBubble.color = colors[getRandomInt(0, colors.length - 1)];
   removeMatch(bubble);
   dropFloatingBubbles();
 }
@@ -415,6 +447,12 @@ function loop() {
   context.beginPath();
   context.arc(curBubble.x, curBubble.y, curBubble.radius, 0, 2 * Math.PI);
   context.fill();
+
+  // draw next bubble
+  context.fillStyle = nextBubble.color;
+  context.beginPath();
+  context.arc(nextBubble.x, nextBubble.y, nextBubble.radius, 0, 2 * Math.PI);
+  context.fill();
 }
 
 // listen for keyboard events to move the fire arrow
@@ -431,6 +469,11 @@ document.addEventListener('keydown', (e) => {
     // convert an angle to x/y
     curBubble.dx = Math.sin(shootDeg) * curBubble.speed;
     curBubble.dy = -Math.cos(shootDeg) * curBubble.speed;
+  }
+
+  // swap bubbles if 's' is pressed
+  if (e.code === 'KeyS') {
+    swapBubbles();
   }
 });
 
