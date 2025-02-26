@@ -30,13 +30,17 @@
             padding: 10px 20px;
             font-size: 1.2em;
             color: white;
-            background-color: #28a745;
+            background-color: #333;
             text-decoration: none;
             border-radius: 5px;
             margin-bottom: 20px;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 5px 5px #0ff, 0 0 10px 10px #f0f, 0 0 15px 15px #00f, 0 0 20px 20px #ff0, 0 0 25px 25px #f00, 0 0 30px 30px #0f0;
         }
-        .cash-app-button img {
-            width: 200px;
+        .donate-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px 10px #0ff, 0 0 20px 20px #f0f, 0 0 30px 30px #00f, 0 0 40px 40px #ff0, 0 0 50px 50px #f00, 0 0 60px 60px #0f0;
         }
     </style>
 </head>
@@ -44,12 +48,7 @@
     <div class="container">
         <div class="header">Support Our Cause</div>
         <div class="description">Your donation helps us continue our work and provide valuable resources to the community.</div>
-        <a class="donate-button" href="https://www.paypal.com/donate">Donate with PayPal</a>
-        <div class="cash-app-button">
-            <a href="https://cash.app/$User2lxx">
-                <img src="https://images.ctfassets.net/1nw4q0oohfju/5KX62i9wOsL9uVRzULSgeT/c8da4a544f6a553e6bd352e3110301f5/cash-app-pay-button.png?fm=webp" alt="Donate with Cash App">
-            </a>
-        </div>
+        <a class="donate-button" href="https://cash.app/$User2lxx">Donate with Cash App</a>
     </div>
 </body>
 </html>
