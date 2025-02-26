@@ -15,7 +15,6 @@
             margin: 0;
             font-family: Arial, sans-serif;
         }
-
         #clicker {
             width: 100px;
             height: 100px;
@@ -28,12 +27,10 @@
             border-radius: 50%;
             transition: transform 0.3s ease;
         }
-
         #clicker:active {
             transform: scale(0.9);
         }
-
-        #skins {
+        #skins, #mods, #new-feature {
             padding: 10px;
             margin-bottom: 20px;
             cursor: pointer;
@@ -42,26 +39,11 @@
             border: none;
             border-radius: 5px;
         }
-
-        #mods {
-            padding: 10px;
-            margin-bottom: 20px;
-            cursor: pointer;
-            background-color: #FF5733;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-
         #shop, #gamble {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
         }
-
         .item, .gamble-item {
             padding: 10px;
             margin: 5px;
@@ -71,11 +53,9 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
         .item.fade-in, .gamble-item.fade-in {
             animation: fadeIn 1s;
         }
-
         #end-screen {
             display: none;
             align-items: center;
@@ -90,7 +70,6 @@
             left: 0;
             animation: fadeIn 2s forwards;
         }
-
         @keyframes fadeIn {
             0% { opacity: 0; }
             100% { opacity: 1; }
@@ -101,6 +80,7 @@
     <button id="clicker">Click me!</button>
     <button id="skins">Change Skin</button>
     <button id="mods">Mods</button>
+    <button id="new-feature">New Feature</button>
     <div id="clicks">Clicks: 0</div>
     <div id="shop"></div>
     <div id="gamble">
@@ -114,6 +94,7 @@
             const clickerButton = document.getElementById('clicker');
             const skinsButton = document.getElementById('skins');
             const modsButton = document.getElementById('mods');
+            const newFeatureButton = document.getElementById('new-feature');
             const clicksDisplay = document.getElementById('clicks');
             const shop = document.getElementById('shop');
             const gambleButton = document.getElementById('coin-flip');
@@ -146,28 +127,33 @@
                 }
             });
 
+            newFeatureButton.addEventListener('click', () => {
+                alert('New fun feature coming soon!');
+            });
+
             function updateClicks() {
                 clicksDisplay.textContent = `Clicks: ${clicks}`;
                 checkShopItems();
             }
 
             const items = [
-                { name: 'CPS +1', cost: 10, increment: 1 },
-                { name: 'CPS +2', cost: 50, increment: 2 },
-                { name: 'The End', cost: 500000, increment: 0 },
-                { name: 'CPS +3', cost: 100, increment: 3 },
-                { name: 'CPS +4', cost: 200, increment: 4 },
-                { name: 'CPS +5', cost: 500, increment: 5 },
-                { name: 'CPS +6', cost: 1000, increment: 6 },
-                { name: 'CPS +7', cost: 2000, increment: 7 },
-                { name: 'CPS +8', cost: 5000, increment: 8 },
-                { name: 'CPS +9', cost: 10000, increment: 9 },
-                { name: 'CPS +10', cost: 20000, increment: 10 },
-                { name: 'CPS +11', cost: 50000, increment: 11 },
-                { name: 'CPS +12', cost: 100000, increment: 12 },
-                { name: 'CPS +13', cost: 200000, increment: 13 },
-                { name: 'CPS +14', cost: 500000, increment: 14 },
-                { name: 'CPS +15', cost: 1000000, increment: 15 }
+                { name: 'CPS +1', cost: 5, increment: 1 },
+                { name: 'CPS +2', cost: 25, increment: 2 },
+                { name: 'The End', cost: 250000, increment: 0 },
+                { name: 'CPS +3', cost: 50, increment: 3 },
+                { name: 'CPS +4', cost: 100, increment: 4 },
+                { name: 'CPS +5', cost: 250, increment: 5 },
+                { name: 'CPS +6', cost: 500, increment: 6 },
+                { name: 'CPS +7', cost: 1000, increment: 7 },
+                { name: 'CPS +8', cost: 2500, increment: 8 },
+                { name: 'CPS +9', cost: 5000, increment: 9 },
+                { name: 'CPS +10', cost: 10000, increment: 10 },
+                { name: 'CPS +11', cost: 25000, increment: 11 },
+                { name: 'CPS +12', cost: 50000, increment: 12 },
+                { name: 'CPS +13', cost: 100000, increment: 13 },
+                { name: 'CPS +14', cost: 250000, increment: 14 },
+                { name: 'CPS +15', cost: 500000, increment: 15 },
+                { name: 'CPS +16', cost: 1000000, increment: 16 }
             ];
 
             items.forEach((item, index) => {
