@@ -15,13 +15,26 @@
     align-items: center;
     justify-content: center;
   }
+
+  #confetti-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
   </style>
 </head>
 <body>
 <canvas width="271" height="392" id="game"></canvas>
+<canvas id="confetti-canvas"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
 <script>
 const canvas = document.getElementById('game');
 const context = canvas.getContext('2d');
+const confettiCanvas = document.getElementById('confetti-canvas');
+const confettiContext = confettiCanvas.getContext('2d');
 
 // puzzle bubble is played on a hex grid. instead of doing complicated
 // math of working with a hex grid, we can just fill the screen with
@@ -46,6 +59,14 @@ const levels = [
   // Add more level configurations here
 ];
 let currentLevel = 0;
+let levelCounter = document.createElement('div');
+levelCounter.style.position = 'absolute';
+levelCounter.style.top = '10px';
+levelCounter.style.left = '10px';
+levelCounter.style.color = 'white';
+levelCounter.style.fontSize = '20px';
+levelCounter.innerText = `Level: ${currentLevel + 1}`;
+document.body.appendChild(levelCounter);
 
 function saveProgress() {
   localStorage.setItem('currentLevel', currentLevel);
@@ -297,7 +318,7 @@ const curBubble = {
 };
 
 const nextBubble = {
-  x: curBubblePos.x + grid,
+  x: curBubblePos.x + grid * 1.5,
   y: curBubblePos.y,
   color: colors[getRandomInt(0, colors.length - 1)],
   radius: grid / 2,
@@ -336,6 +357,22 @@ function handleCollision(bubble) {
   nextBubble.color = colors[getRandomInt(0, colors.length - 1)];
   removeMatch(bubble);
   dropFloatingBubbles();
+
+  if (bubbles.filter(bubble => bubble.active).length === 0) {
+    currentLevel++;
+    if (currentLevel >= levels.length) {
+      currentLevel = 0;
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+      alert('You win!');
+    }
+    saveProgress();
+    levelCounter.innerText = `Level: ${currentLevel + 1}`;
+    fillGrid();
+  }
 }
 
 // game loop
