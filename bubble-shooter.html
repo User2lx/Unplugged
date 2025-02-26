@@ -96,6 +96,7 @@ const bubbleGap = 1;
 const wallSize = 4;
 const bubbles = [];
 let particles = [];
+let isSwapping = false;
 
 // helper function to convert deg to radians
 function degToRad(deg) {
@@ -345,9 +346,36 @@ function getNewBubble() {
 }
 
 function swapBubbles() {
-  const tempColor = curBubble.color;
-  curBubble.color = nextBubble.color;
-  nextBubble.color = tempColor;
+  if (isSwapping) return;
+  isSwapping = true;
+
+  // Smooth animation for swapping bubbles
+  const swapDuration = 500; // in milliseconds
+  const startTime = performance.now();
+
+  const startCurBubbleX = curBubble.x;
+  const startNextBubbleX = nextBubble.x;
+
+  function animateSwap(time) {
+    const elapsedTime = time - startTime;
+    const progress = Math.min(elapsedTime / swapDuration, 1);
+
+    curBubble.x = startCurBubbleX + (nextBubble.x - startCurBubbleX) * progress;
+    nextBubble.x = startNextBubbleX + (startCurBubbleX - startNextBubbleX) * progress;
+
+    if (progress < 1) {
+      requestAnimationFrame(animateSwap);
+    } else {
+      const tempColor = curBubble.color;
+      curBubble.color = nextBubble.color;
+      nextBubble.color = tempColor;
+      curBubble.x = startCurBubbleX;
+      nextBubble.x = startNextBubbleX;
+      isSwapping = false;
+    }
+  }
+
+  requestAnimationFrame(animateSwap);
 }
 
 function handleCollision(bubble) {
@@ -494,6 +522,8 @@ function loop() {
 
 // listen for keyboard events to move the fire arrow
 document.addEventListener('keydown', (e) => {
+  if (isSwapping) return;
+  
   if (e.code === 'ArrowLeft') {
     shootDir = -1;
   }
@@ -502,35 +532,11 @@ document.addEventListener('keydown', (e) => {
   }
 
   // if the current bubble is not moving we can launch it
-  if (e.code === 'Space' &&  curBubble.dx === 0 && curBubble.dy === 0) {
+  if (e.code === 'Space' && curBubble.dx === 0 && curBubble.dy === 0) {
     // convert an angle to x/y
     curBubble.dx = Math.sin(shootDeg) * curBubble.speed;
     curBubble.dy = -Math.cos(shootDeg) * curBubble.speed;
   }
 
   // swap bubbles if 's' is pressed
-  if (e.code === 'KeyS') {
-    swapBubbles();
-  }
-});
-
-// listen for keyboard events to stop moving the fire arrow if key is
-// released
-document.addEventListener('keyup', (e) => {
-  if (
-    // only reset shoot dir if the released key is also the current
-    // direction of movement. otherwise if you press down both arrow
-    // keys at the same time and then release one of them, the arrow
-    // stops moving even though you are still pressing a key
-    (e.code === 'ArrowLeft' && shootDir === -1) ||
-    (e.code === 'ArrowRight' && shootDir === 1)
-  ) {
-    shootDir = 0;
-  }
-});
-
-// start the game
-requestAnimationFrame(loop);
-</script>
-</body>
-</html>
+  if (e
