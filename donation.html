@@ -23,18 +23,10 @@
         return paymentRequest;
       }
 
-      async function initializeCashApp(payments) {
-        const paymentRequest = buildPaymentRequest(payments);
-        const cashAppPay = await payments.cashAppPay(paymentRequest, {
-          redirectURL: window.location.href,
-          referenceId: 'my-website-00000001',
-        });
-        const buttonOptions = {
-          shape: 'semiround',
-          width: 'full',
-        };
-        await cashAppPay.attach('#cash-app-pay', buttonOptions);
-        return cashAppPay;
+      async function initializeCard(payments) {
+        const card = await payments.card();
+        await card.attach('#card-container');
+        return card;
       }
 
       async function createPayment(token) {
@@ -60,17 +52,16 @@
         throw new Error(errorBody);
       }
 
-      // status is either SUCCESS or FAILURE;
       function displayPaymentResults(status) {
-        const statusContainer = document.getElementById(
-          'payment-status-container',
-        );
+        const statusContainer = document.getElementById('payment-status-container');
         if (status === 'SUCCESS') {
           statusContainer.classList.remove('is-failure');
           statusContainer.classList.add('is-success');
+          statusContainer.textContent = 'Payment Successful!';
         } else {
           statusContainer.classList.remove('is-success');
           statusContainer.classList.add('is-failure');
+          statusContainer.textContent = 'Payment Failed. Please try again.';
         }
 
         statusContainer.style.visibility = 'visible';
@@ -85,51 +76,45 @@
         try {
           payments = window.Square.payments(appId, locationId);
         } catch {
-          const statusContainer = document.getElementById(
-            'payment-status-container',
-          );
+          const statusContainer = document.getElementById('payment-status-container');
           statusContainer.className = 'missing-credentials';
           statusContainer.style.visibility = 'visible';
           return;
         }
 
-        let cashAppPay;
+        let card;
         try {
-          cashAppPay = await initializeCashApp(payments);
+          card = await initializeCard(payments);
         } catch (e) {
-          console.error('Initializing Cash App Pay failed', e);
+          console.error('Initializing Card failed', e);
+          return;
         }
-        if (cashAppPay) {
-          cashAppPay.addEventListener(
-            'ontokenization',
-            async function ({ detail }) {
-              const tokenResult = detail.tokenResult;
-              if (tokenResult.status === 'OK') {
-                const paymentResults = await createPayment(tokenResult.token);
 
-                displayPaymentResults('SUCCESS');
-                console.debug('Payment Success', paymentResults);
-              } else {
-                let errorMessage = `Tokenization failed with status: ${tokenResult.status}`;
+        const form = document.getElementById('payment-form');
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
 
-                if (tokenResult.errors) {
-                  errorMessage += ` and errors: ${JSON.stringify(
-                    tokenResult.errors,
-                  )}`;
-                }
-                displayPaymentResults('FAILURE');
-                throw new Error(errorMessage);
-              }
-            },
-          );
-        }
+          try {
+            const result = await card.tokenize();
+            if (result.status === 'OK') {
+              await createPayment(result.token);
+              displayPaymentResults('SUCCESS');
+            } else {
+              displayPaymentResults('FAILURE');
+            }
+          } catch (e) {
+            displayPaymentResults('FAILURE');
+            console.error(e.message);
+          }
+        });
       });
     </script>
   </head>
   <body>
     <form id="payment-form">
-      <h2>Pay $1.00</h2>
-      <div id="cash-app-pay"></div>
+      <h2>Donate $1.00</h2>
+      <div id="card-container"></div>
+      <button type="submit">Pay</button>
     </form>
     <div id="payment-status-container"></div>
   </body>
