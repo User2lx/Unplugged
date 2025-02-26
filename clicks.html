@@ -87,6 +87,9 @@
         <button class="gamble-item" id="coin-flip">Coin Flip</button>
     </div>
     <div id="end-screen">Thanks for playing!</div>
+
+    <audio id="click-sound" src="click.mp3"></audio>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             let clicks = 0;
@@ -99,10 +102,12 @@
             const shop = document.getElementById('shop');
             const gambleButton = document.getElementById('coin-flip');
             const endScreen = document.getElementById('end-screen');
+            const clickSound = document.getElementById('click-sound');
 
             clickerButton.addEventListener('click', () => {
                 clicks++;
                 updateClicks();
+                clickSound.play();
             });
 
             skinsButton.addEventListener('click', () => {
