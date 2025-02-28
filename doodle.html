@@ -37,6 +37,7 @@
         <button class="tool-button" id="highlighter">Highlighter</button>
         <button class="tool-button" id="paintBucket">Paint Bucket</button>
         <input type="color" id="colorPicker" value="#000000">
+        <input type="range" id="sizePicker" min="1" max="50" value="2">
     </div>
     <canvas id="drawingCanvas"></canvas>
     <script>
@@ -48,31 +49,42 @@
         let currentTool = 'pencil';
         let drawing = false;
         let currentColor = '#000000';
+        let currentSize = 2;
 
         document.getElementById('pencil').addEventListener('click', () => currentTool = 'pencil');
         document.getElementById('highlighter').addEventListener('click', () => currentTool = 'highlighter');
         document.getElementById('paintBucket').addEventListener('click', () => currentTool = 'paintBucket');
         document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
+        document.getElementById('sizePicker').addEventListener('input', (e) => currentSize = e.target.value);
 
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
 
         function startDrawing(e) {
+            e.preventDefault();
             drawing = true;
             draw(e);
         }
 
         function draw(e) {
             if (!drawing) return;
-            ctx.lineWidth = currentTool === 'highlighter' ? 10 : 2;
+            e.preventDefault();
+
+            const offsetX = e.touches ? e.touches[0].clientX : e.clientX;
+            const offsetY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            ctx.lineWidth = currentTool === 'highlighter' ? currentSize * 2 : currentSize;
             ctx.strokeStyle = currentTool === 'highlighter' ? currentColor + '80' : currentColor;
             ctx.lineCap = 'round';
 
-            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.lineTo(offsetX - canvas.offsetLeft, offsetY - canvas.offsetTop);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.moveTo(offsetX - canvas.offsetLeft, offsetY - canvas.offsetTop);
         }
 
         function stopDrawing() {
@@ -87,11 +99,11 @@
 
             const pixelsToCheck = [ [x, y] ];
             while (pixelsToCheck.length) {
-                const [x, y] = pixelsToCheck.pop();
-                const currentColor = getColorAtPixel(imageData, x, y);
+                const [px, py] = pixelsToCheck.pop();
+                const currentColor = getColorAtPixel(imageData, px, py);
                 if (colorsMatch(currentColor, startColor)) {
-                    setColorAtPixel(imageData, x, y, fillColor);
-                    pixelsToCheck.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+                    setColorAtPixel(imageData, px, py, fillColor);
+                    pixelsToCheck.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]);
                 }
             }
 
