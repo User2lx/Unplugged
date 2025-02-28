@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doodle Jump</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #87CEEB;
+        }
+        canvas {
+            display: block;
+            background: url('background.png') repeat;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game variables
+        let score = 0;
+        let gameObjects = [];
+
+        // Base class for game objects
+        class GameObject {
+            constructor(x, y, width, height, color) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+                this.dy = 0;
+            }
+
+            update() {
+                // Update object position
+                this.y += this.dy;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        // Rocket class
+        class Rocket extends GameObject {
+            constructor(x, y) {
+                super(x, y, 30, 60, 'red');
+                this.boost = 10;
+            }
+
+            update() {
+                super.update();
+                if (this.y + this.height < 0) {
+                    score += 10;
+                    this.y = canvas.height;
+                }
+            }
+        }
+
+        // PropellerHat class
+        class PropellerHat extends GameObject {
+            constructor(x, y) {
+                super(x, y, 30, 30, 'yellow');
+                this.effect = 5;
+            }
+
+            update() {
+                super.update();
+                if (this.y + this.height < 0) {
+                    score += 5;
+                    this.y = canvas.height;
+                }
+            }
+        }
+
+        // BreakablePlank class
+        class BreakablePlank extends GameObject {
+            constructor(x, y) {
+                super(x, y, 100, 20, 'brown');
+                this.broken = false;
+            }
+
+            update() {
+                super.update();
+                if (!this.broken && this.y + this.height < 0) {
+                    score += 2;
+                    this.broken = true;
+                    this.color = 'gray';
+                }
+            }
+        }
+
+        // Create game objects
+        gameObjects.push(new Rocket(100, 200));
+        gameObjects.push(new PropellerHat(200, 400));
+        gameObjects.push(new BreakablePlank(300, 600));
+
+        // Main game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw game objects
+            gameObjects.forEach(obj => {
+                obj.update();
+                obj.draw(ctx);
+            });
+
+            // Display score
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, 10, 20);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Start the game loop
+        gameLoop();
+    </script>
+</body>
+</html>
