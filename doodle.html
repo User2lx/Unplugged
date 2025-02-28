@@ -9,6 +9,8 @@
             margin: 0;
             overflow: hidden;
             background: #87CEEB;
+            transform: scale(1.5); /* Zoom in */
+            transform-origin: top left;
         }
         canvas {
             display: block;
@@ -21,8 +23,8 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth / 1.5; // Adjust for zoom
+        canvas.height = window.innerHeight / 1.5; // Adjust for zoom
 
         // Game variables
         let score = 0;
@@ -37,10 +39,12 @@
                 this.height = height;
                 this.color = color;
                 this.dy = 0;
+                this.dx = 0;
             }
 
             update() {
                 // Update object position
+                this.x += this.dx;
                 this.y += this.dy;
             }
 
@@ -104,6 +108,43 @@
         gameObjects.push(new PropellerHat(200, 400));
         gameObjects.push(new BreakablePlank(300, 600));
 
+        // User controls
+        document.addEventListener('keydown', (e) => {
+            switch (e.code) {
+                case 'ArrowUp':
+                    gameObjects[0].dy = -5;
+                    break;
+                case 'ArrowDown':
+                    gameObjects[0].dy = 5;
+                    break;
+                case 'ArrowLeft':
+                    gameObjects[0].dx = -5;
+                    break;
+                case 'ArrowRight':
+                    gameObjects[0].dx = 5;
+                    break;
+                case 'Space':
+                    gameObjects[0].dy = -10; // Rocket boost
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.code) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    gameObjects[0].dy = 0;
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    gameObjects[0].dx = 0;
+                    break;
+                case 'Space':
+                    gameObjects[0].dy = 0; // Stop rocket boost
+                    break;
+            }
+        });
+
         // Main game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -124,8 +165,8 @@
 
         // Adjust canvas size on window resize
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth / 1.5; // Adjust for zoom
+            canvas.height = window.innerHeight / 1.5; // Adjust for zoom
         });
 
         // Start the game loop
