@@ -21,6 +21,7 @@
         canvas {
             flex: 1;
             border: 1px solid #ccc;
+            background: white; /* Set background to white */
         }
         .tool-button {
             margin: 10px 0;
@@ -36,6 +37,7 @@
         <button class="tool-button" id="pencil">Pencil</button>
         <button class="tool-button" id="highlighter">Highlighter</button>
         <button class="tool-button" id="paintBucket">Paint Bucket</button>
+        <button class="tool-button" id="eraseAll">Erase All</button> <!-- Erase All button -->
         <input type="color" id="colorPicker" value="#000000">
         <input type="range" id="sizePicker" min="1" max="50" value="2">
     </div>
@@ -54,6 +56,7 @@
         document.getElementById('pencil').addEventListener('click', () => currentTool = 'pencil');
         document.getElementById('highlighter').addEventListener('click', () => currentTool = 'highlighter');
         document.getElementById('paintBucket').addEventListener('click', () => currentTool = 'paintBucket');
+        document.getElementById('eraseAll').addEventListener('click', eraseAll); // Erase All event listener
         document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
         document.getElementById('sizePicker').addEventListener('input', (e) => currentSize = e.target.value);
 
@@ -90,6 +93,10 @@
         function stopDrawing() {
             drawing = false;
             ctx.beginPath();
+        }
+
+        function eraseAll() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
         }
 
         function fillCanvas(x, y, fillColor) {
