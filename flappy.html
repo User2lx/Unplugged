@@ -1,530 +1,473 @@
-<html>
-	<head>
-		<style>
-            /* Load the flappybird font from an external source */
-            @font-face {
-                font-family: flappybird;
-                src: url('http://www.mediafont.com/storage/contents/3184/font.eot'); /* IE */ 
-                src: url('http://www.mediafont.com/storage/contents/3184/04B_19__.TTF'); /* non-IE */ 
-            }
-            
-			body{
-				margin: 0; /* Make sure the body has 0 margin initially */
-				width:100%; /* Define we're using full width of the browser */
-				height:100%; /* Define we're using full height of the browser */
-                overflow: hidden; /* Hide scrollbars */
-			}
-			#Canvas{
-                position:relative; /* Position relative, so all absolute items will be "contained"" through here */
-				width: 100%; /* Define that we're using the full width of the body */
-				height: 100%; /* Define that we're using the full width of the body */
-				background: steelblue; /* Temporary color background */
-			}
-			#Birdy{
-                /* Ratio is about 1.449 (Width/Height) */
-		width: 2.9%;
-                padding-bottom: 2%;
-                
-                
-                background-image: url('http://flappybird.io/img/bird.png');
-                
-                background-size: 300%; /* Make the width 300% of the current width, so that only 1 frame fits and the other 2 frames are hidden */
-				
-				position:absolute; /* Absolutely positioned, so it's out of flow of regular elements, position wherever we'd like */
-				top: 50%; /* We're going to be around middle of the screen (a bit lower due to height)*/
-				left: 20%; /* We're going to be at around 20% left of the screen */
-                
-                z-index: 150; /* Display in front of pipes even after getting hit by them */
-			}
-            
-            .FallenBirdy{
-                -webkit-transform:rotate(90deg);
-                -moz-transform:rotate(90deg);
-                -ms-transform:rotate(90deg);
-                -o-transform:rotate(90deg);
-                transform:rotate(90deg);
-            }
-            
-            #PauseButton{
-                position:absolute;
-                /* Position button so it's not hugging the screen edge */
-                top: 2%; 
-                right: 1%;
-                
-                width: 3%; /* Make the width scale with the canvas size */
-                height: 0; /* Set an initial 0 height */
-                 /* Use padding of same width% to create a square
-                 Padding uses percentages based on width, so we're going to use padding that'll add up to 3%*/
-                padding-top: 1.25%;
-                padding-bottom: 1.75%;
-                
-                background: orange;
-                
-                border-radius: 5px; /*Rounded corners*/
-                
-                font-size: 2.6vw; /* Scale Font to 3% of ViewPort*/
-                text-align: center; /* Horiziontally center pause text */
-                
-                z-index: 50; /* Make it lay on top of the pipes */
-                
-                cursor:pointer; /* Make it appear like it's a button so the cursor turns into a hand when hovered */
-            }
-            #PauseButton span{
-                line-height: 3%; /*Vertically center the pause text */
-                margin-left: 3%; /* Adjust pause text position */
-            }
-            
-            .Pipe{
-                position:absolute; /* Position it absolutely, not in document flow */
-                top: 0; /* Hug the top of the screen */
-                left: 100%; /* Start off the screen */
-                
-                width: 5%; /* Arbitrary pipe percentage */
-                
-                background: greenyellow;
-                
-                animation: PipeMovement 15s linear; /* Run the movement animation in 15 seconds linearly */
-                -webkit-animation: PipeMovement 15s linear; /* webkit prefix */
-            }
-            
-            @keyframes PipeMovement{
-                from {left: 100%} /* Define that we'll start at position 100% left (off screen to the right) */
-                to {left: -25%} /* Define that we'll end at -25% left (off screen to the left) */
-            }
-            @-webkit-keyframes PipeMovement{ /* webkit prefix */
-                from {left: 100%}
-                to {left: -25%}
-            }
-            
-            /* Pause the animation when the user hits the pause button */
-            .paused {
-                -ms-animation-play-state:paused;
-                -o-animation-play-state:paused;
-                -moz-animation-play-state:paused;
-                -webkit-animation-play-state:paused;
-                animation-play-state: paused;
-             }
-             
-             /* Prevents the user from highlighting elements we don't want highlighted' */
-             .noSelect{
-                 -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-             }
-             
-             #LostScoreScreen{
-                 /* Position the score box so it's perfectly centered on screen */
-                position: relative; /* Position relative inside the absolute container */
-                left: -50%; /* Move it so half of it is left of the center */
-                margin-top: -70%; /* Raise it so that it's about center */
-                
-                padding: 5px 0px 5px 12px; /* Center the text properly and give it a bit of space */
-                
-                background: #ded895; /* Random color, kinda matches flappy bird */
-                
-                border-radius: 4%; /* Give it rounded edges */
-                border: 2px solid black; /* 2px thick black border for the score screen */
-                
-                text-align: center; /* Horiziontally center the text */
-                
-                display: none; /* Hide initially */
-                
-                font-family: flappybird; /* Use the flappybird font for the score */
-                font-size: 2vw; /* Scale the font to 2% of viewport */
-                
-                color:white; /* White font */                
-                text-shadow: /* Give it a 2px of "text shadow" to act as an outline to the score text */
-                    -2px -2px 0 #000,  
-                    2px -2px 0 #000,
-                    -2px 2px 0 #000,
-                    2px 2px 0 #000;
-                
-                z-index: 150; /* Pop the box above the pipes */
-             }
-             
-             #CurrentScoreCard{
-                 /* Position the score box so it's perfectly centered on screen */
-                position: relative; /* Position relative inside the absolute container */
-                left: -50%; /* Move it so half of it is left of the center */
-                margin-top: -700%; /* Raise it so that it's above center */
-                                
-                text-align: center; /* Horiziontally center the text */
-                
-                font-family: flappybird; /* Use the flappybird font for the score */
-                font-size: 4vw; /* Scale the font to 2% of viewport */
-                
-                color:white; /* White font */                
-                text-shadow: /* Give it a 2px of "text shadow" to act as an outline to the score text */
-                    -2px -2px 0 #000,  
-                    2px -2px 0 #000,
-                    -2px 2px 0 #000,
-                    2px 2px 0 #000;
-                
-                z-index: 50; /* Raise above the pipes */
-             }
-            
-            
-            #DebugInfo{
-                position: absolute;
-                top: 0; left: 0;
-                width: 150px;
-                height: 250px;
-                z-index: 25;
-                background: gray;
-                opacity: 0.7;
-                color:white;     
-                display:none;
-            }
-		</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Project 001</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Carter+One&display=swap');
+        * {
+            font-family: helvetica, sans-serif;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+        body {
+            background-color: rgba(0,0,0, .95);
+            height: 100vh;
+            margin: 0;
+        }
+        .game-title h1 {
+            text-align: center;
+            font-family: 'Carter One', cursive;
+            color: rgb(251, 176, 37);
+            font-size: 3em;
+            line-height: 150%;
+            letter-spacing: 4px;
+            text-shadow: 2px 4px rgba(250,250,250, 1);
+            margin: 0;
+            position: relative;
+            top: 10px;
+        }
+        .game-screen {
+            width: 300px;
+            height: 500px;
+            margin: 0 auto;
+            position: relative;
+            top: 50px;
+        }
+        canvas {
+            background-color: black;
+            display: block;
+            width: 300px;
+            height: 500px;
+            margin: 0 auto;
+            border-radius: 10px;
+        }
+        .game-description {
+            color: #f0f0f0;
+            line-height: 2em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">
+            <h1>FLAPPY BIRD</h1>
+        </div>
+        <div class="game-screen">
+            <canvas id="game" width="300" height="500"></canvas>
+            <p id="description" class="game-description">Press 'spacebar' or 'click' to begin</p>
+        </div>
+    </div>
+    <script>
+        /************************
+        ***** DECLARATIONS: *****
+        ************************/
+        let cvs         //  canvas
+        let ctx         //  context'2d'
+        let description //  game description
+        let theme1      //  original theme
+        let theme2      //  original them v2
+        let bg          //  background
+        let bird        //  bird: yellow
+        let bird1       //  bird: red
+        let bird2       //  bird: blue
+        let pipes       //  top and bottom pipes
+        let ground      //  ground floor
+        let getReady    //  get ready screen
+        let gameOver    //  game over screen
+        let map         //  map of number images
+        let score       //  score counter
+        let gameState   //  state of game
+        let frame       //  ms/frame = 17; dx/frame = 2; fps = 59;
+        let degree      //  bird rotation degree
+        const SFX_SCORE = new Audio()         //  sound for scoring
+        const SFX_FLAP = new Audio()          //  sound for flying bird
+        const SFX_COLLISION = new Audio()     //  sound for collision
+        const SFX_FALL = new Audio()          //  sound for falling to the ground
+        const SFX_SWOOSH = new Audio()        //  sound for changing game state
         
-		<!-- Bootstrap CSS from MaxCDN -->
-        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-	</head>
-	<body>
-		<div id="Canvas">
-            <!-- Inline CSS -->
+        cvs = document.getElementById('game')
+        ctx = cvs.getContext('2d')
+        description = document.getElementById('description')
+        theme1 = new Image()
+        theme1.src = 'img/og-theme.png'
+        theme2 = new Image()
+        theme2.src = 'img/og-theme-2.png'
+        frame = 0;
+        degree = Math.PI/180
+        SFX_SCORE.src = 'audio/sfx_point.wav'
+        SFX_FLAP.src = 'audio/sfx_wing.wav'
+        SFX_COLLISION.src = 'audio/sfx_hit.wav'
+        SFX_FALL.src = 'audio/sfx_die.wav'
+        SFX_SWOOSH.src = 'audio/sfx_swooshing.wav'
+        
+        gameState = {
+            //loads game on ready screen, tick to change state of game
+            current: 0,
+            getReady: 0,
+            //on play game state: bird flaps and flies
+            play: 1,
+            //game over screen: button||click takes player to ready screen
+            gameOver: 2
+        }
+        //background
+        bg = {
+            //object's key-value properties pinpointing its location
+            imgX: 0,
+            imgY: 0,
+            width: 276,
+            height: 228,
+            //x,y coordinates of where image should be drawn on canvas
+            x: 0,
+            //https://stackoverflow.com/questions/7043509/this-inside-object
+            //reason why 'y' cannot be defined as this.height or bg.height
+            y: cvs.height - 228,
+            w: 276,
+            h: 228,
+            dx: .2,
+            //object's render function that utilizes all above values to draw image onto canvas
+            render: function() {
+                ctx.drawImage(theme1, this.imgX,this.imgY,this.width,this.height, this.x,this.y,this.w,this.h)
+        
+                //image repeat and tile to fit canvas
+                ctx.drawImage(theme1, this.imgX,this.imgY,this.width,this.height, this.x + this.width,this.y,this.w,this.h)
+        
+                //image repeat again for continuous animation
+                ctx.drawImage(theme1, this.imgX,this.imgY,this.width,this.height, this.x + this.width*2,this.y,this.w,this.h)
+            },
+        
+            position: function () {
+                //still img on get ready frame
+                if (gameState.current == gameState.getReady) {
+                    this.x = 0
+                }    
+                //ANIMATION: slowly move background on play game state by decrementing x
+                if (gameState.current == gameState.play) {
+                    this.x = (this.x-this.dx) % (this.w)
+                }
+            }
+        }
+        //top and bottom pipes
+        pipes = {
+            //object's key-value properties pinpointing its location
+            //top pipe image x,y coordinate
+            top: {
+                imgX: 56,
+                imgY: 323,
+            },
+            //bot pipe image x,y coordinate
+            bot: {
+                imgX: 84,
+                imgY:323,
+            },
+            width: 26,
+            height: 160,
+            //pipes' values for drawing on canvas
+            w: 55,
+            h: 300,
+            gap: 85,
+            dx: 2,
+            //acceptable y values must be -260 <= y <= -40
+            minY: -260,
+            maxY: -40,
             
-            <div id="InstructionBox" style="position: absolute; left: 50%; display:none;">
-                <div style="position: relative; left: -50%; z-index: 150; font-family:flappybird; color:white; font-size: 2vw;" class="noSelect">
-                    Click to Fly <br>
-                    Space Bar to Reset <br>
-                    "P" to Pause
-                </div>
-            </div>
-                        
-            <div style="position: absolute; left: 50%; top: 50%;">
-                <div id="CurrentScoreCard" class="noSelect">
-                    <span id="CurrentScore">0</span>
-                </div>
-            </div>
+            pipeGenerator: [],
             
-            <div style="position: absolute; left: 50%; top: 50%;">
-                <div id="LostScoreScreen" class="noSelect">
-                    <span>Score</span>
-                    <br>
-                    <span id="FinalScore">0</span>
-                    <br>
-                    <span>Best</span>
-                    <br>
-                    <span id="BestScore">0</span>
-                    <br>
-                    <button id="ResetButton" type="button" class="btn btn-warning">Reset</button>
-                </div>
-            </div>
-            
-            <div id="DebugInfo" class="noSelect"></div>
-			<div id="Birdy" style=" background-position-x: 400%;">
-			</div>
-            <div id="PauseButton" class="noSelect">
-                <span class="glyphicon glyphicon-pause"></span>
-            </div>
-		</div>
-		
-        <!-- jQuery from Google CDN -->
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-		<script>
-			$(function(){
-                $('#InstructionBox').slideDown(); //Slide down the instructions box
-                setTimeout(function(){ $('#InstructionBox').slideUp(); }, 5000); //Make it slide up after 5 seconds
-                
-                var canvasObject = $('#Canvas');
-                
-                var gameLoopIntervalID = 0;
-                var Paused = true;
-                
-                var Lost = false;
-                
-                function pauseGame(){
-                    clearInterval(gameLoopIntervalID); //Stop the timer
-                    $('.Pipe').addClass('paused'); //Pause the CSS3 animation so the pipes don't move.
-                    $('#PauseButton span').removeClass('glyphicon-pause').addClass('glyphicon-play'); //Swap out the pause text with the play text
-                    Paused = true; //Set paused flag to true
+            reset: function() {
+                this.pipeGenerator = []
+            },
+            //object's render function that utilizes all above values to draw image onto canvas
+            render: function() {
+                //draw whatever is in the pipeGenerator
+                for (let i = 0; i < this.pipeGenerator.length; i++) {
+                    let pipe = this.pipeGenerator[i]
+                    let topPipe = pipe.y
+                    let bottomPipe = pipe.y + this.gap + this.h
+        
+                    ctx.drawImage(theme2, this.top.imgX,this.top.imgY,this.width,this.height, pipe.x,topPipe,this.w,this.h)
+                    ctx.drawImage(theme2, this.bot.imgX,this.bot.imgY,this.width,this.height, pipe.x,bottomPipe,this.w,this.h)
                 }
-                
-                function startGame(){
-                    if(Lost){
-                        return; //Don't unpause if we're already dead
-                    }
-                    //Run the gameLoop every 100ms and save the ID for stopping
-                    gameLoopIntervalID = setInterval(function(){gameLoop();}, 30);
-                    $('.Pipe').removeClass('paused'); //Unpause the CSS3 animations
-                    $('#PauseButton span').removeClass('glyphicon-play').addClass('glyphicon-pause'); //Swap out the play text with the pause text
-                    Paused = false; //Set pause flag to false
+            },
+            position: function() {
+                //if game is not in session, do nothing
+                if (gameState.current !== gameState.play) {
+                    return
                 }
-                
-                function endGame(){
-                    Lost = true; //Set the lost flag to true, so they can't unpause;
-                    pauseGame(); //"Pause" the game              
-                    var cookieScore = getCookie('HighScore');      
-                    console.log(Math.max(CurrentScore,cookieScore));
-                    console.log(cookieScore);
-                    setCookie('HighScore', Math.max(CurrentScore,cookieScore), 30000); //Store the highest score between current score and saved score
-                    Birdy.BirdyObject.animate({top:'90%'}, 1500, 'linear'); //Drop our birdy
-                    $('#FinalScore').html(CurrentScore); //Update the current score
-                    $('#BestScore').html(Math.max(CurrentScore,cookieScore)); //Update the current score
-                    $('#LostScoreScreen').slideDown(); //Have a nice slideDown for the score screen
-                }
-                
-                function resetGame(){
-                    pauseGame(); //Pause the game first, so we'll kill the last game loop
-                    $('.Pipe').remove(); //Remove all pipes
-                    Lost = false; //Reset the lost flag
-                    CurrentScore = 0; //Reset the score
-                    Birdy.Reset(); //Reset the bird object
-                    startGame(); //Restart the game loop                    
-                    $('#LostScoreScreen').slideUp(); //Have a nice slideUp for the score screen
-                }
-                
-                //Toggle the pause function
-                function togglePause(){
-                    if(!Paused){
-                        pauseGame();
-                    }else{
-                        startGame();
-                    }
-                }                            
-                
-                var CurrentScore = 0;
-                
-                $('#PauseButton').mousedown(function(event){
-                    event.stopPropagation(); //Don't allow the click to register as a "jump" command, by stopping it's propagation through the DOM tree.
-                    togglePause(); //Toggle the pause.
-                });
-                
-                $('#ResetButton').click(function(){
-                    resetGame();
-                });
-                
-				canvasObject.mousedown(function(){
-					Birdy.jump(); //Jump when the user clicks
-				});
-                
-                $('body').keydown(function(event){
-                    if(event.which == 32){
-                        resetGame();
-                    }
-                    if(event.which == 80){
-                        togglePause(); //Toggle the pause.
-                    }
-                });
-                
-                //Count how many gameLoops have passed
-                var gameLoopCounter = 0;
-                
-                function gameLoop(){
+                //if game is in session, generate set of pipes forever
+                if (gameState.current == gameState.play) {
                     
-                    if(gameLoopCounter % 2 === 0){ //Reduce to every 2 loops to improve performance
-                        incrementScore();
-                        checkCollisions();
-                    }
-                    
-                    isInBound(Birdy.BirdyObject, canvasObject);
-                    Birdy.fall();
-                    
-                    //TODO: Add decrease time between pipes as score increases
-                    if(gameLoopCounter%90 === 0){
-                        addPipe(); //Add a pipe every 90 loops ~2.7 seconds
-                        cleanPipes(); //Remove pipes as well
-                    }
-                    
-                    if(gameLoopCounter%7 === 0){ //Flap the wings every 7 loops
-                        Birdy.flapWings();
-                    }
-                    
-                    gameLoopCounter++;
-                }
-                
-				var Birdy = new (function(){
-					var selectorObject = $('#Birdy');
-					
-					var jumping = false;
-					
-					var gravVeloc = 0;
-					
-					var gravAccel = 0.3;
-                    
-                    var terminalVelocity = 5;
-                    
-                    //Current angle of the bird
-                    var Angle = 0;
-                    
-                    //Wing flap counter
-                    var WingPosition = 0;
-                    
-                    //Sequence of the wing flapping
-                    var WingPositions = [0, 1, 2, 1];
-					
-                    this.Reset = function(){
-                        jumping = false;
-                        gravVeloc = 0;
-                        Angle = 0;
-                        WingPosition = 0;
-                        selectorObject.stop().rotate(0).css('top','50%');
-                    }
-                    
-					this.fall = function(){
-						if(!jumping){ //Check if we're jumping
-							//If we're currently not jumping
-							selectorObject.stop().animate({top:'+='+gravVeloc+'%'}, 30, 'linear'); //Stop any current animations and then drop the bird by Velocity%
-							gravVeloc += gravAccel; //Add the acceleration scalar to the velocity scalar.
-                            //Limit the maximum velocity of the bird
-                            if(gravVeloc>terminalVelocity){
-                                gravVeloc = terminalVelocity;
+                    //when pipes reach this frame, generate another set
+                    if (frame%100 == 0) {
+                        this.pipeGenerator.push(
+                            {
+                                //spawn off canvas
+                                //pipes' x value needs to be width of canvas to render outside
+                                x: cvs.width,
+                                //random y-coordinates
+                                //pipes' y value needs to vary randomly within acceptable parameters
+                                y: Math.floor((Math.random() * (this.maxY-this.minY+1)) + this.minY)
                             }
-                            var AdjustedAngle = Angle+15*(gravVeloc/terminalVelocity)^2;
-                            adjustAngle(Math.min(AdjustedAngle,90));
-                            $('#DebugInfo').html('Gravity: '+gravVeloc);
-						}else{
-							gravVeloc = 0; //Reset the falling velocity.
-							//console.log('Grav Disabled');
-						}
-					};
-					
-					this.jump = function(){
-                        if(Paused){ //If we're paused, don't let our bird jump
-                            return;
+                        )
+                    }
+                    //iterate for all pipes generated (animation, collision, deletion)
+                    for (let i = 0; i < this.pipeGenerator.length; i++) {
+        
+                        //decleration for bird and pipes' parameters (COLLISION)
+                        let pg = this.pipeGenerator[i]
+                        let b = {
+                            left: bird.x - bird.r,
+                            right: bird.x + bird.r,
+                            top: bird.y - bird.r,
+                            bottom: bird.y + bird.r,
                         }
-						jumping = true; //Set that we're jumping right now
-                        adjustAngle(-45);
-						selectorObject.stop().animate({top:'-=9%'}, 100, 'linear', function(){ //stop any current animations and "Jump" up 9% in 100ms linearly.
-							jumping = false; //Set our jumping flag to false right after our jump
-							Birdy.fall(); //Run the fall immediately 
-						});
-					};
-                    
-                    this.flapWings = function(){
-                        WingPosition++; //Increment wing flapping counter
+                        let p = {
+                            top: {
+                                top: pg.y,
+                                bottom: pg.y + this.h
+                            },
+                            bot: {
+                                top: pg.y + this.h + this.gap,
+                                bottom: pg.y + this.h*2 + this.gap
+                            },
+                            left: pg.x,
+                            right: pg.x + this.w
+                        }
+        
+                        //ANIMATION: set of pipes scroll from the right of canvas by decrementing x
+                        pg.x -= this.dx
                         
-                        if(Angle > 45){ //If the bird is falling, put the wings back to center
-                            WingPosition = 1;
+                        //delete pipes as they scroll off the canvas (memory management)
+                        if(pg.x < -this.w) {
+                            this.pipeGenerator.shift()
+                                //score up
+                                score.current++
+                                SFX_SCORE.play()
+                            }
+        
+                        //PIPE COLLISION
+                        //collision with top pipe
+                        if (b.left < p.right &&
+                            b.right > p.left &&
+                            b.top < p.top.bottom &&
+                            b.bottom > p.top.top) {
+                                gameState.current = gameState.gameOver
+                                SFX_COLLISION.play()
                         }
-                        
-                        selectorObject.css("background-position-x", WingPositions[WingPosition%4]*50 + "%"); //Move the backgroud position of the bird to animate the flapping
-                    }
-                    
-                    function adjustAngle(angle){
-                        selectorObject.rotate(angle); //Rotate the bid
-                        Angle = angle; //Set the current angle of the bird so we can read it
-                    }
-                    
-                    
-                    this.BirdyObject = selectorObject;
-				});
-                
-                //Generate a new pipe
-                function addPipe(){
-                    var PipeGap = 30, //Gap between pipes in %
-                            MinPipeHeight = 5; //Minimum pipe height, so the pipes are still okay sized.
-                    
-                    var MaxTopPipeHeight = 100-PipeGap-2*MinPipeHeight; //Max height the top pipe can be                    
-                    var TopPipeHeight = Math.random()*MaxTopPipeHeight+MinPipeHeight; //Actual top pipe height, which is random.
-                    var BottomPipeTop = TopPipeHeight+PipeGap; //This calculates where the bottom pipe would be in position
-                    var BottomPipeHeight = 100-BottomPipeTop; //This calculates how tall the bottom pipe should be
-                    
-                    //Let's create the top pipe, give it the correct height, and add it to the canvas. Mark them as non-scored.  
-                    $('<div/>').addClass('Pipe').css('height',TopPipeHeight+'%').data('scored', false).appendTo(canvasObject); 
-                    //And now the bottom pipe, but this time we need to tell how far from the top it is, and how tall it is as well. Mark them as non-scored.           
-                    $('<div/>').addClass('Pipe BottomPipe').css({height:BottomPipeHeight+'%',top: BottomPipeTop+'%'}).data('scored', false).appendTo(canvasObject); 
-                    
-                }
-                
-                //Delete all the pipes that are already off screen
-                function cleanPipes(){
-                    $('.Pipe').each(function(){
-                        //If the position percentage is less than -20%, it's off the screen
-                        if($(this).offset().left/$(this).parent().width() < -0.2){ 
-                            $(this).remove();
+                        //collision with bottom pipe
+                        if (b.left < p.right &&
+                            b.right > p.left &&
+                            b.top < p.bot.bottom &&
+                            b.bottom > p.bot.top) {
+                                gameState.current = gameState.gameOver
+                                SFX_COLLISION.play()
                         }
-                    });
-                }
-                
-                function checkCollisions(){
-                    $('.Pipe').each(function(){
-                        if(isIntersecting(Birdy.BirdyObject, $(this))){
-                            console.log('Hit!');
-                            endGame();
-                        }
-                    });
-                }
-                
-                function isIntersecting(obj1, obj2){
-                    //Get the coordinates of the left, top, right, and bottom of the bird and pipe
-                    var obj1Dimensions = [obj1.offset().left, obj1.offset().top, obj1.offset().left+obj1.width(), obj1.offset().top+obj1.height()];
-                    var obj2Dimensions = [obj2.offset().left, obj2.offset().top, obj2.offset().left+obj2.width(), obj2.offset().top+obj2.height()];
-                    
-                    /*
-                     * It's easier to prove that we aren't intersecting, so we'll
-                     * prove that our bird isn't touching any pipes, and then
-                     * we'll negate the result to find out if it touching the pipe.                 
-                     */
-                    
-                    return !(obj1Dimensions[3] < obj2Dimensions[1] //If our bird's bottom edge is above the pipe's top edge OR
-                            || obj1Dimensions[1] > obj2Dimensions[3] //If our bird's top edge is below the pipe's bottom edge OR
-                            || obj1Dimensions[0] > obj2Dimensions[2] //If our bird's left edge is right of the pipe's right edge OR
-                            || obj1Dimensions[2] < obj2Dimensions[0] ); //If our bird's right edge is left of the pipe's left edge OR
-                    
-                }
-                
-                function isInBound(birdy, canvas){
-                    //We're out of bounds if the bottom of the bird is below the bottom of the canvas
-                    //OR if the bird's top is above the canvas top
-                    if(birdy.offset().top+birdy.height()> canvas.offset().top+canvas.height() || birdy.offset().top<canvas.offset().top){ 
-                        console.log('Out of Bounds!'); //Print out that we're out of bounds
-                        endGame();
                     }
                 }
-                
-                //Increase the score as the birdy passes a pipe
-                function incrementScore(){
-                    $('.BottomPipe').each(function(){
-                        var BirdyBeakXPos = Birdy.BirdyObject.offset().left + Birdy.BirdyObject.width(); //Calculate the X coordinate of the bird's beak.
-                        var PipeRightXPos = $(this).offset().left + $(this).width(); //Calculate the X coordinate of the pipe's right edge.
-                        if(!$(this).data('scored') && BirdyBeakXPos>PipeRightXPos){ //If we're ahead of the pipe and we haven't scored on it yet, add to the score.
-                            CurrentScore++; //Increment score
-                            console.log(CurrentScore); //Write to console the score we currently have for debugging purposes
-                            $(this).data('scored', true); //Mark the pipe as scored, so we won't look at it again
-                        }
-                    });          
-                    $('#CurrentScore').html(CurrentScore); //Update current score display
+            }
+        }
+        //ground floor
+        ground = {
+            //object's key-value properties pinpointing its location
+            imgX: 276,
+            imgY: 0,
+            width: 224,
+            height: 112,
+            //values for drawing on canvas
+            x: 0,
+            y:cvs.height - 112,
+            w:224,
+            h:112,
+            dx: 2,
+            render: function() {
+                ctx.drawImage(theme1, this.imgX,this.imgY,this.width,this.height, this.x,this.y,this.w,this.h)
+                //image repeat and tile to fit canvas
+                ctx.drawImage(theme1, this.imgX,this.imgY,this.width,this.height, this.x + this.width,this.y,this.w,this.h)
+            },
+            //ANIMATION:  ground scrolls to the left in a continuous loop when game state is at play
+            //needs to be at the same rate of pipes' scroll speed
+            position: function() {
+                if (gameState.current == gameState.getReady) {
+                    this.x = 0
                 }
-                               
-                                
-                //Run the start game which starts the gameLoop function
-                startGame();     
-                
-                //jQuery function to set the rotation of an element using the CSS3 transform property.
-                jQuery.fn.rotate = function(degrees) {
-                    return $(this).css({'-webkit-transform' : 'rotate('+ degrees +'deg)',
-                                 '-moz-transform' : 'rotate('+ degrees +'deg)',
-                                 '-ms-transform' : 'rotate('+ degrees +'deg)',
-                                 'transform' : 'rotate('+ degrees +'deg)'});
-                };
-                
-                /* Set and Get Cookies function from: http://www.w3schools.com/js/js_cookies.asp */
-                function setCookie(cname,cvalue,exdays)
-                {
-                    var d = new Date();
-                    d.setTime(d.getTime()+(exdays*24*60*60*1000));
-                    var expires = "expires="+d.toGMTString();
-                    document.cookie = cname + "=" + cvalue + "; " + expires;
+                if (gameState.current == gameState.play) {
+                    //modulus keeps this.x value infinitely cycling back to zero
+                    this.x = (this.x-this.dx) % (this.w/2)
                 }
-                function getCookie(cname)
-                {
-                    var name = cname + "=";
-                    var ca = document.cookie.split(';');
-                    for(var i=0; i<ca.length; i++) 
-                    {
-                        var c = ca[i].trim();
-                        if (c.indexOf(name)==0) return c.substring(name.length,c.length);
+            }
+        }
+        //map of number images
+        map = [
+            num0 = {
+                imgX: 496,
+                imgY: 60,
+                width: 12,
+                height: 18
+            },
+            num1 = {
+                imgX: 135,
+                imgY: 455,
+                width: 10,
+                height: 18
+            },
+            num2 = {
+                imgX: 292,
+                imgY: 160,
+                width: 12,
+                height: 18
+            },
+            num3 = {
+                imgX: 306,
+                imgY: 160,
+                width: 12,
+                height: 18
+            },
+            num4 = {
+                imgX: 320,
+                imgY: 160,
+                width: 12,
+                height: 18
+            },
+            num5 = {
+                imgX: 334,
+                imgY: 160,
+                width: 12,
+                height: 18
+            },
+            num6 = {
+                imgX: 292,
+                imgY: 184,
+                width: 12,
+                height: 18
+            },
+            num7 = {
+                imgX: 306,
+                imgY: 184,
+                width: 12,
+                height: 18
+            },
+            num8 = {
+                imgX: 320,
+                imgY: 184,
+                width: 12,
+                height: 18
+            },
+            num9 = {
+                imgX: 334,
+                imgY: 184,
+                width: 12,
+                height: 18
+            }    
+        ]
+        //current score, top score, tracker
+        score = {
+            current: 0,
+            best: null, // DO THIS STRETCH GOAL
+            //values for drawing mapped numbers on canvas
+            x: cvs.width/2,
+            y: 40,
+            w: 15,
+            h: 25,
+            reset: function() {
+                this.current = 0
+            },
+            //display the score
+            render: function() {
+                if (gameState.current == gameState.play ||
+                    gameState.current == gameState.gameOver) {
+                    //change current score number value to string value and access each place value
+                    let string = this.current.toString()
+                    let ones = string.charAt(string.length-1)
+                    let tens = string.charAt(string.length-2)
+                    let hundreds = string.charAt(string.length-3)
+        
+                    //if current score has thousands place value: the game is over
+                    if (this.current >= 1000) {
+                        gameState.current = gameState.gameOver
+                    
+                    //if current score has ones, tens, and hundreds place value only
+                    } else if (this.current >= 100) {
+                        ctx.drawImage(theme2, map[ones].imgX,map[ones].imgY,map[ones].width,map[ones].height, ( (this.x-this.w/2) + (this.w) + 3 ),this.y,this.w,this.h)
+        
+                        ctx.drawImage(theme2, map[tens].imgX,map[tens].imgY,map[tens].width,map[tens].height, ( (this.x-this.w/2) ),this.y,this.w,this.h)
+        
+                        ctx.drawImage(theme2, map[hundreds].imgX,map[hundreds].imgY,map[hundreds].width,map[hundreds].height, (   (this.x-this.w/2) - (this.w) - 3 ),this.y,this.w,this.h)
+        
+                    //if current score has ones and tens place value only
+                    } else if (this.current >= 10) {
+                        ctx.drawImage(theme2, map[ones].imgX,map[ones].imgY,map[ones].width,map[ones].height, ( (this.x-this.w/2) + (this.w/2) + 3 ),this.y,this.w,this.h)
+        
+                        ctx.drawImage(theme2, map[tens].imgX,map[tens].imgY,map[tens].width,map[tens].height, ( (this.x-this.w/2) - (this.w/2) - 3 ),this.y,this.w,this.h)
+                    
+                    //if current score has ones place value only
+                    } else {
+                        ctx.drawImage(theme2, map[ones].imgX,map[ones].imgY,map[ones].width,map[ones].height, ( this.x-this.w/2 ),this.y,this.w,this.h)
                     }
-                    return "";
                 }
-			});
-			
-		</script>
-		
-	</body>
-</html>
+            }
+        }    
+        //bird : YELLOW BIRD
+        bird = {
+            animation: [
+                {imgX: 276, imgY: 114},  //  position 0
+                {imgX: 276, imgY: 140},  //  position 1
+                {imgX: 276, imgY: 166},  //  position 2
+                {imgX: 276, imgY: 140}   //  position 1
+            ],
+            fr: 0,
+            //object's key-value properties pinpointing its location
+            width: 34,
+            height: 24,
+            //values for drawing on canvas
+            x: 50,
+            y: 160,
+            w: 34,
+            h: 24,
+            //bird's radius
+            r: 12,
+            //how much the bird flies per flap()
+            fly: 5.25,
+            //gravity increments the velocity per frame
+            gravity: .32,
+            //velocity = pixels the bird will drop in a frame
+            velocity: 0,
+            //object's render function that utilizes all above values to draw image onto canvas
+            render: function() {
+                let bird = this.animation[this.fr]
+                //save all previous setting
+                ctx.save()
+                //target center of bird
+                ctx.translate(this.x, this.y)
+                //rotate bird by degree
+                ctx.rotate(this.rotation)
+                ctx.drawImage(theme1, bird.imgX,bird.imgY,this.width,this.height, -this.w/2,-this.h/2,this.w,this.h)
+                ctx.restore()
+                //bird is centered on x,y position
+                // ctx.drawImage(theme1, bird.imgX,bird.imgY,this.width,this.height, this.x-this.w/2,this.y-this.h/2,this.w,this.h)
+            },
+            //bird flies
+            flap: function() {
+                this.velocity = - this.fly
+            },
+            //function checks gameState and updates bird's position
+            position: function() {
+                if (gameState.current == gameState.getReady) {
+                    this.y = 160
+                    this.rotation = 0 * degree
+                    //bird animation changes every 20 frames
+                    if (frame%20 == 0) {
+                        this.fr += 1
+                    }
+                    //when bird animation reaches its last value, reset animation
+                    if (this.fr > this.animation.length - 1) {
+                        this.fr = 0
+                    }
+        
+                } else {
+                    //bird animation changes every 4 frames
+                    if (frame%4 == 0) {
+                        this.fr += 1
+                    }
+                    //when bird animation reaches its last value, reset animation
+                    if (this.fr > this.animation.length - 
