@@ -34,19 +34,32 @@
         document.addEventListener('DOMContentLoaded', function() {
             const applications = JSON.parse(localStorage.getItem('applications')) || [];
             const applicationsList = document.getElementById('applicationsList');
-            applications.forEach((application, index) => {
-                const applicationDiv = document.createElement('div');
-                applicationDiv.className = 'application';
-                applicationDiv.innerHTML = `
-                    <h3>Application #${index + 1}</h3>
-                    <p><strong>First Name:</strong> ${application.firstName}</p>
-                    <p><strong>Last Name:</strong> ${application.lastName}</p>
-                    <p><strong>Email:</strong> ${application.email}</p>
-                    <p><strong>Reason:</strong> ${application.reason}</p>
-                    <p><strong>Experiences:</strong> ${application.experience}</p>
-                `;
-                applicationsList.appendChild(applicationDiv);
-            });
+
+            function renderApplications() {
+                applicationsList.innerHTML = '';
+                applications.forEach((application, index) => {
+                    const applicationDiv = document.createElement('div');
+                    applicationDiv.className = 'application';
+                    applicationDiv.innerHTML = `
+                        <h3>Application #${index + 1}</h3>
+                        <p><strong>First Name:</strong> ${application.firstName}</p>
+                        <p><strong>Last Name:</strong> ${application.lastName}</p>
+                        <p><strong>Email:</strong> ${application.email}</p>
+                        <p><strong>Reason:</strong> ${application.reason}</p>
+                        <p><strong>Experiences:</strong> ${application.experience}</p>
+                        <button onclick="deleteApplication(${index})">Delete</button>
+                    `;
+                    applicationsList.appendChild(applicationDiv);
+                });
+            }
+
+            window.deleteApplication = function(index) {
+                applications.splice(index, 1);
+                localStorage.setItem('applications', JSON.stringify(applications));
+                renderApplications();
+            }
+
+            renderApplications();
         });
     </script>
 </body>
