@@ -3,174 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doodle Jump</title>
+    <title>Draw Game</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
-            background: #87CEEB;
-            transform: scale(1.5); /* Zoom in */
-            transform-origin: top left;
+            display: flex;
+            height: 100vh;
+        }
+        #toolbar {
+            width: 150px;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
         }
         canvas {
-            display: block;
-            background: url('background.png') repeat;
+            flex: 1;
+            border: 1px solid #ccc;
+        }
+        .tool-button {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div id="toolbar">
+        <button class="tool-button" id="pencil">Pencil</button>
+        <button class="tool-button" id="highlighter">Highlighter</button>
+        <button class="tool-button" id="paintBucket">Paint Bucket</button>
+        <input type="color" id="colorPicker" value="#000000">
+    </div>
+    <canvas id="drawingCanvas"></canvas>
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth / 1.5; // Adjust for zoom
-        canvas.height = window.innerHeight / 1.5; // Adjust for zoom
+        canvas.width = window.innerWidth - 150; // Adjust for toolbar width
+        canvas.height = window.innerHeight;
 
-        // Game variables
-        let score = 0;
-        let gameObjects = [];
+        let currentTool = 'pencil';
+        let drawing = false;
+        let currentColor = '#000000';
 
-        // Base class for game objects
-        class GameObject {
-            constructor(x, y, width, height, color) {
-                this.x = x;
-                this.y = y;
-                this.width = width;
-                this.height = height;
-                this.color = color;
-                this.dy = 0;
-                this.dx = 0;
-            }
+        document.getElementById('pencil').addEventListener('click', () => currentTool = 'pencil');
+        document.getElementById('highlighter').addEventListener('click', () => currentTool = 'highlighter');
+        document.getElementById('paintBucket').addEventListener('click', () => currentTool = 'paintBucket');
+        document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
 
-            update() {
-                // Update object position
-                this.x += this.dx;
-                this.y += this.dy;
-            }
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
 
-            draw(ctx) {
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            }
+        function startDrawing(e) {
+            drawing = true;
+            draw(e);
         }
 
-        // Rocket class
-        class Rocket extends GameObject {
-            constructor(x, y) {
-                super(x, y, 30, 60, 'red');
-                this.boost = 10;
-            }
+        function draw(e) {
+            if (!drawing) return;
+            ctx.lineWidth = currentTool === 'highlighter' ? 10 : 2;
+            ctx.strokeStyle = currentTool === 'highlighter' ? currentColor + '80' : currentColor;
+            ctx.lineCap = 'round';
 
-            update() {
-                super.update();
-                if (this.y + this.height < 0) {
-                    score += 10;
-                    this.y = canvas.height;
+            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function fillCanvas(x, y, fillColor) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const startColor = getColorAtPixel(imageData, x, y);
+            if (colorsMatch(startColor, fillColor)) return;
+
+            const pixelsToCheck = [ [x, y] ];
+            while (pixelsToCheck.length) {
+                const [x, y] = pixelsToCheck.pop();
+                const currentColor = getColorAtPixel(imageData, x, y);
+                if (colorsMatch(currentColor, startColor)) {
+                    setColorAtPixel(imageData, x, y, fillColor);
+                    pixelsToCheck.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
                 }
             }
+
+            ctx.putImageData(imageData, 0, 0);
         }
 
-        // PropellerHat class
-        class PropellerHat extends GameObject {
-            constructor(x, y) {
-                super(x, y, 30, 30, 'yellow');
-                this.effect = 5;
-            }
-
-            update() {
-                super.update();
-                if (this.y + this.height < 0) {
-                    score += 5;
-                    this.y = canvas.height;
-                }
-            }
+        function getColorAtPixel(imageData, x, y) {
+            const index = (y * imageData.width + x) * 4;
+            return [
+                imageData.data[index],
+                imageData.data[index + 1],
+                imageData.data[index + 2],
+                imageData.data[index + 3]
+            ];
         }
 
-        // BreakablePlank class
-        class BreakablePlank extends GameObject {
-            constructor(x, y) {
-                super(x, y, 100, 20, 'brown');
-                this.broken = false;
-            }
-
-            update() {
-                super.update();
-                if (!this.broken && this.y + this.height < 0) {
-                    score += 2;
-                    this.broken = true;
-                    this.color = 'gray';
-                }
-            }
+        function setColorAtPixel(imageData, x, y, color) {
+            const index = (y * imageData.width + x) * 4;
+            [imageData.data[index], imageData.data[index + 1], imageData.data[index + 2], imageData.data[index + 3]] = color;
         }
 
-        // Create game objects
-        gameObjects.push(new Rocket(100, 200));
-        gameObjects.push(new PropellerHat(200, 400));
-        gameObjects.push(new BreakablePlank(300, 600));
+        function colorsMatch(a, b) {
+            return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+        }
 
-        // User controls
-        document.addEventListener('keydown', (e) => {
-            switch (e.code) {
-                case 'ArrowUp':
-                    gameObjects[0].dy = -5;
-                    break;
-                case 'ArrowDown':
-                    gameObjects[0].dy = 5;
-                    break;
-                case 'ArrowLeft':
-                    gameObjects[0].dx = -5;
-                    break;
-                case 'ArrowRight':
-                    gameObjects[0].dx = 5;
-                    break;
-                case 'Space':
-                    gameObjects[0].dy = -10; // Rocket boost
-                    break;
+        canvas.addEventListener('click', (e) => {
+            if (currentTool === 'paintBucket') {
+                const x = e.clientX - canvas.offsetLeft;
+                const y = e.clientY - canvas.offsetTop;
+                const fillColor = hexToRgba(currentColor);
+                fillCanvas(x, y, fillColor);
             }
         });
 
-        document.addEventListener('keyup', (e) => {
-            switch (e.code) {
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    gameObjects[0].dy = 0;
-                    break;
-                case 'ArrowLeft':
-                case 'ArrowRight':
-                    gameObjects[0].dx = 0;
-                    break;
-                case 'Space':
-                    gameObjects[0].dy = 0; // Stop rocket boost
-                    break;
-            }
-        });
-
-        // Main game loop
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw game objects
-            gameObjects.forEach(obj => {
-                obj.update();
-                obj.draw(ctx);
-            });
-
-            // Display score
-            ctx.fillStyle = 'black';
-            ctx.font = '20px Arial';
-            ctx.fillText('Score: ' + score, 10, 20);
-
-            requestAnimationFrame(gameLoop);
+        function hexToRgba(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255, 255];
         }
 
-        // Adjust canvas size on window resize
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth / 1.5; // Adjust for zoom
-            canvas.height = window.innerHeight / 1.5; // Adjust for zoom
+            canvas.width = window.innerWidth - 150; // Adjust for toolbar width
+            canvas.height = window.innerHeight;
         });
-
-        // Start the game loop
-        gameLoop();
     </script>
 </body>
 </html>
