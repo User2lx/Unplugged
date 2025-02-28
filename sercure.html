@@ -17,111 +17,16 @@
     <div class="copyright">©Unplugged 2025</div>
 
 
-
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unplugged - Verification</title>
-    <style>
-        body {
-            background-color: pink;
-            color: white;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            text-align: center;
-            padding: 50px;
-        }
-        .captcha-container {
-            margin-top: 20px;
-        }
-        .captcha {
-            display: inline-block;
-            padding: 10px;
-            border: 2px solid white;
-            border-radius: 5px;
-            background-color: pink;
-            box-shadow: 0 0 10px gold;
-        }
-        .captcha-text {
-            display: block;
-            margin: 0 auto;
-            padding: 10px;
-            font-size: 20px;
-        }
-        .captcha input {
-            margin-top: 10px;
-            padding: 5px;
-            font-size: 1em;
-        }
-        #verify-button {
-            margin-top: 20px;
-            font-size: 1.5em;
-            color: white;
-            background-color: pink;
-            border: 2px solid white;
-            border-radius: 10px;
-            padding: 10px 20px;
-            cursor: pointer;
-            box-shadow: 0 0 10px gold;
-        }
-    </style>
-</head>
-<body>
-    <div class="glitter-border">
-        <h1>Welcome to Unplugged!</h1>
-        <p>Please verify that you are not a bot to continue.</p>
-    </div>
-    <div class="captcha-container">
-        <div class="captcha">
-            <div id="captcha-text" class="captcha-text"></div>
-            <input type="text" id="captcha-input" placeholder="Enter CAPTCHA">
-        </div>
-        <div id="verify-button" onclick="verifyCaptcha()">Verify</div>
-    </div>
-    <script>
-        function getRandomWord() {
-            const words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape"];
-            return words[Math.floor(Math.random() * words.length)];
-        }
-
-        function getRandomFontSize() {
-            return Math.floor(Math.random() * 20) + 20; // Random size between 20px and 40px
-        }
-
-        function getRandomFontFamily() {
-            const fonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia"];
-            return fonts[Math.floor(Math.random() * fonts.length)];
-        }
-
-        function generateCaptcha() {
-            let captchaText = "";
-            for (let i = 0; i < 5; i++) {
-                const word = getRandomWord();
-                const fontSize = getRandomFontSize();
-                const fontFamily = getRandomFontFamily();
-                captchaText += `<span style="font-size: ${fontSize}px; font-family: ${fontFamily};">${word}</span>`;
-            }
-            document.getElementById('captcha-text').innerHTML = captchaText;
-        }
-
-        function verifyCaptcha() {
-            const userInput = document.getElementById('captcha-input').value;
-            const captchaText = document.getElementById('captcha-text').innerText.replace(/\s+/g, '');
-            if (userInput === captchaText) {
-                alert("Verification successful!");
-                window.location.href = 'https://user2lx.github.io/Unplugged/unplugged2.html';
-            } else {
-                alert("Verification failed. Please try again.");
-                generateCaptcha();
-            }
-        }
-
-        // Generate the CAPTCHA when the page loads
-        window.onload = generateCaptcha;
-    </script>
-</body>
+<html>
+  <head>
+    <title>reCAPTCHA demo: Simple page</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  </head>
+  <body>
+    <form action="?" method="POST">
+      <div class="g-recaptcha" data-sitekey="your_site_key"></div>
+      <br/>
+      <input type="submit" value="Submit">
+    </form>
+  </body>
 </html>
