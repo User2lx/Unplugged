@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submitted Applications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .applications-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .application {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .application h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="applications-container">
+        <h2>Submitted Applications</h2>
+        <div id="applicationsList"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const applications = JSON.parse(localStorage.getItem('applications')) || [];
+            const applicationsList = document.getElementById('applicationsList');
+            applications.forEach((application, index) => {
+                const applicationDiv = document.createElement('div');
+                applicationDiv.className = 'application';
+                applicationDiv.innerHTML = `
+                    <h3>Application #${index + 1}</h3>
+                    <p><strong>First Name:</strong> ${application.firstName}</p>
+                    <p><strong>Last Name:</strong> ${application.lastName}</p>
+                    <p><strong>Email:</strong> ${application.email}</p>
+                    <p><strong>Reason:</strong> ${application.reason}</p>
+                    <p><strong>Experiences:</strong> ${application.experience}</p>
+                `;
+                applicationsList.appendChild(applicationDiv);
+            });
+        });
+    </script>
+</body>
+</html>
