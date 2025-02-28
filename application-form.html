@@ -42,6 +42,22 @@
         .form-container button:hover {
             background-color: #45a049;
         }
+        .rating {
+            display: flex;
+            justify-content: space-between;
+            width: 100px;
+        }
+        .rating input {
+            display: none;
+        }
+        .rating label {
+            font-size: 2em;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .rating input:checked ~ label {
+            color: #f5b301;
+        }
     </style>
 </head>
 <body>
@@ -62,6 +78,21 @@
 
             <label for="experience">Experiences</label>
             <textarea id="experience" name="experience" rows="4" required></textarea>
+
+            <label for="role">What role would you like?</label>
+            <textarea id="role" name="role" rows="2" required></textarea>
+
+            <label for="future">Where do you see yourself in a month?</label>
+            <textarea id="future" name="future" rows="2" required></textarea>
+
+            <label for="codingSkill">On a scale of 1-5, how good are you with coding?</label>
+            <div class="rating">
+                <input type="radio" id="star5" name="codingSkill" value="5" required><label for="star5">★</label>
+                <input type="radio" id="star4" name="codingSkill" value="4" required><label for="star4">★</label>
+                <input type="radio" id="star3" name="codingSkill" value="3" required><label for="star3">★</label>
+                <input type="radio" id="star2" name="codingSkill" value="2" required><label for="star2">★</label>
+                <input type="radio" id="star1" name="codingSkill" value="1" required><label for="star1">★</label>
+            </div>
 
             <button type="submit">Submit Application</button>
         </form>
