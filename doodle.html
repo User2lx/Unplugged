@@ -38,6 +38,8 @@
         <button class="tool-button" id="highlighter">Highlighter</button>
         <button class="tool-button" id="paintBucket">Paint Bucket</button>
         <button class="tool-button" id="eraseAll">Erase All</button> <!-- Erase All button -->
+        <button class="tool-button" id="undo">Undo</button> <!-- Undo button -->
+        <button class="tool-button" id="redo">Redo</button> <!-- Redo button -->
         <input type="color" id="colorPicker" value="#000000">
         <input type="range" id="sizePicker" min="1" max="50" value="2">
     </div>
@@ -52,11 +54,14 @@
         let drawing = false;
         let currentColor = '#000000';
         let currentSize = 2;
+        let history = [], historyIndex = -1;
 
         document.getElementById('pencil').addEventListener('click', () => currentTool = 'pencil');
         document.getElementById('highlighter').addEventListener('click', () => currentTool = 'highlighter');
         document.getElementById('paintBucket').addEventListener('click', () => currentTool = 'paintBucket');
         document.getElementById('eraseAll').addEventListener('click', eraseAll); // Erase All event listener
+        document.getElementById('undo').addEventListener('click', undo);
+        document.getElementById('redo').addEventListener('click', redo);
         document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
         document.getElementById('sizePicker').addEventListener('input', (e) => currentSize = e.target.value);
 
@@ -67,10 +72,40 @@
         canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stopDrawing);
 
+        function saveState() {
+            history = history.slice(0, historyIndex + 1);
+            history.push(canvas.toDataURL());
+            historyIndex++;
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(history[historyIndex]);
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState(history[historyIndex]);
+            }
+        }
+
+        function restoreState(dataUrl) {
+            const img = new Image();
+            img.src = dataUrl;
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+        }
+
         function startDrawing(e) {
             e.preventDefault();
             drawing = true;
             draw(e);
+            saveState();
         }
 
         function draw(e) {
@@ -97,6 +132,7 @@
 
         function eraseAll() {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            saveState();
         }
 
         function fillCanvas(x, y, fillColor) {
@@ -115,6 +151,7 @@
             }
 
             ctx.putImageData(imageData, 0, 0);
+            saveState();
         }
 
         function getColorAtPixel(imageData, x, y) {
