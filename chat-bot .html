@@ -128,3 +128,136 @@
     </script>
 </body>
 </html>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta AI Chat Bot</title>
+    <style>
+        body {
+            background-color: #2e2e2e;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            max-height: 80vh;
+            background-color: #3c3c3c;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        #credits {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: #bbbbbb;
+        }
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #555;
+        }
+        #chat-messages div {
+            padding: 5px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #4a4a4a;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color: #3a3a3a;
+            align-self: flex-start;
+        }
+        #input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #3c3c3c;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5a5a5a;
+            color: #ffffff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="credits">Credits to ChatGPT for API key</div>
+        <div id="chat-messages"></div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type a message">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const apiKey = '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';
+
+        document.getElementById('send-button').addEventListener('click', async function() {
+            const userInput = document.getElementById('user-input').value;
+            const chatMessages = document.getElementById('chat-messages');
+
+            if (userInput.trim() === '') return;
+
+            // Display the user's message
+            const userMessage = document.createElement('div');
+            userMessage.textContent = 'User: ' + userInput;
+            userMessage.classList.add('user-message');
+            chatMessages.appendChild(userMessage);
+
+            // Clear the input field
+            document.getElementById('user-input').value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Fetch the bot response from the API
+            try {
+                const response = await fetch('https://api.example.com/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({ message: userInput })
+                });
+
+                const data = await response.json();
+                const botMessage = document.createElement('div');
+                botMessage.textContent = 'Bot: ' + data.response;
+                botMessage.classList.add('bot-message');
+                chatMessages.appendChild(botMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
