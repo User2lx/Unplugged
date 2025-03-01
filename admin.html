@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,7 +22,7 @@
         .container h1 {
             margin-bottom: 20px;
         }
-        .btn {
+        .btn, .rank-button {
             display: inline-block;
             padding: 10px 20px;
             margin: 10px;
@@ -35,25 +34,8 @@
             cursor: pointer;
             text-decoration: none;
         }
-        .btn:hover {
+        .btn:hover, .rank-button:hover {
             background-color: #45a049;
-        }
-        .rank-button {
-            width: 150px;
-            height: 150px;
-            margin: 10px auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #808080; /* Grey background */
-            color: white;
-            font-size: 20px;
-            border-radius: 10px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            box-shadow: 0 0 10px 3px rgba(0, 255, 255, 0.8); /* Neon cyan LED-like outline */
-        }
-        .rank-button:hover {
             transform: scale(1.1);
             box-shadow: 0 0 20px 6px rgba(0, 255, 255, 1);
         }
