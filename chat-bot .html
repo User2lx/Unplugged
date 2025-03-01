@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Bot</title>
+    <style>
+        #chat-container {
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        #user-input {
+            flex: none;
+            margin-bottom: 10px;
+        }
+        #send-button {
+            flex: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <!-- Chat messages will be displayed here -->
+        <div id="chat-messages"></div>
+        <!-- User input field -->
+        <input type="text" id="user-input" placeholder="Type a message">
+        <!-- Send button -->
+        <button id="send-button">Send</button>
+    </div>
+    <script>
+        document.getElementById('send-button').addEventListener('click', function() {
+            const userInput = document.getElementById('user-input').value;
+            const chatMessages = document.getElementById('chat-messages');
+
+            // Display the user's message
+            const userMessage = document.createElement('div');
+            userMessage.textContent = 'User: ' + userInput;
+            chatMessages.appendChild(userMessage);
+
+            // Clear the input field
+            document.getElementById('user-input').value = '';
+
+            // Simulate a chat bot response
+            const botMessage = document.createElement('div');
+            botMessage.textContent = 'Bot: Hello! How can I help you?';
+            chatMessages.appendChild(botMessage);
+        });
+    </script>
+</body>
+</html>
