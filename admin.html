@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,12 +38,32 @@
         .btn:hover {
             background-color: #45a049;
         }
+        .rank-button {
+            width: 150px;
+            height: 150px;
+            margin: 10px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #808080; /* Grey background */
+            color: white;
+            font-size: 20px;
+            border-radius: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            box-shadow: 0 0 10px 3px rgba(0, 255, 255, 0.8); /* Neon cyan LED-like outline */
+        }
+        .rank-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px 6px rgba(0, 255, 255, 1);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Admin Panel</h1>
         <a href="https://user2lx.github.io/Unplugged/applications.html" class="btn">Applications</a>
+        <div class="rank-button">Rank</div>
     </div>
 </body>
 </html>
