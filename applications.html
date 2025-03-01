@@ -8,6 +8,8 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #333; /* Dark grey background */
+            color: #ccc; /* Light grey text */
         }
         .applications-container {
             max-width: 800px;
@@ -18,9 +20,14 @@
             border-radius: 5px;
             padding: 20px;
             margin-bottom: 20px;
+            background-color: #444; /* Slightly lighter grey for application cards */
         }
         .application h3 {
             margin-top: 0;
+        }
+        .no-applications {
+            text-align: center;
+            color: #aaa; /* Medium light color */
         }
     </style>
 </head>
@@ -37,23 +44,27 @@
 
             function renderApplications() {
                 applicationsList.innerHTML = '';
-                applications.forEach((application, index) => {
-                    const applicationDiv = document.createElement('div');
-                    applicationDiv.className = 'application';
-                    applicationDiv.innerHTML = `
-                        <h3>Application #${index + 1}</h3>
-                        <p><strong>First Name:</strong> ${application.firstName}</p>
-                        <p><strong>Last Name:</strong> ${application.lastName}</p>
-                        <p><strong>Email:</strong> ${application.email}</p>
-                        <p><strong>Reason:</strong> ${application.reason}</p>
-                        <p><strong>Experiences:</strong> ${application.experience}</p>
-                        <p><strong>Role:</strong> ${application.role}</p>
-                        <p><strong>Future:</strong> ${application.future}</p>
-                        <p><strong>Coding Skill:</strong> ${application.codingSkill}</p>
-                        <button onclick="deleteApplication(${index})">Delete</button>
-                    `;
-                    applicationsList.appendChild(applicationDiv);
-                });
+                if (applications.length === 0) {
+                    applicationsList.innerHTML = '<p class="no-applications">No applications currently</p>';
+                } else {
+                    applications.forEach((application, index) => {
+                        const applicationDiv = document.createElement('div');
+                        applicationDiv.className = 'application';
+                        applicationDiv.innerHTML = `
+                            <h3>Application #${index + 1}</h3>
+                            <p><strong>First Name:</strong> ${application.firstName}</p>
+                            <p><strong>Last Name:</strong> ${application.lastName}</p>
+                            <p><strong>Email:</strong> ${application.email}</p>
+                            <p><strong>Reason:</strong> ${application.reason}</p>
+                            <p><strong>Experiences:</strong> ${application.experience}</p>
+                            <p><strong>Role:</strong> ${application.role}</p>
+                            <p><strong>Future:</strong> ${application.future}</p>
+                            <p><strong>Coding Skill:</strong> ${application.codingSkill}</p>
+                            <button onclick="deleteApplication(${index})">Delete</button>
+                        `;
+                        applicationsList.appendChild(applicationDiv);
+                    });
+                }
             }
 
             window.deleteApplication = function(index) {
