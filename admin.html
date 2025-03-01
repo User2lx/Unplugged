@@ -22,20 +22,22 @@
         .container h1 {
             margin-bottom: 20px;
         }
-        .btn, .rank-button {
-            display: inline-block;
-            padding: 10px 20px;
+        .game-square {
+            width: 150px;
+            height: 150px;
             margin: 10px;
-            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #808080; /* Grey background */
             color: white;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 5px;
+            font-size: 20px;
+            border-radius: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
-            text-decoration: none;
+            box-shadow: 0 0 10px 3px rgba(0, 255, 255, 0.8); /* Neon cyan LED-like outline */
         }
-        .btn:hover, .rank-button:hover {
-            background-color: #45a049;
+        .game-square:hover {
             transform: scale(1.1);
             box-shadow: 0 0 20px 6px rgba(0, 255, 255, 1);
         }
@@ -44,8 +46,8 @@
 <body>
     <div class="container">
         <h1>Admin Panel</h1>
-        <a href="https://user2lx.github.io/Unplugged/applications.html" class="btn">Applications</a>
-        <div class="rank-button">Rank</div>
+        <a href="https://user2lx.github.io/Unplugged/applications.html" class="game-square">Applications</a>
+        <div class="game-square">Rank</div>
     </div>
 </body>
 </html>
