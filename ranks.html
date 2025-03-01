@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Coding Level</th>
+                <th>Rank</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows for leaderboard entries -->
+            <tr>
+                <td>1. Name 1</td>
+                <td>Level 1</td>
+                <td>Rank 1</td>
+            </tr>
+            <tr>
+                <td>2. Name 2</td>
+                <td>Level 2</td>
+                <td>Rank 2</td>
+            </tr>
+            <!-- Add more rows as needed, up to 30 -->
+            <tr>
+                <td>30. Name 30</td>
+                <td>Level 30</td>
+                <td>Rank 30</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>
