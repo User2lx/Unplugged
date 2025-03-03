@@ -2,14 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Access pending</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unplugged</title>
+    <style>
+        body {
+            background-color: #111111; /* dark grey */
+            color: #00ffff; /* neon LED cyan */
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .glitter-border {
+            border: 5px solid;
+            border-image: linear-gradient(to right, #00ffff, #00ffff, #00ffff); /* neon LED cyan */
+            border-image-slice: 1;
+            padding: 20px;
+            box-shadow: 0 0 10px #00ffff; /* neon LED cyan */
+            animation: glitter 1s infinite;
+        }
+        @keyframes glitter {
+            0% { box-shadow: 0 0 10px #00ffff; }
+            50% { box-shadow: 0 0 20px #00ffff; }
+            100% { box-shadow: 0 0 10px #00ffff; }
+        }
+        .logo {
+            display: block;
+            margin: 20px auto;
+        }
+        #redirect-button {
+            margin-top: 20px;
+            font-size: 2em;
+            color: #00ffff; /* neon LED cyan */
+            background-color: black;
+            border: 2px solid #00ffff; /* neon LED cyan */
+            border-radius: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ffff; /* neon LED cyan */
+            transition: transform 0.3s ease;
+        }
+        #redirect-button:hover {
+            transform: scale(1.1);
+        }
+        .title {
+            color: #00ffff; /* neon LED cyan */
+        }
+    </style>
 </head>
 <body>
     <div class="glitter-border">
         <h1 class="title">Welcome to Unplugged!</h1>
-        <p>Unplugged is an online platform dedicated to providing safe, family-friendly gaming experiences for users at school or at home. As the developer behind the site, I’ve focused on delivering curated content that ensures fun and security for all players.</p>
-        <p>With Unplugged, players can enjoy a curated selection of games that prioritize safety and accessibility. My aim is to create a platform where both kids and adults can unwind and have fun without worrying about inappropriate content.</p>
-        <p>Whether you're a student looking for a quick gaming break, a parent searching for safe entertainment for your child, or someone interested in exploring a secure environment, Unplugged offers something for everyone.</p>
+        <p>Unplugged is an online platform dedicated to providing safe, family-friendly gaming experiences for users at school or at home. As the developer behind the site, I’ve focused on delivering high-quality and secure gaming experiences.</p>
+        <p>With Unplugged, players can enjoy a curated selection of games that prioritize safety and accessibility. My aim is to create a platform where both kids and adults can unwind and have fun, without the concerns of inappropriate content.</p>
+        <p>Whether you're a student looking for a quick gaming break, a parent searching for safe entertainment for your child, or someone interested in exploring a secure environment, Unplugged offers an ideal solution.</p>
         <img src="logo.png" alt="Unplugged Logo" class="logo">
     </div>
     <div id="redirect-button" onclick="window.location.href='https://user2lx.github.io/Unplugged/main-page.html'">Go to Unplugged</div>
