@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Its time</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+        }
+        .container {
+            text-align: center;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .flash {
+            animation: flash 0.1s linear infinite;
+        }
+        @keyframes flash {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="button" onclick="startFullscreen()">Go Fullscreen</button>
+        <img id="image1" src="jeff1.jpg" style="display: none;">
+        <img id="image2" src="jeff2.jpg" style="display: none;">
+        <audio id="audio" src="1.mp3" loop></audio>
+    </div>
+    <script>
+        let isFullscreen = false;
+        let isSwapping = false;
+        let swapInterval;
+
+        function startFullscreen() {
+            if (!isFullscreen) {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { // Firefox
+                    elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { // IE/Edge
+                    elem.msRequestFullscreen();
+                }
+                isFullscreen = true;
+                document.getElementById('audio').play();
+                startSwapping();
+            }
+        }
+
+        function startSwapping() {
+            if (!isSwapping) {
+                const img1 = document.getElementById('image1');
+                const img2 = document.getElementById('image2');
+                img1.style.display = 'block';
+                img2.style.display = 'block';
+                isSwapping = true;
+                swapInterval = setInterval(() => {
+                    img1.classList.toggle('flash');
+                    img2.classList.toggle('flash');
+                    [img1.src, img2.src] = [img2.src, img1.src];
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
