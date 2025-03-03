@@ -15,6 +15,8 @@
         }
         .container {
             text-align: center;
+            width: 100%;
+            height: 100%;
         }
         .button {
             background-color: #4CAF50;
@@ -30,6 +32,12 @@
         .flash {
             animation: flash 0.1s linear infinite;
         }
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
         @keyframes flash {
             0%, 50%, 100% { opacity: 1; }
             25%, 75% { opacity: 0; }
@@ -38,9 +46,9 @@
 </head>
 <body>
     <div class="container">
-        <button class="button" onclick="startFullscreen()">Go Fullscreen</button>
-        <img id="image1" src="jeff1.jpg" style="display: none;">
-        <img id="image2" src="jeff2.jpg" style="display: none;">
+        <button class="button" onclick="startFullscreen()">...</button>
+        <img id="image1" src="jeff1.jpg">
+        <img id="image2" src="jeff2.jpg">
         <audio id="audio" src="1.mp3" loop></audio>
     </div>
     <script>
@@ -80,6 +88,15 @@
                 }, 300);
             }
         }
+
+        // Cut off audio before end and loop it
+        const audio = document.getElementById('audio');
+        audio.addEventListener('timeupdate', () => {
+            if (audio.currentTime >= audio.duration - 1) {
+                audio.currentTime = 0;
+                audio.play();
+            }
+        });
     </script>
 </body>
 </html>
