@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="retro bowl.jpg" type="image">
     <title>Retro Bowl | Alexx743</title>
 </head>
-<body>
+<body onload="iffs('https://retro-bowl-six.vercel.app')">
 
   <h2> Retro Bowl</h2>
 
@@ -37,11 +37,12 @@
   </a>
   </div>
 
+   
     <iframe src="https://retro-bowl-six.vercel.app" class="retro-bowl-iframe"></iframe>
 
     <button 
     onclick="iffs('https://retro-bowl-six.vercel.app')"
-     class="fullscreen">Fullscreen</button>
+     class="fullscreen"></button>
     
      <script>
       function iffs(href) {
@@ -53,10 +54,6 @@
     stl.position = 'fixed';
     stl.left = stl.right = stl.top = stl.bottom = '0';
     iframe.src = href;
-    }
-
-    window.onload = function() {
-        iffs('https://retro-bowl-six.vercel.app');
     }
     </script>
 
