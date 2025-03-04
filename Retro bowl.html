@@ -37,12 +37,11 @@
   </a>
   </div>
 
-   
     <iframe src="https://retro-bowl-six.vercel.app" class="retro-bowl-iframe"></iframe>
 
     <button 
     onclick="iffs('https://retro-bowl-six.vercel.app')"
-     class="fullscreen"></button>
+     class="fullscreen">Fullscreen</button>
     
      <script>
       function iffs(href) {
@@ -55,6 +54,10 @@
     stl.left = stl.right = stl.top = stl.bottom = '0';
     iframe.src = href;
     }
+
+    window.onload = function() {
+        iffs('https://retro-bowl-six.vercel.app');
+    }
     </script>
 
 <script>
@@ -62,32 +65,5 @@
   async (e) => { if ("`" == e.key) window.parent.window.location.replace("https://google.com/") });
 </script>
 
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Bowl</title>
-    <style>
-        /* Add your CSS styles here */
-    </style>
-</head>
-<body>
-    <button id="fullscreen-btn">Go Full Screen</button>
-    <script>
-        document.getElementById('fullscreen-btn').addEventListener('click', function() {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) { // Firefox
-                document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
-                document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
-                document.documentElement.msRequestFullscreen();
-            }
-        });
-    </script>
 </body>
 </html>
