@@ -1,361 +1,444 @@
-<html>
+const canvas = 
+    document.getElementById('mazeCanvas');
+const pen = 
+    canvas.getContext('2d');
 
-<head>
-  <style>
-    .center {
-      transform: translate(-50%, -50%);
-      position: absolute;
-      top: 50%;
-      left: 50%;
+const width = canvas.width;
+const height = canvas.height;
+let cellSize = 40;
+
+const playerRadius = cellSize / 2 - 5;
+const endRadius = cellSize / 2 - 5;
+
+let trail = [];
+let generatedMaze;
+let solutionPath;
+
+let points = 0;
+const cols = 
+    Math.floor(width / cellSize);
+const rows = 
+    Math.floor(height / cellSize);
+const player1 = {
+    x: 0,
+    y: 0,
+    color: 'red',
+};
+
+const end = {
+    x: cols - 1,
+    y: rows - 1,
+    color: 'blue',
+};
+
+document.querySelector('.startbtn').
+    addEventListener('click', function () {
+    resetPlayerPos();
+    clearScreen();
+    setup();
+    draw();
+    addListener();
+    displayHidden();
+});
+
+document.
+    addEventListener('DOMContentLoaded', 
+    function () {
+    const startButton = 
+        document.querySelector('.startbtn');
+    function stopBlinking() {
+        startButton.classList.remove("blink");
+    }
+    startButton.classList.add("blink");
+    startButton.
+        addEventListener("click", stopBlinking);
+});
+
+function addListener() {
+    document.
+    addEventListener('keydown', handleKeyPress);
+}
+
+document.getElementById('btnUp').
+addEventListener('click', function () {
+    movePlayer('ArrowUp', player1);
+    draw();
+});
+
+document.getElementById('btnDown').
+addEventListener('click', function () {
+    movePlayer('ArrowDown', player1);
+    draw();
+});
+
+document.getElementById('btnLeft').
+addEventListener('click', function () {
+    movePlayer('ArrowLeft', player1);
+    draw();
+});
+
+document.getElementById('btnRight').
+addEventListener('click', function () {
+    movePlayer('ArrowRight', player1);
+    draw();
+});
+
+function handleKeyPress(event) {
+    const key = event.key;
+    movePlayer(key, player1);
+    draw();
+}
+
+function showRestartMessage() {
+    const messageBox = 
+        document.getElementsByClassName('msgbox')[0];
+    messageBox.innerHTML = "Invalid Move. Press restart.";
+    messageBox.innerHTML += 
+    `<br>
+    <button class='restartbtn' 
+            style='margin-top:70px;' 
+            onclick='resetState()'>
+            Restart
+    </button>`;
+    messageBox.style.visibility = "visible";
+    messageBox.style.fontSize = "1.7em"
+    messageBox.style.color = "white"
+    messageBox.style.fontFamily = 
+    `'Lucida Sans', 
+    'Lucida Sans Regular', 
+    'Lucida Grande', 
+    'Lucida Sans Unicode', 
+    Geneva, Verdana, sans-serif`
+
+}
+function resetState() {
+    const messageBox = 
+        document.getElementsByClassName('msgbox')[0];
+    messageBox.style.visibility = "hidden";
+}
+function movePlayer(key, player) {
+    let validMove = false;
+
+    switch (key) {
+        case 'ArrowUp':
+            if (player.y > 0 && 
+                cells[player.x][player.y].
+                walls.top === false) {
+                player.y--;
+                points++;
+                validMove = true;
+            }
+            break;
+        case 'ArrowDown':
+            if (player.y < rows - 1 && 
+                cells[player.x][player.y].
+                walls.bottom === false) {
+                player.y++;
+                points++;
+                validMove = true;
+            }
+            break;
+        case 'ArrowLeft':
+            if (player.x > 0 && 
+                cells[player.x][player.y].
+                walls.left === false) {
+                player.x--;
+                points++;
+                validMove = true;
+            }
+            break;
+        case 'ArrowRight':
+            if (player.x < cols - 1 && 
+                cells[player.x][player.y].
+                walls.right === false) {
+                player.x++;
+                points++;
+                validMove = true;
+            }
+            break;
+    }
+    if (!validMove) {
+        return;
     }
 
-    .container {
-      border: 3px solid black;
+    const isTwice = trail.some(
+        cell => cell.x === player.x && 
+        cell.y === player.y);
+    if (isTwice) {
+        showRestartMessage();
+        resetPlayerPos();
     }
 
-    .row {
-      width: 100%;
-      display: flex;
+    if (player.x == cols - 1 && player.y == rows - 1) {
+        document.
+        removeEventListener('keydown', handleKeyPress);
+        const messageBox = 
+            document.getElementsByClassName('msgbox')[0];
+
+        messageBox.innerHTML = "<h1>You Won!</h1>"
+        messageBox.innerHTML += "<h2 id='moves'>Moves</h2>"
+        messageBox.innerHTML += 
+        `<button id='done' onclick='location.reload()'>
+            Play Again
+        </button>`
+        document.getElementById('moves').innerHTML = "Moves:" + points;
+        messageBox.style.fontSize = "1em"
+        messageBox.style.color = "black"
+        messageBox.style.fontFamily = 
+        `'Lucida Sans', 
+        'Lucida Sans Regular', 
+        'Lucida Grande', 
+        'Lucida Sans Unicode', 
+        Geneva, Verdana, sans-serif`
+        messageBox.style.visibility = "visible";
     }
+}
 
-    .cell {
-      background: #111;
-      width: 25px;
-      height: 25px;
-      box-sizing: border-box;
+function clearScreen() {
+    pen.canvas.width = pen.canvas.width;
+}
+
+function displayHidden() {
+    document.getElementsByClassName('msgbox')[0].
+    style.visibility = "hidden";
+}
+
+const cells = [];
+
+for (let x = 0; x < rows; x++) {
+    cells[x] = [];
+    for (let y = 0; y < cols; y++) {
+        cells[x][y] = null;
     }
+}
 
-    .left-wall {
-      border-left: 1px solid black;
-    }
-
-    .right-wall {
-      border-right: 1px solid black;
-    }
-
-    .top-wall {
-      border-top: 1px solid black;
-    }
-
-    .bottom-wall {
-      border-bottom: 1px solid black;
-    }
-
-    .visited {
-      background: white;
-    }
-
-    .wrapper {
-      width: 100%;
-      height: 100%;
-      padding: 25%;
-    }
-
-    .point {
-      background: red;
-      border-radius: 50%;
-      width: 50%;
-      height: 50%;
-    }
-
-    .blue {
-      background: blue;
-    }
-
-    .buttons {
-      position: absolute;
-      z-index: 100;
-      display: flex;
-      width: 100%;
-      justify-content: center;
-      align-items: center;
-    }
-
-    button {
-      margin: 0 5px;
-      border-radius: 5px;
-      background: white;
-      padding: 10px;
-      box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
-    }
-
-    .passed {
-      background: grey;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="container center"></div>
-
-  <div class="buttons">
-    <button onclick="generateMaze(10)">Very Easy (10 x 10)</button>
-    <button onclick="generateMaze(20)">Easy (20 x 20)</button>
-    <button onclick="generateMaze(30)">Normal (30 x 30)</button>
-    <button onclick="generateMaze(50)">Hard (50 x 50)</button>
-    <button onclick="generateMaze(100)">Hell (100 x 100)</button>
-    <button onclick="print()">인쇄하기</button>
-  </div>
-  <script>
-    const range = (n) => Array.from({ length: n }).map((_, i) => i);
-
-    const delay = (n) => new Promise((r) => setTimeout(r, n));
-
-    const createGrid = (n) =>
-      Array.from({ length: n }).map(() =>
-        Array.from({ length: n }).map(() => 0)
-      );
-
-    const draw = (container, grid) => {
-      const template = grid
-        .map(
-          (row) =>
-            `<div class="row">${row.map((i) => i.draw()).join("")}</div>`
-        )
-        .join("");
-
-      container.innerHTML = template;
-    };
-
-    class Cell {
-      constructor(x, y, size) {
+class CellA {
+    constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = size;
         this.visited = false;
-        this.walls = { left: true, right: true, top: true, bottom: true };
-      }
-
-      draw() {
-        const classes = Object.entries(this.walls)
-          .filter(([k, v]) => v)
-          .map(([position]) => `${position}-wall`)
-          .join(" ");
-
-        const visited = this.visited ? "visited" : "";
-        const size = `width: ${this.size}; height: ${this.size};`;
-
-        return `<span style="${size}" class="cell ${classes} ${visited} "></span>`;
-      }
-
-      visit() {
-        this.visited = true;
-      }
-
-      randomNeighbor(grid) {
-        const { x, y } = this;
-        return [
-          [x - 1, y],
-          [x + 1, y],
-          [x, y - 1],
-          [x, y + 1],
-        ]
-          .filter(([x, y]) => grid[y] && grid[y][x] && !grid[y][x].visited)
-          .map(([x, y]) => grid[y][x])
-          .sort(() => Math.random() - 0.5)[0];
-      }
+        this.walls = {
+            top: true,
+            right: true,
+            bottom: true,
+            left: true,
+        };
     }
 
-    function removeWall(cell1, cell2) {
-      const xDiff = cell1.x - cell2.x;
-      const yDiff = cell1.y - cell2.y;
+    show() {
+        const x = this.x * cellSize;
+        const y = this.y * cellSize;
 
-      if (xDiff === -1) {
-        cell1.walls.right = false;
-        cell2.walls.left = false;
-      } else if (xDiff === 1) {
-        cell1.walls.left = false;
-        cell2.walls.right = false;
-      } else if (yDiff === -1) {
-        cell1.walls.bottom = false;
-        cell2.walls.top = false;
-      } else if (yDiff === 1) {
-        cell1.walls.top = false;
-        cell2.walls.bottom = false;
-      }
-    }
+        pen.beginPath();
 
-    const generateMaze = async (n) => {
-      const size = 750 / n;
-
-      const grid = createGrid(n).map((row, y) =>
-        row.map((_, x) => new Cell(x, y, size))
-      );
-
-      const initialCell = grid[0][0];
-
-      initialCell.visit();
-
-      const stack = [initialCell];
-
-      let currentCell;
-
-      while (stack.length) {
-        currentCell = stack.pop();
-
-        const neighborCell = currentCell.randomNeighbor(grid);
-
-        if (neighborCell) {
-          stack.push(currentCell);
-          removeWall(currentCell, neighborCell);
-          neighborCell.visit();
-          stack.push(neighborCell);
-        }
-      }
-
-      const container = document.querySelector(".container");
-
-      draw(container, grid);
-
-      document.body.onkeydown = createNavigator(n, grid);
-    };
-
-    function createNavigator(n, grid) {
-      const index = (x, y) => y * n + x;
-      const inGrid = (x, y) => 0 <= x && x <= n && 0 <= y && y <= n;
-      const point = '<div class="wrapper"><div class="point"></div></div>';
-
-      let x = 0;
-      let y = 0;
-      const cells = document.querySelectorAll(".cell");
-      let currentCell = cells[index(x, y)];
-      let nextCell = null;
-      currentCell.innerHTML = point;
-      currentCell.classList.add("passed");
-
-      cells[cells.length - 1].innerHTML = point.replace(
-        "point",
-        "blue point"
-      );
-
-      return (e) => {
-        if (!e.key.startsWith("Arrow")) return;
-
-        const key = e.key.slice(5).toLowerCase();
-
-        if (key === "up") {
-          if (!inGrid(x, y - 1)) return;
-          if (grid[y][x].walls.top) return;
-          y -= 1;
-        } else if (key === "down") {
-          if (!inGrid(x, y + 1)) return;
-          if (grid[y][x].walls.bottom) return;
-          y += 1;
-        } else if (key === "left") {
-          if (!inGrid(x - 1, y)) return;
-          if (grid[y][x].walls.left) return;
-          x -= 1;
-        } else if (key === "right") {
-          if (!inGrid(x + 1, y)) return;
-          if (grid[y][x].walls.right) return;
-          x += 1;
+        if (this.walls.top) {
+            pen.moveTo(x, y);
+            pen.lineTo(x + cellSize, y);
         }
 
-        nextCell = cells[index(x, y)];
-        nextCell.innerHTML = point;
-        nextCell.classList.add("passed");
+        if (this.walls.right) {
+            pen.moveTo(x + cellSize, y);
+            pen.lineTo(x + cellSize, y + cellSize);
+        }
 
-        currentCell.innerHTML = "";
-        currentCell = nextCell;
-      };
+        if (this.walls.bottom) {
+            pen.moveTo(x + cellSize, y + cellSize);
+            pen.lineTo(x, y + cellSize);
+        }
+
+        if (this.walls.left) {
+            pen.moveTo(x, y + cellSize);
+            pen.lineTo(x, y);
+        }
+        pen.strokeStyle = 'green';
+        pen.lineWidth = 5;
+        pen.lineCap = "round";
+        pen.stroke();
     }
-.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
 }
- .divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-}.divbutton {
-    position: absolute;
-    top: 20px; /* Adjust the top position */
-    left: 50px; /* Adjust the left position */
-} 
-	  generateMaze(30);
-  </script>
-</body>
 
-</html>
+function setup() {
+    // Initialize the cells
+    for (let x = 0; x < rows; x++) {
+        for (let y = 0; y < cols; y++) {
+            cells[x][y] = new CellA(x, y);
+        }
+    }
+    genMaze(0, 0);
+}
+
+function genMaze(x, y) {
+    const presentCell = cells[x][y];
+    presentCell.visited = true;
+
+    const directions = 
+        randomize(['top', 'right', 'bottom', 'left']);
+
+    for (const direction of directions) {
+        const dx = 
+            { top: 0, right: 1, bottom: 0, left: -1 }[direction];
+        const dy = 
+            { top: -1, right: 0, bottom: 1, left: 0 }[direction];
+
+        const newX = x + dx;
+        const newY = y + dy;
+        // if the coordinates are inbound
+        if (newX >= 0 && newX < cols 
+            && newY >= 0 && newY < rows) {
+            const neighbour = cells[newX][newY];
+
+            // removing walls
+
+            if (!neighbour.visited) {
+                presentCell.walls[direction] = false;
+                neighbour.walls[{
+                    top: 'bottom',
+                    right: 'left',
+                    bottom: 'top',
+                    left: 'right',
+                }[direction]] = false;
+                genMaze(newX, newY);
+            }
+        }
+    }
+    generatedMaze = 
+        cells.map(row => row.map(
+            cell => ({ ...cell })));
+    solutionPath = solveMaze();
+}
+
+
+function resetPlayerPos() {
+    player1.x = 0;
+    player1.y = 0;
+    points = 0;
+    trail = [];
+}
+
+function draw() {
+    clearScreen();
+    genMaze(player1.x, player1.y);
+
+    for (let x = 0; x < cols; x++) {
+        for (let y = 0; y < rows; y++) {
+            cells[x][y].show();
+        }
+    }
+
+    trail.push({ x: player1.x, y: player1.y });
+    pen.beginPath();
+    for (let i = 0; i < trail.length; i++) {
+        const trailX = 
+            trail[i].x * cellSize + cellSize / 2;
+        const trailY = 
+            trail[i].y * cellSize + cellSize / 2;
+
+        if (i === 0) {
+            pen.moveTo(trailX, trailY);
+        } else {
+            pen.lineTo(trailX, trailY);
+        }
+    }
+    pen.lineCap = "round";
+    pen.strokeStyle = "white";
+    pen.lineWidth = 4;
+    pen.stroke();
+
+    drawPlayer(player1);
+    drawEnd();
+
+
+    pen.strokeStyle = 'green';
+    pen.lineWidth = 6;
+    pen.lineCap = "round";
+    pen.stroke();
+
+    const isPartOfSolution = 
+        solutionPath.some(cell => 
+            cell.x === player1.x && 
+            cell.y === player1.y);
+
+    if (!isPartOfSolution) {
+        showRestartMessage();
+        player1.x = 0;
+        player1.y = 0;
+        points = 0;
+        trail = [];
+        draw();
+    }
+}
+
+function drawPlayer(player) {
+    const x = player.x * cellSize + cellSize / 2;
+    const y = player.y * cellSize + cellSize / 2;
+
+    pen.beginPath();
+    pen.arc(x, y, playerRadius, 0, 2 * Math.PI);
+    pen.fillStyle = player.color;
+    pen.fill();
+}
+
+function drawEnd() {
+    const x = (end.x + 0.5) * cellSize;
+    const y = (end.y + 0.5) * cellSize;
+
+    pen.beginPath();
+    pen.arc(x, y, endRadius, 0, 2 * Math.PI);
+    pen.fillStyle = end.color;
+    pen.fill();
+
+}
+
+function randomize(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+function solveMaze() {
+    const visited = 
+        Array.from({ length: rows }, 
+            () => Array(cols).fill(false));
+    const path = [];
+
+    function dfs(x, y) {
+        if (x < 0 || x >= cols || y < 0 || 
+            y >= rows || visited[y][x]) {
+            return false;
+        }
+
+        visited[y][x] = true;
+        path.push({ x, y });
+
+        if (x === cols - 1 && y === rows - 1) {
+            return true;
+        }
+
+        const cell = generatedMaze[x][y];
+
+        if (!cell.walls.top && dfs(x, y - 1)) {
+            return true;
+        }
+        if (!cell.walls.right && dfs(x + 1, y)) {
+            return true;
+        }
+        if (!cell.walls.bottom && dfs(x, y + 1)) {
+            return true;
+        }
+        if (!cell.walls.left && dfs(x - 1, y)) {
+            return true;
+        }
+
+        path.pop();
+        return false;
+    }
+
+    dfs(0, 0);
+    return path;
+}
+
+setup();
+draw();
+
 		
