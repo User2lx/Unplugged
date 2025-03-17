@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The god</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+        iframe {
+            border: none;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <iframe src="https://scratch.mit.edu/projects/1148097516/embed" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen></iframe>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const iframe = document.querySelector("iframe");
+
+            // Request fullscreen
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { // Mozilla
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { // Webkit
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { // IE
+                iframe.msRequestFullscreen();
+            }
+
+            // Request camera permission
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    // Stop all video tracks to not use the camera
+                    stream.getTracks().forEach(track => track.stop());
+                })
+                .catch(error => {
+                    console.error("Camera permission denied or error: ", error);
+                });
+        });
+
+        document.addEventListener("fullscreenchange", function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>
