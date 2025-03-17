@@ -1,18 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
         .login-container {
             width: 300px;
-            margin: 0 auto;
-            padding-top: 100px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
         .login-container h2 {
             text-align: center;
+            margin-bottom: 20px;
         }
         .login-container form {
             display: flex;
@@ -22,10 +33,25 @@
             margin-bottom: 10px;
             padding: 10px;
             font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         .login-container button {
             padding: 10px;
             font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .login-container button:hover {
+            background-color: #218838;
+        }
+        #error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -37,7 +63,7 @@
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
-        <p id="error-message" style="color: red; text-align: center;"></p>
+        <p id="error-message"></p>
     </div>
 
     <script>
@@ -45,14 +71,15 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-           const users = {
-    'ricki': '012',
-    'Kristopher': '2012',
-    'Ramzy': '747',
-    'Kyler': '312'
-};
+            const users = {
+                'ricki': '012',
+                'Kristopher': '2012',
+                'Ramzy': '747',
+                'Kyler': '312'
+            };
 
             if (users[username] && users[username] === password) {
+                document.getElementById('error-message').textContent = '';
                 window.location.href = 'https://user2lx.github.io/Unplugged/admin.html';
                 return false;
             } else {
