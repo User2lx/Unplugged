@@ -1,1 +1,26 @@
-<iframe src="https://scratch.mit.edu/projects/1148380082/embed" allowtransparency="true" width="485" height="402" frameborder="0" scrolling="no" allowfullscreen></iframe>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>bitlife</title>
+</head>
+<body>
+    <iframe id="myIframe" src="https://scratch.mit.edu/projects/1148380082/embed" allowtransparency="true" width="485" height="402" frameborder="0" scrolling="no" allowfullscreen></iframe>
+    <button onclick="openFullscreen()">Go Fullscreen</button>
+
+    <script>
+        var iframe = document.getElementById("myIframe");
+
+        function openFullscreen() {
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { // Firefox
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { // IE/Edge
+                iframe.msRequestFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
