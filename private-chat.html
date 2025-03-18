@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat</title>
+    <style>
+        /* Add your styles here */
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #login, #chat {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            width: 100%;
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        input, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="login">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="login-btn">Login</button>
+        </div>
+        <div id="chat" style="display:none;">
+            <div id="messages"></div>
+            <input type="text" id="message-input" placeholder="Type a message">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+    <script>
+        const socket = new WebSocket('ws://localhost:3000');
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            socket.send(JSON.stringify({ type: 'login', username, password }));
+        });
+
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === 'login' && msg.success) {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('chat').style.display = 'block';
+            } else if (msg.type === 'message') {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${msg.username}: ${msg.text}`;
+                document.getElementById('messages').appendChild(messageElement);
+            } else if (msg.type === 'delete') {
+                // Handle message deletion
+            } else if (msg.type === 'mute') {
+                // Handle user muting
+            }
+        };
+
+        document.getElementById('send-btn').addEventListener('click', () => {
+            const text = document.getElementById('message-input').value;
+            socket.send(JSON.stringify({ type: 'message', text }));
+        });
+
+        const users = {
+            'ricki': '012',
+            'Kristopher': '2012',
+            'Ramzy': '747',
+            'Kyler': '312'
+        };
+
+        const roles = {
+            'ricki': 'owner',
+            'Kristopher': 'owner',
+            'Ramzy': 'user',
+            'Kyler': 'user'
+        };
+
+        let clients = [];
+
+        const WebSocketServer = require('ws').Server;
+        const wss = new WebSocketServer({ port: 3000 });
+
+        wss.on('connection', (ws) => {
+            ws.on('message', (message) => {
+                const msg = JSON.parse(message);
+
+                if (msg.type === 'login') {
+                    const { username, password } = msg;
+                    if (users[username] && users[username] === password) {
+                        ws.username = username;
+                        ws.role = roles[username];
+                        ws.send(JSON.stringify({ type: 'login', success: true, role: ws.role }));
+                        clients.push(ws);
+                    } else {
+                        ws.send(JSON.stringify({ type: 'login', success: false }));
+                    }
+                } else if (msg.type === 'message') {
+                    if (ws.username) {
+                        broadcast({ type: 'message', username: ws.username, text: msg.text });
+                    }
+                } else if (msg.type === 'delete' && ws.role === 'owner') {
+                    broadcast({ type: 'delete', messageId: msg.messageId });
+                } else if (msg.type === 'mute' && ws.role === 'owner') {
+                    muteUser(msg.username);
+                }
+            });
+
+            ws.on('close', () => {
+                clients = clients.filter(client => client !== ws);
+            });
+        });
+
+        function broadcast(message) {
+            clients.forEach(client => {
+                client.send(JSON.stringify(message));
+            });
+        }
+
+        function muteUser(username) {
+            clients.forEach(client => {
+                if (client.username === username) {
+                    client.send(JSON.stringify({ type: 'mute' }));
+                }
+            });
+        }
+    </script>
+</body>
+</html>
