@@ -47,43 +47,42 @@
         document.addEventListener('DOMContentLoaded', () => {
             const pollForm = document.getElementById('pollForm');
             const pollResults = document.getElementById('pollResults');
-            const pollKey = 'userPollVote';
-            const pollData = JSON.parse(localStorage.getItem('pollData')) || {
-                mario: 0,
-                scratch: 0,
-                emulator: 0,
-                redesign: 0
-            };
 
-            if (localStorage.getItem(pollKey)) {
-                displayResults();
-            }
+            fetch('/poll/results')
+                .then(response => response.json())
+                .then(data => displayResults(data));
 
             pollForm.addEventListener('submit', (event) => {
                 event.preventDefault();
-                if (localStorage.getItem(pollKey)) {
-                    alert('You have already voted.');
-                    return;
-                }
-
                 const selectedOption = pollForm.pollOption.value;
                 if (selectedOption) {
-                    pollData[selectedOption]++;
-                    localStorage.setItem('pollData', JSON.stringify(pollData));
-                    localStorage.setItem(pollKey, true);
-                    displayResults();
+                    fetch('/poll/vote', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ option: selectedOption })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            displayResults(data.results);
+                        } else {
+                            alert(data.message);
+                        }
+                    });
                 } else {
                     alert('Please select an option.');
                 }
             });
 
-            function displayResults() {
+            function displayResults(results) {
                 pollResults.innerHTML = `
                     <h3>Poll Results</h3>
-                    <p>Add Game Mario: ${pollData.mario}</p>
-                    <p>Add More Scratch Games: ${pollData.scratch}</p>
-                    <p>Add Emulator (Will Try): ${pollData.emulator}</p>
-                    <p>Redesign Website: ${pollData.redesign}</p>
+                    <p>Add Game Mario: ${results.mario}</p>
+                    <p>Add More Scratch Games: ${results.scratch}</p>
+                    <p>Add Emulator (Will Try): ${results.emulator}</p>
+                    <p>Redesign Website: ${results.redesign}</p>
                 `;
             }
         });
