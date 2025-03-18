@@ -45,109 +45,54 @@
         </div>
     </div>
     <script>
-        const socket = new WebSocket('ws://localhost:3000');
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-btn');
 
-        document.getElementById('login-btn').addEventListener('click', () => {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            socket.send(JSON.stringify({ type: 'login', username, password }));
-        });
+        // Function to fetch new messages from the server
+        function fetchMessages() {
+            fetch('/get-messages')
+                .then(response => response.json())
+                .then(data => {
+                    messagesDiv.innerHTML = '';
+                    data.messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.textContent = message;
+                        messagesDiv.appendChild(messageElement);
+                    });
+                });
+        }
 
-        document.getElementById('skip-login-btn').addEventListener('click', () => {
-            const username = document.getElementById('username').value;
-            socket.send(JSON.stringify({ type: 'skipLogin', username }));
-        });
-
-        socket.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-
-            if ((msg.type === 'login' || msg.type === 'skipLogin') && msg.success) {
-                document.getElementById('login').style.display = 'none';
-                document.getElementById('chat').style.display = 'block';
-            } else if (msg.type === 'message') {
-                const messageElement = document.createElement('div');
-                messageElement.textContent = `${msg.username}: ${msg.text}`;
-                document.getElementById('messages').appendChild(messageElement);
-            } else if (msg.type === 'delete') {
-                // Handle message deletion
-            } else if (msg.type === 'mute') {
-                // Handle user muting
+        // Function to send a new message to the server
+        function sendMessage() {
+            const message = messageInput.value;
+            if (message) {
+                fetch('/send-message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: message})
+                }).then(() => {
+                    messageInput.value = '';
+                    fetchMessages();
+                });
             }
-        };
-
-        document.getElementById('send-btn').addEventListener('click', () => {
-            const text = document.getElementById('message-input').value;
-            socket.send(JSON.stringify({ type: 'message', text }));
-        });
-
-        const users = {
-            'ricki': '012',
-            'Kristopher': '2012',
-            'Ramzy': '747',
-            'Kyler': '312'
-        };
-
-        const roles = {
-            'ricki': 'owner',
-            'Kristopher': 'owner',
-            'Ramzy': 'DEV',
-            'Kyler': 'DEV'
-        };
-
-        let clients = [];
-
-        const WebSocketServer = require('ws').Server;
-        const wss = new WebSocketServer({ port: 3000 });
-
-        wss.on('connection', (ws) => {
-            ws.on('message', (message) => {
-                const msg = JSON.parse(message);
-
-                if (msg.type === 'login') {
-                    const { username, password } = msg;
-                    if (users[username] && users[username] === password) {
-                        ws.username = username;
-                        ws.role = roles[username];
-                        ws.send(JSON.stringify({ type: 'login', success: true, role: ws.role }));
-                        clients.push(ws);
-                    } else {
-                        ws.send(JSON.stringify({ type: 'login', success: false }));
-                    }
-                } else if (msg.type === 'skipLogin') {
-                    const { username } = msg;
-                    ws.username = username ? username : `Guest${Math.floor(Math.random() * 1000)}`;
-                    ws.role = 'user';
-                    ws.send(JSON.stringify({ type: 'skipLogin', success: true, role: ws.role }));
-                    clients.push(ws);
-                } else if (msg.type === 'message') {
-                    if (ws.username) {
-                        broadcast({ type: 'message', username: ws.username, text: msg.text });
-                    }
-                } else if (msg.type === 'delete' && ws.role === 'owner') {
-                    broadcast({ type: 'delete', messageId: msg.messageId });
-                } else if (msg.type === 'mute' && ws.role === 'owner') {
-                    muteUser(msg.username);
-                }
-            });
-
-            ws.on('close', () => {
-                clients = clients.filter(client => client !== ws);
-            });
-        });
-
-        function broadcast(message) {
-            clients.forEach(client => {
-                client.send(JSON.stringify(message));
-            });
         }
 
-        function muteUser(username) {
-            clients.forEach(client => {
-                if (client.username === username) {
-                    client.send(JSON.stringify({ type: 'mute' }));
-                }
-            });
-        }
+        // Poll for new messages every 2 seconds
+        setInterval(fetchMessages, 2000);
+
+        // Send message on button click
+        sendButton.addEventListener('click', sendMessage);
+
+        // Send message on Enter key press
+        messageInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initial fetch of messages
+        fetchMessages();
     </script>
 </body>
 </html>
