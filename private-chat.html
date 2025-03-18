@@ -34,8 +34,9 @@
     <div id="chat-container">
         <div id="login">
             <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
+            <input type="password" id="password" placeholder="Password (optional)">
             <button id="login-btn">Login</button>
+            <button id="skip-login-btn">Skip Login</button>
         </div>
         <div id="chat" style="display:none;">
             <div id="messages"></div>
@@ -52,10 +53,15 @@
             socket.send(JSON.stringify({ type: 'login', username, password }));
         });
 
+        document.getElementById('skip-login-btn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            socket.send(JSON.stringify({ type: 'skipLogin', username }));
+        });
+
         socket.onmessage = (event) => {
             const msg = JSON.parse(event.data);
 
-            if (msg.type === 'login' && msg.success) {
+            if ((msg.type === 'login' || msg.type === 'skipLogin') && msg.success) {
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('chat').style.display = 'block';
             } else if (msg.type === 'message') {
@@ -107,6 +113,12 @@
                     } else {
                         ws.send(JSON.stringify({ type: 'login', success: false }));
                     }
+                } else if (msg.type === 'skipLogin') {
+                    const { username } = msg;
+                    ws.username = username ? username : `Guest${Math.floor(Math.random() * 1000)}`;
+                    ws.role = 'user';
+                    ws.send(JSON.stringify({ type: 'skipLogin', success: true, role: ws.role }));
+                    clients.push(ws);
                 } else if (msg.type === 'message') {
                     if (ws.username) {
                         broadcast({ type: 'message', username: ws.username, text: msg.text });
