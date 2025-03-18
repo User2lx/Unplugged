@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poll</title>
+    <style>
+        .poll {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .poll-option {
+            margin: 10px 0;
+        }
+        .poll-results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="poll">
+        <h2>Vote for the Next Feature</h2>
+        <form id="pollForm">
+            <div class="poll-option">
+                <input type="radio" name="pollOption" value="mario" id="mario">
+                <label for="mario">Add Game Mario</label>
+            </div>
+            <div class="poll-option">
+                <input type="radio" name="pollOption" value="scratch" id="scratch">
+                <label for="scratch">Add More Scratch Games</label>
+            </div>
+            <div class="poll-option">
+                <input type="radio" name="pollOption" value="emulator" id="emulator">
+                <label for="emulator">Add Emulator (Will Try)</label>
+            </div>
+            <div class="poll-option">
+                <input type="radio" name="pollOption" value="redesign" id="redesign">
+                <label for="redesign">Redesign Website</label>
+            </div>
+            <button type="submit">Vote</button>
+        </form>
+        <div class="poll-results" id="pollResults"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pollForm = document.getElementById('pollForm');
+            const pollResults = document.getElementById('pollResults');
+            const pollKey = 'userPollVote';
+            const pollData = JSON.parse(localStorage.getItem('pollData')) || {
+                mario: 0,
+                scratch: 0,
+                emulator: 0,
+                redesign: 0
+            };
+
+            if (localStorage.getItem(pollKey)) {
+                displayResults();
+            }
+
+            pollForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                if (localStorage.getItem(pollKey)) {
+                    alert('You have already voted.');
+                    return;
+                }
+
+                const selectedOption = pollForm.pollOption.value;
+                if (selectedOption) {
+                    pollData[selectedOption]++;
+                    localStorage.setItem('pollData', JSON.stringify(pollData));
+                    localStorage.setItem(pollKey, true);
+                    displayResults();
+                } else {
+                    alert('Please select an option.');
+                }
+            });
+
+            function displayResults() {
+                pollResults.innerHTML = `
+                    <h3>Poll Results</h3>
+                    <p>Add Game Mario: ${pollData.mario}</p>
+                    <p>Add More Scratch Games: ${pollData.scratch}</p>
+                    <p>Add Emulator (Will Try): ${pollData.emulator}</p>
+                    <p>Redesign Website: ${pollData.redesign}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
