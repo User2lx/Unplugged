@@ -206,4 +206,94 @@
         function loadVideo(url) {
             videoElement.src = url;
             videoElement.style.display = 'block';
-            video ▋
+            videoElement.addEventListener('loadeddata', () => {
+                drawVideoFrame();
+            });
+        }
+
+        function loadAudio(url) {
+            audioElement.src = url;
+            audioElement.style.display = 'block';
+        }
+
+        function drawVideoFrame() {
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        }
+
+        function cutVideo() {
+            if (videoElement) {
+                const currentTime = videoElement.currentTime;
+                console.log(`Cutting video at ${currentTime} seconds`);
+            } else {
+                alert('No video loaded');
+            }
+        }
+
+        function trimVideo() {
+            if (videoElement) {
+                const currentTime = videoElement.currentTime;
+                console.log(`Trimming video to ${currentTime} seconds`);
+            } else {
+                alert('No video loaded');
+            }
+        }
+
+        function splitVideo() {
+            if (videoElement) {
+                const currentTime = videoElement.currentTime;
+                console.log(`Splitting video at ${currentTime} seconds`);
+            } else {
+                alert('No video loaded');
+            }
+        }
+
+        function addTransition() {
+            console.log('Adding transition to video');
+        }
+
+        function addText() {
+            const text = prompt('Enter the text to add:');
+            if (text) {
+                console.log(`Adding text: ${text}`);
+            }
+        }
+
+        function addOverlay() {
+            const overlay = prompt('Enter the overlay details:');
+            if (overlay) {
+                console.log(`Adding overlay: ${overlay}`);
+            }
+        }
+
+        function addAudioToTrack() {
+            if (audioElement) {
+                audioTrack.appendChild(audioElement);
+                audioElement.play();
+            } else {
+                alert('No audio loaded');
+            }
+        }
+
+        function exportVideo() {
+            console.log('Exporting video');
+        }
+
+        brightness.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        contrast.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        saturation.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        function applyFilters() {
+            ctx.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturation.value}%)`;
+            drawVideoFrame();
+        }
+    </script>
+</body>
+</html>
