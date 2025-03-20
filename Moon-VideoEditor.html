@@ -220,32 +220,56 @@
 
         function cutVideo() {
             // Implement video cutting functionality
-            alert('Cut video functionality');
+            if (videoElement) {
+                // Example: Cut video at the current time and split into two parts
+                const currentTime = videoElement.currentTime;
+                console.log(`Cutting video at ${currentTime} seconds`);
+            } else {
+                alert('No video loaded');
+            }
         }
 
         function trimVideo() {
             // Implement video trimming functionality
-            alert('Trim video functionality');
+            if (videoElement) {
+                // Example: Trim video from the start to the current time
+                const currentTime = videoElement.currentTime;
+                console.log(`Trimming video to ${currentTime} seconds`);
+            } else {
+                alert('No video loaded');
+            }
         }
 
         function splitVideo() {
             // Implement video splitting functionality
-            alert('Split video functionality');
+            if (videoElement) {
+                // Example: Split video into two parts at the current time
+                const currentTime = videoElement.currentTime;
+                console.log(`Splitting video at ${currentTime} seconds`);
+            } else {
+                alert('No video loaded');
+            }
         }
 
         function addTransition() {
             // Implement add transition functionality
-            alert('Add transition functionality');
+            console.log('Adding transition to video');
         }
 
         function addText() {
             // Implement add text functionality
-            alert('Add text functionality');
+            const text = prompt('Enter the text to add:');
+            if (text) {
+                console.log(`Adding text: ${text}`);
+            }
         }
 
         function addOverlay() {
             // Implement add overlay functionality
-            alert('Add overlay functionality');
+            const overlay = prompt('Enter the overlay details:');
+            if (overlay) {
+                console.log(`Adding overlay: ${overlay}`);
+            }
         }
 
         function addAudioToTrack() {
@@ -259,7 +283,7 @@
 
         function exportVideo() {
             // Implement video export functionality
-            alert('Export video functionality');
+            console.log('Exporting video');
         }
 
         brightness.addEventListener('input', () => {
