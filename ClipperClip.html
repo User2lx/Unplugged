@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animating Draw Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+        #toolbar {
+            width: 100%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+        }
+        #timeline {
+            width: 100%;
+            background: #e0e0e0;
+            display: flex;
+            overflow-x: auto;
+            padding: 10px;
+        }
+        .frame {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            background: white;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .frame.selected {
+            border-color: blue;
+        }
+        canvas {
+            flex: 1;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        .tool-button {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+        }
+        .tool-button.selected {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <button class="tool-button" id="pencil">Pencil</button>
+        <button class="tool-button" id="eraser">Eraser</button>
+        <button class="tool-button" id="playback">Play</button>
+        <button class="tool-button" id="addFrame">Add Frame</button>
+        <input type="range" id="frameRate" min="1" max="60" value="24" title="Frame Rate">
+        <input type="color" id="colorPicker" value="#000000">
+        <input type="range" id="sizePicker" min="1" max="50" value="2">
+    </div>
+    <div id="timeline"></div>
+    <canvas id="drawingCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 150;
+
+        let currentTool = 'pencil';
+        let drawing = false;
+        let currentColor = '#000000';
+        let currentSize = 2;
+        let frameRate = 24;
+        let frames = [[]];
+        let currentFrameIndex = 0;
+
+        document.getElementById('pencil').addEventListener('click', () => selectTool('pencil'));
+        document.getElementById('eraser').addEventListener('click', () => selectTool('eraser'));
+        document.getElementById('playback').addEventListener('click', playback);
+        document.getElementById('addFrame').addEventListener('click', addFrame);
+        document.getElementById('frameRate').addEventListener('input', (e) => frameRate = e.target.value);
+        document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
+        document.getElementById('sizePicker').addEventListener('input', (e) => currentSize = e.target.value);
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            e.preventDefault();
+            drawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+
+            const offsetX = e.touches ? e.touches[0].clientX : e.clientX;
+            const offsetY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out'; // Set to erase mode
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                ctx.globalCompositeOperation = 'source-over'; // Set to draw mode
+                ctx.strokeStyle = currentColor;
+            }
+
+            ctx.lineWidth = currentSize;
+            ctx.lineCap = 'round';
+
+            ctx.lineTo(offsetX - canvas.offsetLeft, offsetY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(offsetX - canvas.offsetLeft, offsetY - canvas.offsetTop);
+
+            saveFrame();
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-button').forEach(button => button.classList.remove('selected'));
+            document.getElementById(tool).classList.add('selected');
+        }
+
+        function addFrame() {
+            frames.push([]);
+            currentFrameIndex = frames.length - 1;
+            updateTimeline();
+            clearCanvas();
+        }
+
+        function saveFrame() {
+            frames[currentFrameIndex] = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        }
+
+        function restoreFrame() {
+            if (frames[currentFrameIndex]) {
+                ctx.putImageData(frames[currentFrameIndex], 0, 0);
+            } else {
+                clearCanvas();
+            }
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            frames.forEach((_, index) => {
+                const frame = document.createElement('div');
+                frame.className = 'frame' + (index === currentFrameIndex ? ' selected' : '');
+                frame.textContent = index + 1;
+                frame.addEventListener('click', () => selectFrame(index));
+                timeline.appendChild(frame);
+            });
+        }
+
+        function selectFrame(index) {
+            currentFrameIndex = index;
+            document.querySelectorAll('.frame').forEach((frame, i) => {
+                frame.classList.toggle('selected', i === index);
+            });
+            restoreFrame();
+        }
+
+        function playback() {
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index >= frames.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                currentFrameIndex = index;
+                restoreFrame();
+                index++;
+            }, 1000 / frameRate);
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 150;
+            restoreFrame();
+        });
+
+        updateTimeline();
+    </script>
+</body>
+</html>
