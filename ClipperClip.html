@@ -54,6 +54,10 @@
         .tool-button.selected {
             transform: scale(1.2);
         }
+        .label {
+            margin: 0 10px;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -62,9 +66,10 @@
         <button class="tool-button" id="eraser">Eraser</button>
         <button class="tool-button" id="playback">Play</button>
         <button class="tool-button" id="addFrame">Add Frame</button>
-        <input type="range" id="frameRate" min="1" max="60" value="24" title="Frame Rate">
-        <input type="color" id="colorPicker" value="#000000">
-        <input type="range" id="sizePicker" min="1" max="50" value="2">
+        <button class="tool-button" id="export">Export</button>
+        <label class="label">FPS: <input type="number" id="frameRate" min="1" max="60" value="12"></label>
+        <label class="label">Color: <input type="color" id="colorPicker" value="#000000"></label>
+        <label class="label">Size: <input type="range" id="sizePicker" min="1" max="50" value="2"><span id="sizeValue">2</span></label>
     </div>
     <div id="timeline"></div>
     <canvas id="drawingCanvas"></canvas>
@@ -78,17 +83,21 @@
         let drawing = false;
         let currentColor = '#000000';
         let currentSize = 2;
-        let frameRate = 24;
-        let frames = [[]];
+        let frameRate = 12;
+        let frames = [null];
         let currentFrameIndex = 0;
 
         document.getElementById('pencil').addEventListener('click', () => selectTool('pencil'));
         document.getElementById('eraser').addEventListener('click', () => selectTool('eraser'));
         document.getElementById('playback').addEventListener('click', playback);
         document.getElementById('addFrame').addEventListener('click', addFrame);
-        document.getElementById('frameRate').addEventListener('input', (e) => frameRate = e.target.value);
+        document.getElementById('export').addEventListener('click', exportAnimation);
+        document.getElementById('frameRate').addEventListener('change', (e) => frameRate = e.target.value);
         document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
-        document.getElementById('sizePicker').addEventListener('input', (e) => currentSize = e.target.value);
+        document.getElementById('sizePicker').addEventListener('input', (e) => {
+            currentSize = e.target.value;
+            document.getElementById('sizeValue').textContent = e.target.value;
+        });
 
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
@@ -141,10 +150,15 @@
         }
 
         function addFrame() {
-            frames.push([]);
+            frames.push(null);
             currentFrameIndex = frames.length - 1;
             updateTimeline();
             clearCanvas();
+            if (frames[currentFrameIndex - 1]) {
+                ctx.globalAlpha = 0.4;
+                ctx.putImageData(frames[currentFrameIndex - 1], 0, 0);
+                ctx.globalAlpha = 1.0;
+            }
         }
 
         function saveFrame() {
@@ -194,6 +208,29 @@
                 restoreFrame();
                 index++;
             }, 1000 / frameRate);
+        }
+
+        function exportAnimation() {
+            const zip = new JSZip();
+            frames.forEach((frame, index) => {
+                if (frame) {
+                    const canvasData = document.createElement('canvas');
+                    canvasData.width = canvas.width;
+                    canvasData.height = canvas.height;
+                    const context = canvasData.getContext('2d');
+                    context.putImageData(frame, 0, 0);
+                    const dataURL = canvasData.toDataURL('image/png');
+                    zip.file(`frame${index + 1}.png`, dataURL.split(',')[1], { base64: true });
+                }
+            });
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = 'animation.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
         }
 
         window.addEventListener('resize', () => {
