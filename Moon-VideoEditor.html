@@ -55,7 +55,6 @@
             margin-bottom: 10px;
             padding: 5px;
             border-radius: 4px;
-            height: 50px;
         }
         #videoTrack {
             flex-direction: column;
@@ -207,6 +206,7 @@
             videoElement.src = url;
             videoElement.style.display = 'block';
             videoElement.addEventListener('loadeddata', () => {
+                autoAdjustVideoSize();
                 drawVideoFrame();
             });
         }
@@ -214,6 +214,20 @@
         function loadAudio(url) {
             audioElement.src = url;
             audioElement.style.display = 'block';
+        }
+
+        function autoAdjustVideoSize() {
+            const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+            const containerWidth = videoTrack.clientWidth;
+            const containerHeight = videoTrack.clientHeight;
+
+            if (containerWidth / containerHeight > aspectRatio) {
+                videoElement.style.width = 'auto';
+                videoElement.style.height = '100%';
+            } else {
+                videoElement.style.width = '100%';
+                videoElement.style.height = 'auto';
+            }
         }
 
         function drawVideoFrame() {
