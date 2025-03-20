@@ -29,6 +29,17 @@
             border: 1px solid #ccc;
             background: #fff;
             cursor: pointer;
+            transition: transform 0.2s; /* For tween effect */
+        }
+        .tool-button.selected {
+            transform: scale(1.2); /* Enlarge selected tool */
+        }
+        #info {
+            display: none;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -37,9 +48,11 @@
         <button class="tool-button" id="pencil">Pencil</button>
         <button class="tool-button" id="highlighter">Highlighter</button>
         <button class="tool-button" id="paintBucket">Paint Bucket</button>
-        <button class="tool-button" id="eraseAll">Erase All</button> <!-- Erase All button -->
-        <button class="tool-button" id="undo">Undo</button> <!-- Undo button -->
-        <button class="tool-button" id="redo">Redo</button> <!-- Redo button -->
+        <button class="tool-button" id="eraser">Eraser</button>
+        <button class="tool-button" id="saveImage">Save Image</button>
+        <button class="tool-button" id="backgroundColor">Background Color</button>
+        <button class="tool-button" id="infoButton">Info</button>
+        <div id="info">This is still beta and will proceed with updates along with some of the other games. Paint dropper tool is in the color picking tool.</div>
         <input type="color" id="colorPicker" value="#000000">
         <input type="range" id="sizePicker" min="1" max="50" value="2">
     </div>
@@ -56,12 +69,13 @@
         let currentSize = 2;
         let history = [], historyIndex = -1;
 
-        document.getElementById('pencil').addEventListener('click', () => currentTool = 'pencil');
-        document.getElementById('highlighter').addEventListener('click', () => currentTool = 'highlighter');
-        document.getElementById('paintBucket').addEventListener('click', () => currentTool = 'paintBucket');
-        document.getElementById('eraseAll').addEventListener('click', eraseAll); // Erase All event listener
-        document.getElementById('undo').addEventListener('click', undo);
-        document.getElementById('redo').addEventListener('click', redo);
+        document.getElementById('pencil').addEventListener('click', () => selectTool('pencil'));
+        document.getElementById('highlighter').addEventListener('click', () => selectTool('highlighter'));
+        document.getElementById('paintBucket').addEventListener('click', () => selectTool('paintBucket'));
+        document.getElementById('eraser').addEventListener('click', () => selectTool('eraser'));
+        document.getElementById('saveImage').addEventListener('click', saveImage);
+        document.getElementById('backgroundColor').addEventListener('click', changeBackgroundColor);
+        document.getElementById('infoButton').addEventListener('click', toggleInfo);
         document.getElementById('colorPicker').addEventListener('input', (e) => currentColor = e.target.value);
         document.getElementById('sizePicker').addEventListener('input', (e) => currentSize = e.target.value);
 
@@ -114,9 +128,16 @@
 
             const offsetX = e.touches ? e.touches[0].clientX : e.clientX;
             const offsetY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            if(currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out'; // Set to erase mode
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                ctx.globalCompositeOperation = 'source-over'; // Set to draw mode
+                ctx.strokeStyle = currentTool === 'highlighter' ? currentColor + '80' : currentColor;
+            }
 
             ctx.lineWidth = currentTool === 'highlighter' ? currentSize * 2 : currentSize;
-            ctx.strokeStyle = currentTool === 'highlighter' ? currentColor + '80' : currentColor;
             ctx.lineCap = 'round';
 
             ctx.lineTo(offsetX - canvas.offsetLeft, offsetY - canvas.offsetTop);
@@ -128,11 +149,6 @@
         function stopDrawing() {
             drawing = false;
             ctx.beginPath();
-        }
-
-        function eraseAll() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            saveState();
         }
 
         function fillCanvas(x, y, fillColor) {
@@ -191,6 +207,31 @@
             canvas.width = window.innerWidth - 150; // Adjust for toolbar width
             canvas.height = window.innerHeight;
         });
+
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-button').forEach(button => button.classList.remove('selected'));
+            document.getElementById(tool).classList.add('selected');
+        }
+
+        function saveImage() {
+            const link = document.createElement('a');
+            link.download = 'drawing.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function changeBackgroundColor() {
+            const color = prompt('Enter a background color (e.g., #ff0000 or red):', '#ffffff');
+            if (color) {
+                canvas.style.backgroundColor = color;
+            }
+        }
+
+        function toggleInfo() {
+            const info = document.getElementById('info');
+            info.style.display = info.style.display === 'none' ? 'block' : 'none';
+        }
     </script>
 </body>
 </html>
