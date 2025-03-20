@@ -8,32 +8,53 @@
         body {
             margin: 0;
             display: flex;
-            height: 100vh;
             flex-direction: column;
+            height: 100vh;
             background-color: #121212;
             color: #ffffff;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         #toolbar {
             width: 100%;
-            background: #333333;
+            background: #1e1e1e;
             display: flex;
             align-items: center;
             padding: 10px;
-            flex-wrap: wrap;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         }
-        #timeline {
-            width: 100%;
-            background: #444444;
+        #toolbar button {
+            background: #333;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            margin-right: 10px;
+            padding: 10px 15px;
+            transition: background 0.3s;
+        }
+        #toolbar button:hover {
+            background: #444;
+        }
+        #toolbar .label {
+            margin: 0 10px;
+            padding: 10px;
+        }
+        #timeline-container {
             display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+            border-top: 1px solid #333;
+            height: 30%;
             overflow-x: auto;
             padding: 10px;
         }
         .track {
-            width: 100%;
+            display: flex;
             background: #555555;
-            margin: 5px 0;
+            margin-bottom: 10px;
             padding: 5px;
+            border-radius: 4px;
         }
         .frame {
             width: 100px;
@@ -49,25 +70,16 @@
         .frame.selected {
             border-color: blue;
         }
-        canvas {
+        #preview-container {
             flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #121212;
+        }
+        canvas {
             border: 1px solid #555555;
             background: #222222;
-        }
-        .tool-button {
-            margin: 5px;
-            padding: 10px;
-            border: 1px solid #555555;
-            background: #333333;
-            cursor: pointer;
-            color: #ffffff;
-        }
-        .tool-button.selected {
-            transform: scale(1.2);
-        }
-        .label {
-            margin: 0 10px;
-            padding: 10px;
         }
     </style>
 </head>
@@ -88,11 +100,13 @@
         <label class="label">Contrast: <input type="range" id="contrast" min="0" max="200" value="100"></label>
         <label class="label">Saturation: <input type="range" id="saturation" min="0" max="200" value="100"></label>
     </div>
-    <div id="timeline">
+    <div id="timeline-container">
         <div class="track" id="videoTrack">Video Track</div>
         <div class="track" id="audioTrack">Audio Track</div>
     </div>
-    <canvas id="previewCanvas"></canvas>
+    <div id="preview-container">
+        <canvas id="previewCanvas"></canvas>
+    </div>
     <script>
         const videoTrack = document.getElementById('videoTrack');
         const audioTrack = document.getElementById('audioTrack');
