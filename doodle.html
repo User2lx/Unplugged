@@ -215,10 +215,30 @@
         }
 
         function saveImage() {
-            const link = document.createElement('a');
-            link.download = 'drawing.png';
-            link.href = canvas.toDataURL();
-            link.click();
+            const fileName = prompt("Enter the image file name:", "drawing.png");
+            if (!fileName) return;
+
+            const backgroundColor = prompt("Enter a background color (e.g., #ff0000 or red):", "#ffffff");
+            if (backgroundColor) {
+                // Save the current canvas state
+                const prevImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // Set the background color
+                ctx.fillStyle = backgroundColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw the saved image data on top of the background color
+                ctx.putImageData(prevImageData, 0, 0);
+
+                // Save the image
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL();
+                link.click();
+
+                // Restore the canvas state
+                ctx.putImageData(prevImageData, 0, 0);
+            }
         }
 
         function changeBackgroundColor() {
