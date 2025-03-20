@@ -86,6 +86,7 @@
         let frameRate = 12;
         let frames = [null];
         let currentFrameIndex = 0;
+        let onionSkinImage = null;
 
         document.getElementById('pencil').addEventListener('click', () => selectTool('pencil'));
         document.getElementById('eraser').addEventListener('click', () => selectTool('eraser'));
@@ -150,13 +151,15 @@
         }
 
         function addFrame() {
+            saveFrame();
+            onionSkinImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
             frames.push(null);
             currentFrameIndex = frames.length - 1;
             updateTimeline();
             clearCanvas();
-            if (frames[currentFrameIndex - 1]) {
+            if (onionSkinImage) {
                 ctx.globalAlpha = 0.4;
-                ctx.putImageData(frames[currentFrameIndex - 1], 0, 0);
+                ctx.putImageData(onionSkinImage, 0, 0);
                 ctx.globalAlpha = 1.0;
             }
         }
@@ -211,26 +214,49 @@
         }
 
         function exportAnimation() {
-            const zip = new JSZip();
-            frames.forEach((frame, index) => {
-                if (frame) {
-                    const canvasData = document.createElement('canvas');
-                    canvasData.width = canvas.width;
-                    canvasData.height = canvas.height;
-                    const context = canvasData.getContext('2d');
-                    context.putImageData(frame, 0, 0);
-                    const dataURL = canvasData.toDataURL('image/png');
-                    zip.file(`frame${index + 1}.png`, dataURL.split(',')[1], { base64: true });
-                }
-            });
-            zip.generateAsync({ type: 'blob' }).then(content => {
+            let fileName = prompt("Enter the video file name:", "animation");
+            if (!fileName) return;
+            if (!fileName.toLowerCase().endsWith(".mp4")) {
+                fileName += ".mp4";
+            }
+
+            const videoCanvas = document.createElement('canvas');
+            videoCanvas.width = canvas.width;
+            videoCanvas.height = canvas.height;
+            const videoContext = videoCanvas.getContext('2d');
+
+            const stream = videoCanvas.captureStream();
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = URL.createObjectURL(content);
-                a.download = 'animation.zip';
+                a.href = url;
+                a.download = fileName;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-            });
+                URL.revokeObjectURL(url);
+            };
+
+            let index = 0;
+            mediaRecorder.start();
+
+            const interval = setInterval(() => {
+                if (index >= frames.length) {
+                    mediaRecorder.stop();
+                    clearInterval(interval);
+                    return;
+                }
+                videoContext.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+                if (frames[index]) {
+                    videoContext.putImageData(frames[index], 0, 0);
+                }
+                index++;
+            }, 1000 / frameRate);
         }
 
         window.addEventListener('resize', () => {
