@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moon Video Editor</title>
+    <title>Dark Mode Video Editor</title>
     <style>
         body {
             margin: 0;
@@ -12,6 +12,7 @@
             flex-direction: column;
             background-color: #121212;
             color: #ffffff;
+            font-family: Arial, sans-serif;
         }
         #toolbar {
             width: 100%;
@@ -28,10 +29,16 @@
             overflow-x: auto;
             padding: 10px;
         }
+        .track {
+            width: 100%;
+            background: #555555;
+            margin: 5px 0;
+            padding: 5px;
+        }
         .frame {
-            width: 50px;
+            width: 100px;
             height: 50px;
-            border: 1px solid #555555;
+            border: 1px solid #666666;
             background: #222222;
             margin-right: 5px;
             display: flex;
@@ -48,7 +55,7 @@
             background: #222222;
         }
         .tool-button {
-            margin: 10px;
+            margin: 5px;
             padding: 10px;
             border: 1px solid #555555;
             background: #333333;
@@ -66,25 +73,83 @@
 </head>
 <body>
     <div id="toolbar">
-        <button class="tool-button" id="pencil">Pencil</button>
-        <button class="tool-button" id="eraser">Eraser</button>
-        <button class="tool-button" id="playback">Play</button>
-        <button class="tool-button" id="addFrame">Add Frame</button>
-        <button class="tool-button" id="export">Export</button>
-        <label class="label">FPS: <input type="number" id="frameRate" min="1" max="60" value="12"></label>
-        <label class="label">Color: <input type="color" id="colorPicker" value="#000000"></label>
-        <label class="label">Size: <input type="range" id="sizePicker" min="1" max="50" value="2"><span id="sizeValue">2</span></label>
+        <button class="tool-button" id="import">Import</button>
+        <button class="tool-button" id="cut">Cut</button>
+        <button class="tool-button" id="trim">Trim</button>
+        <button class="tool-button" id="split">Split</button>
+        <button class="tool-button" id="addTransition">Add Transition</button>
         <button class="tool-button" id="addText">Add Text</button>
-        <label class="label">Background Color: <input type="color" id="bgColorPicker" value="#ffffff"></label>
-        <div>
-            <button class="tool-button" id="audioSettings">Audio Settings</button>
-            <input type="file" id="audioUpload" accept="audio/*" style="display:none">
-        </div>
+        <button class="tool-button" id="addOverlay">Add Overlay</button>
+        <button class="tool-button" id="addAudio">Add Audio</button>
+        <button class="tool-button" id="export">Export</button>
+        <label class="label">FPS: <input type="number" id="frameRate" min="1" max="60" value="30"></label>
+        <label class="label">Brightness: <input type="range" id="brightness" min="0" max="200" value="100"></label>
+        <label class="label">Contrast: <input type="range" id="contrast" min="0" max="200" value="100"></label>
+        <label class="label">Saturation: <input type="range" id="saturation" min="0" max="200" value="100"></label>
     </div>
-    <div id="timeline"></div>
-    <canvas id="drawingCanvas"></canvas>
+    <div id="timeline">
+        <div class="track" id="videoTrack">Video Track</div>
+        <div class="track" id="audioTrack">Audio Track</div>
+    </div>
+    <canvas id="previewCanvas"></canvas>
     <script>
-        // JavaScript code to handle video editing functionalities will go here
+        const videoTrack = document.getElementById('videoTrack');
+        const audioTrack = document.getElementById('audioTrack');
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 200;
+
+        const frameRate = document.getElementById('frameRate').value;
+        const brightness = document.getElementById('brightness').value;
+        const contrast = document.getElementById('contrast').value;
+        const saturation = document.getElementById('saturation').value;
+
+        document.getElementById('import').addEventListener('click', importMedia);
+        document.getElementById('cut').addEventListener('click', cutMedia);
+        document.getElementById('trim').addEventListener('click', trimMedia);
+        document.getElementById('split').addEventListener('click', splitMedia);
+        document.getElementById('addTransition').addEventListener('click', addTransition);
+        document.getElementById('addText').addEventListener('click', addText);
+        document.getElementById('addOverlay').addEventListener('click', addOverlay);
+        document.getElementById('addAudio').addEventListener('click', addAudio);
+        document.getElementById('export').addEventListener('click', exportVideo);
+
+        function importMedia() {
+            console.log('Import media');
+        }
+
+        function cutMedia() {
+            console.log('Cut media');
+        }
+
+        function trimMedia() {
+            console.log('Trim media');
+        }
+
+        function splitMedia() {
+            console.log('Split media');
+        }
+
+        function addTransition() {
+            console.log('Add transition');
+        }
+
+        function addText() {
+            console.log('Add text');
+        }
+
+        function addOverlay() {
+            console.log('Add overlay');
+        }
+
+        function addAudio() {
+            console.log('Add audio');
+        }
+
+        function exportVideo() {
+            console.log('Export video');
+        }
     </script>
 </body>
 </html>
