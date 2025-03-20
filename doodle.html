@@ -215,8 +215,13 @@
         }
 
         function saveImage() {
-            const fileName = prompt("Enter the image file name:", "drawing.png");
+            let fileName = prompt("Enter the image file name:", "drawing.png");
             if (!fileName) return;
+
+            // Ensure the file name ends with .png
+            if (!fileName.toLowerCase().endsWith(".png")) {
+                fileName += ".png";
+            }
 
             const backgroundColor = prompt("Enter a background color (e.g., #ff0000 or red):", "#ffffff");
             if (backgroundColor) {
