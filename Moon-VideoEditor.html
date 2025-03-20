@@ -49,12 +49,17 @@
             overflow-x: auto;
             padding: 10px;
         }
-        .track {
+        #videoTrack, #audioTrack {
             display: flex;
             background: #555555;
             margin-bottom: 10px;
             padding: 5px;
             border-radius: 4px;
+            height: 50px;
+        }
+        #videoTrack {
+            flex-direction: column;
+            height: 200px;
         }
         .frame {
             width: 100px;
@@ -81,6 +86,9 @@
             border: 1px solid #555555;
             background: #222222;
         }
+        #videoElement, #audioElement {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -103,8 +111,14 @@
         <label class="label">Saturation: <input type="range" id="saturation" min="0" max="200" value="100"></label>
     </div>
     <div id="timeline-container">
-        <div class="track" id="videoTrack">Video Track</div>
-        <div class="track" id="audioTrack">Audio Track</div>
+        <div class="track" id="videoTrack">
+            <video id="videoElement" controls></video>
+            <div>Video Track</div>
+        </div>
+        <div class="track" id="audioTrack">
+            <audio id="audioElement" controls></audio>
+            <div>Audio Track</div>
+        </div>
     </div>
     <div id="preview-container">
         <canvas id="previewCanvas"></canvas>
@@ -124,8 +138,8 @@
         const importFile = document.getElementById('importFile');
         const importAudio = document.getElementById('importAudio');
 
-        let videoElement = null;
-        let audioElement = null;
+        const videoElement = document.getElementById('videoElement');
+        const audioElement = document.getElementById('audioElement');
 
         const toolButtons = document.querySelectorAll('.tool-button');
         toolButtons.forEach(button => {
@@ -190,118 +204,6 @@
         });
 
         function loadVideo(url) {
-            if (videoElement) {
-                videoElement.remove();
-            }
-            videoElement = document.createElement('video');
             videoElement.src = url;
-            videoElement.controls = true;
-            videoElement.style.display = 'none';
-            document.body.appendChild(videoElement);
-            videoElement.addEventListener('loadeddata', () => {
-                drawVideoFrame();
-            });
-        }
-
-        function loadAudio(url) {
-            if (audioElement) {
-                audioElement.remove();
-            }
-            audioElement = document.createElement('audio');
-            audioElement.src = url;
-            audioElement.controls = true;
-            audioElement.style.display = 'none';
-            document.body.appendChild(audioElement);
-        }
-
-        function drawVideoFrame() {
-            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        }
-
-        function cutVideo() {
-            // Implement video cutting functionality
-            if (videoElement) {
-                // Example: Cut video at the current time and split into two parts
-                const currentTime = videoElement.currentTime;
-                console.log(`Cutting video at ${currentTime} seconds`);
-            } else {
-                alert('No video loaded');
-            }
-        }
-
-        function trimVideo() {
-            // Implement video trimming functionality
-            if (videoElement) {
-                // Example: Trim video from the start to the current time
-                const currentTime = videoElement.currentTime;
-                console.log(`Trimming video to ${currentTime} seconds`);
-            } else {
-                alert('No video loaded');
-            }
-        }
-
-        function splitVideo() {
-            // Implement video splitting functionality
-            if (videoElement) {
-                // Example: Split video into two parts at the current time
-                const currentTime = videoElement.currentTime;
-                console.log(`Splitting video at ${currentTime} seconds`);
-            } else {
-                alert('No video loaded');
-            }
-        }
-
-        function addTransition() {
-            // Implement add transition functionality
-            console.log('Adding transition to video');
-        }
-
-        function addText() {
-            // Implement add text functionality
-            const text = prompt('Enter the text to add:');
-            if (text) {
-                console.log(`Adding text: ${text}`);
-            }
-        }
-
-        function addOverlay() {
-            // Implement add overlay functionality
-            const overlay = prompt('Enter the overlay details:');
-            if (overlay) {
-                console.log(`Adding overlay: ${overlay}`);
-            }
-        }
-
-        function addAudioToTrack() {
-            if (audioElement) {
-                audioTrack.appendChild(audioElement);
-                audioElement.play();
-            } else {
-                alert('No audio loaded');
-            }
-        }
-
-        function exportVideo() {
-            // Implement video export functionality
-            console.log('Exporting video');
-        }
-
-        brightness.addEventListener('input', () => {
-            applyFilters();
-        });
-
-        contrast.addEventListener('input', () => {
-            applyFilters();
-        });
-
-        saturation.addEventListener('input', () => {
-            applyFilters();
-        });
-
-        function applyFilters() {
-            ctx.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturation.value}%)`;
-            drawVideoFrame();
-        }
-    </script>
-</body>
-</html>
+            videoElement.style.display = 'block';
+            video ▋
