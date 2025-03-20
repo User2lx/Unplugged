@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon Video Editor</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        #toolbar {
+            width: 100%;
+            background: #333333;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+        #timeline {
+            width: 100%;
+            background: #444444;
+            display: flex;
+            overflow-x: auto;
+            padding: 10px;
+        }
+        .frame {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #555555;
+            background: #222222;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .frame.selected {
+            border-color: blue;
+        }
+        canvas {
+            flex: 1;
+            border: 1px solid #555555;
+            background: #222222;
+        }
+        .tool-button {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #555555;
+            background: #333333;
+            cursor: pointer;
+            color: #ffffff;
+        }
+        .tool-button.selected {
+            transform: scale(1.2);
+        }
+        .label {
+            margin: 0 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <button class="tool-button" id="pencil">Pencil</button>
+        <button class="tool-button" id="eraser">Eraser</button>
+        <button class="tool-button" id="playback">Play</button>
+        <button class="tool-button" id="addFrame">Add Frame</button>
+        <button class="tool-button" id="export">Export</button>
+        <label class="label">FPS: <input type="number" id="frameRate" min="1" max="60" value="12"></label>
+        <label class="label">Color: <input type="color" id="colorPicker" value="#000000"></label>
+        <label class="label">Size: <input type="range" id="sizePicker" min="1" max="50" value="2"><span id="sizeValue">2</span></label>
+        <button class="tool-button" id="addText">Add Text</button>
+        <label class="label">Background Color: <input type="color" id="bgColorPicker" value="#ffffff"></label>
+        <div>
+            <button class="tool-button" id="audioSettings">Audio Settings</button>
+            <input type="file" id="audioUpload" accept="audio/*" style="display:none">
+        </div>
+    </div>
+    <div id="timeline"></div>
+    <canvas id="drawingCanvas"></canvas>
+    <script>
+        // JavaScript code to handle video editing functionalities will go here
+    </script>
+</body>
+</html>
