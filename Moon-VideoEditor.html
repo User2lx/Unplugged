@@ -111,8 +111,88 @@
                 toolButtons.forEach(btn => btn.classList.remove('selected'));
                 button.classList.add('selected');
                 console.log(`${button.id} clicked`);
+                handleToolAction(button.id);
             });
         });
+
+        function handleToolAction(action) {
+            switch(action) {
+                case 'import':
+                    importVideo();
+                    break;
+                case 'cut':
+                    cutVideo();
+                    break;
+                case 'trim':
+                    trimVideo();
+                    break;
+                case 'split':
+                    splitVideo();
+                    break;
+                case 'addTransition':
+                    addTransition();
+                    break;
+                case 'addText':
+                    addText();
+                    break;
+                case 'addOverlay':
+                    addOverlay();
+                    break;
+                case 'addAudio':
+                    addAudio();
+                    break;
+                case 'export':
+                    exportVideo();
+                    break;
+                default:
+                    console.log('Unknown action');
+            }
+        }
+
+        function importVideo() {
+            // Implement video import functionality
+            console.log('Import video functionality');
+        }
+
+        function cutVideo() {
+            // Implement video cut functionality
+            console.log('Cut video functionality');
+        }
+
+        function trimVideo() {
+            // Implement video trim functionality
+            console.log('Trim video functionality');
+        }
+
+        function splitVideo() {
+            // Implement video split functionality
+            console.log('Split video functionality');
+        }
+
+        function addTransition() {
+            // Implement add transition functionality
+            console.log('Add transition functionality');
+        }
+
+        function addText() {
+            // Implement add text functionality
+            console.log('Add text functionality');
+        }
+
+        function addOverlay() {
+            // Implement add overlay functionality
+            console.log('Add overlay functionality');
+        }
+
+        function addAudio() {
+            // Implement add audio functionality
+            console.log('Add audio functionality');
+        }
+
+        function exportVideo() {
+            // Implement video export functionality
+            console.log('Export video functionality');
+        }
     </script>
 </body>
 </html>
