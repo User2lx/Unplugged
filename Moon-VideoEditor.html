@@ -86,7 +86,9 @@
 <body>
     <div id="toolbar">
         <input type="file" id="importFile" accept="video/*" style="display:none;">
-        <button class="tool-button" id="import">Import</button>
+        <input type="file" id="importAudio" accept="audio/*" style="display:none;">
+        <button class="tool-button" id="import">Import Video</button>
+        <button class="tool-button" id="importAudioBtn">Import Audio</button>
         <button class="tool-button" id="cut">Cut</button>
         <button class="tool-button" id="trim">Trim</button>
         <button class="tool-button" id="split">Split</button>
@@ -120,8 +122,10 @@
         const contrast = document.getElementById('contrast');
         const saturation = document.getElementById('saturation');
         const importFile = document.getElementById('importFile');
+        const importAudio = document.getElementById('importAudio');
 
         let videoElement = null;
+        let audioElement = null;
 
         const toolButtons = document.querySelectorAll('.tool-button');
         toolButtons.forEach(button => {
@@ -136,6 +140,9 @@
             switch(action) {
                 case 'import':
                     importFile.click();
+                    break;
+                case 'importAudioBtn':
+                    importAudio.click();
                     break;
                 case 'cut':
                     cutVideo();
@@ -156,7 +163,7 @@
                     addOverlay();
                     break;
                 case 'addAudio':
-                    addAudio();
+                    addAudioToTrack();
                     break;
                 case 'export':
                     exportVideo();
@@ -174,6 +181,14 @@
             }
         });
 
+        importAudio.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                loadAudio(url);
+            }
+        });
+
         function loadVideo(url) {
             if (videoElement) {
                 videoElement.remove();
@@ -186,6 +201,17 @@
             videoElement.addEventListener('loadeddata', () => {
                 drawVideoFrame();
             });
+        }
+
+        function loadAudio(url) {
+            if (audioElement) {
+                audioElement.remove();
+            }
+            audioElement = document.createElement('audio');
+            audioElement.src = url;
+            audioElement.controls = true;
+            audioElement.style.display = 'none';
+            document.body.appendChild(audioElement);
         }
 
         function drawVideoFrame() {
@@ -222,9 +248,13 @@
             alert('Add overlay functionality');
         }
 
-        function addAudio() {
-            // Implement add audio functionality
-            alert('Add audio functionality');
+        function addAudioToTrack() {
+            if (audioElement) {
+                audioTrack.appendChild(audioElement);
+                audioElement.play();
+            } else {
+                alert('No audio loaded');
+            }
         }
 
         function exportVideo() {
