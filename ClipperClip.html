@@ -17,6 +17,7 @@
             display: flex;
             align-items: center;
             padding: 10px;
+            flex-wrap: wrap;
         }
         #timeline {
             width: 100%;
@@ -70,6 +71,12 @@
         <label class="label">FPS: <input type="number" id="frameRate" min="1" max="60" value="12"></label>
         <label class="label">Color: <input type="color" id="colorPicker" value="#000000"></label>
         <label class="label">Size: <input type="range" id="sizePicker" min="1" max="50" value="2"><span id="sizeValue">2</span></label>
+        <button class="tool-button" id="addText">Add Text</button>
+        <label class="label">Background Color: <input type="color" id="bgColorPicker" value="#ffffff"></label>
+        <div>
+            <button class="tool-button" id="audioSettings">Audio Settings</button>
+            <input type="file" id="audioUpload" accept="audio/*" style="display:none">
+        </div>
     </div>
     <div id="timeline"></div>
     <canvas id="drawingCanvas"></canvas>
@@ -87,6 +94,10 @@
         let frames = [null];
         let currentFrameIndex = 0;
         let onionSkinImage = null;
+        let audio = new Audio();
+        let audioFile = null;
+        let textElements = [];
+        let bgColor = '#ffffff';
 
         document.getElementById('pencil').addEventListener('click', () => selectTool('pencil'));
         document.getElementById('eraser').addEventListener('click', () => selectTool('eraser'));
@@ -99,6 +110,13 @@
             currentSize = e.target.value;
             document.getElementById('sizeValue').textContent = e.target.value;
         });
+        document.getElementById('addText').addEventListener('click', addText);
+        document.getElementById('bgColorPicker').addEventListener('input', (e) => {
+            bgColor = e.target.value;
+            restoreFrame();
+        });
+        document.getElementById('audioSettings').addEventListener('click', () => document.getElementById('audioUpload').click());
+        document.getElementById('audioUpload').addEventListener('change', handleAudioUpload);
 
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
@@ -135,13 +153,12 @@
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(offsetX - canvas.offsetLeft, offsetY - canvas.offsetTop);
-
-            saveFrame();
         }
 
         function stopDrawing() {
             drawing = false;
             ctx.beginPath();
+            saveFrame();
         }
 
         function selectTool(tool) {
@@ -169,11 +186,14 @@
         }
 
         function restoreFrame() {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             if (frames[currentFrameIndex]) {
                 ctx.putImageData(frames[currentFrameIndex], 0, 0);
             } else {
                 clearCanvas();
             }
+            textElements.forEach(text => drawText(text));
         }
 
         function clearCanvas() {
@@ -202,9 +222,14 @@
 
         function playback() {
             let index = 0;
+            if (audioFile) {
+                audio.src = URL.createObjectURL(audioFile);
+                audio.play();
+            }
             const interval = setInterval(() => {
                 if (index >= frames.length) {
                     clearInterval(interval);
+                    audio.pause();
                     return;
                 }
                 currentFrameIndex = index;
@@ -252,11 +277,44 @@
                     return;
                 }
                 videoContext.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+                videoContext.fillStyle = bgColor;
+                videoContext.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
                 if (frames[index]) {
                     videoContext.putImageData(frames[index], 0, 0);
                 }
+                textElements.forEach(text => drawTextOnCanvas(videoContext, text));
                 index++;
             }, 1000 / frameRate);
+        }
+
+        function handleAudioUpload(e) {
+            audioFile = e.target.files[0];
+        }
+
+        function addText() {
+            const text = prompt("Enter the text:");
+            if (text) {
+                const x = parseInt(prompt("Enter the X position:"), 10);
+                const y = parseInt(prompt("Enter the Y position:"), 10);
+                const fontSize = parseInt(prompt("Enter the font size:"), 10) || 16;
+                const color = prompt("Enter the text color:") || '#000000';
+                const newText = { text, x, y, fontSize, color };
+                textElements.push(newText);
+                drawText(newText);
+                saveFrame();
+            }
+        }
+
+        function drawText({ text, x, y, fontSize, color }) {
+            ctx.fillStyle = color;
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillText(text, x, y);
+        }
+
+        function drawTextOnCanvas(context, { text, x, y, fontSize, color }) {
+            context.fillStyle = color;
+            context.font = `${fontSize}px Arial`;
+            context.fillText(text, x, y);
         }
 
         window.addEventListener('resize', () => {
