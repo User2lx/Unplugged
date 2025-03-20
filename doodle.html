@@ -47,8 +47,9 @@
     <div id="toolbar">
         <button class="tool-button" id="pencil">Pencil</button>
         <button class="tool-button" id="highlighter">Highlighter</button>
-        <button class="tool-button" id="paintBucket">Paint Bucket</button>
         <button class="tool-button" id="eraser">Eraser</button>
+        <button class="tool-button" id="undo">Undo</button>
+        <button class="tool-button" id="redo">Redo</button>
         <button class="tool-button" id="saveImage">Save Image</button>
         <button class="tool-button" id="backgroundColor">Background Color</button>
         <button class="tool-button" id="infoButton">Info</button>
@@ -71,8 +72,9 @@
 
         document.getElementById('pencil').addEventListener('click', () => selectTool('pencil'));
         document.getElementById('highlighter').addEventListener('click', () => selectTool('highlighter'));
-        document.getElementById('paintBucket').addEventListener('click', () => selectTool('paintBucket'));
         document.getElementById('eraser').addEventListener('click', () => selectTool('eraser'));
+        document.getElementById('undo').addEventListener('click', undo);
+        document.getElementById('redo').addEventListener('click', redo);
         document.getElementById('saveImage').addEventListener('click', saveImage);
         document.getElementById('backgroundColor').addEventListener('click', changeBackgroundColor);
         document.getElementById('infoButton').addEventListener('click', toggleInfo);
@@ -151,58 +153,6 @@
             ctx.beginPath();
         }
 
-        function fillCanvas(x, y, fillColor) {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const startColor = getColorAtPixel(imageData, x, y);
-            if (colorsMatch(startColor, fillColor)) return;
-
-            const pixelsToCheck = [ [x, y] ];
-            while (pixelsToCheck.length) {
-                const [px, py] = pixelsToCheck.pop();
-                const currentColor = getColorAtPixel(imageData, px, py);
-                if (colorsMatch(currentColor, startColor)) {
-                    setColorAtPixel(imageData, px, py, fillColor);
-                    pixelsToCheck.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]);
-                }
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-            saveState();
-        }
-
-        function getColorAtPixel(imageData, x, y) {
-            const index = (y * imageData.width + x) * 4;
-            return [
-                imageData.data[index],
-                imageData.data[index + 1],
-                imageData.data[index + 2],
-                imageData.data[index + 3]
-            ];
-        }
-
-        function setColorAtPixel(imageData, x, y, color) {
-            const index = (y * imageData.width + x) * 4;
-            [imageData.data[index], imageData.data[index + 1], imageData.data[index + 2], imageData.data[index + 3]] = color;
-        }
-
-        function colorsMatch(a, b) {
-            return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
-        }
-
-        canvas.addEventListener('click', (e) => {
-            if (currentTool === 'paintBucket') {
-                const x = e.clientX - canvas.offsetLeft;
-                const y = e.clientY - canvas.offsetTop;
-                const fillColor = hexToRgba(currentColor);
-                fillCanvas(x, y, fillColor);
-            }
-        });
-
-        function hexToRgba(hex) {
-            const bigint = parseInt(hex.slice(1), 16);
-            return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255, 255];
-        }
-
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth - 150; // Adjust for toolbar width
             canvas.height = window.innerHeight;
@@ -219,7 +169,7 @@
             if (!fileName) return;
 
             // Ensure the file name ends with .png
-            if (!fileName.toLowerCase().endsWith(".png")) {
+            if (!fileName.toLowerCase().ends with(".png")) {
                 fileName += ".png";
             }
 
