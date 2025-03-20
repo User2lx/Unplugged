@@ -73,6 +73,7 @@
 </head>
 <body>
     <div id="toolbar">
+        <input type="file" id="importFile" accept="video/*" style="display:none;">
         <button class="tool-button" id="import">Import</button>
         <button class="tool-button" id="cut">Cut</button>
         <button class="tool-button" id="trim">Trim</button>
@@ -104,13 +105,15 @@
         const brightness = document.getElementById('brightness');
         const contrast = document.getElementById('contrast');
         const saturation = document.getElementById('saturation');
+        const importFile = document.getElementById('importFile');
+
+        let videoElement = null;
 
         const toolButtons = document.querySelectorAll('.tool-button');
         toolButtons.forEach(button => {
             button.addEventListener('click', () => {
                 toolButtons.forEach(btn => btn.classList.remove('selected'));
                 button.classList.add('selected');
-                console.log(`${button.id} clicked`);
                 handleToolAction(button.id);
             });
         });
@@ -118,7 +121,7 @@
         function handleToolAction(action) {
             switch(action) {
                 case 'import':
-                    importVideo();
+                    importFile.click();
                     break;
                 case 'cut':
                     cutVideo();
@@ -149,58 +152,87 @@
             }
         }
 
-        function importVideo() {
-            // Implement video import functionality
-            console.log('Import video functionality');
-            alert('Import video functionality');
+        importFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                loadVideo(url);
+            }
+        });
+
+        function loadVideo(url) {
+            if (videoElement) {
+                videoElement.remove();
+            }
+            videoElement = document.createElement('video');
+            videoElement.src = url;
+            videoElement.controls = true;
+            videoElement.style.display = 'none';
+            document.body.appendChild(videoElement);
+            videoElement.addEventListener('loadeddata', () => {
+                drawVideoFrame();
+            });
+        }
+
+        function drawVideoFrame() {
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
         }
 
         function cutVideo() {
-            // Implement video cut functionality
-            console.log('Cut video functionality');
+            // Implement video cutting functionality
             alert('Cut video functionality');
         }
 
         function trimVideo() {
-            // Implement video trim functionality
-            console.log('Trim video functionality');
+            // Implement video trimming functionality
             alert('Trim video functionality');
         }
 
         function splitVideo() {
-            // Implement video split functionality
-            console.log('Split video functionality');
+            // Implement video splitting functionality
             alert('Split video functionality');
         }
 
         function addTransition() {
             // Implement add transition functionality
-            console.log('Add transition functionality');
             alert('Add transition functionality');
         }
 
         function addText() {
             // Implement add text functionality
-            console.log('Add text functionality');
             alert('Add text functionality');
         }
 
         function addOverlay() {
             // Implement add overlay functionality
-            console.log('Add overlay functionality');
             alert('Add overlay functionality');
         }
 
         function addAudio() {
             // Implement add audio functionality
-            console.log('Add audio functionality');
             alert('Add audio functionality');
         }
 
         function exportVideo() {
             // Implement video export functionality
-            console.log('Export video functionality');
             alert('Export video functionality');
+        }
+
+        brightness.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        contrast.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        saturation.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        function applyFilters() {
+            ctx.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturation.value}%)`;
+            drawVideoFrame();
         }
     </script>
 </body>
