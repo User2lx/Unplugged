@@ -105,15 +105,14 @@
         const contrast = document.getElementById('contrast');
         const saturation = document.getElementById('saturation');
 
-        document.getElementById('import').addEventListener('click', () => console.log('Import media'));
-        document.getElementById('cut').addEventListener('click', () => console.log('Cut media'));
-        document.getElementById('trim').addEventListener('click', () => console.log('Trim media'));
-        document.getElementById('split').addEventListener('click', () => console.log('Split media'));
-        document.getElementById('addTransition').addEventListener('click', () => console.log('Add transition'));
-        document.getElementById('addText').addEventListener('click', () => console.log('Add text'));
-        document.getElementById('addOverlay').addEventListener('click', () => console.log('Add overlay'));
-        document.getElementById('addAudio').addEventListener('click', () => console.log('Add audio'));
-        document.getElementById('export').addEventListener('click', () => console.log('Export video'));
+        const toolButtons = document.querySelectorAll('.tool-button');
+        toolButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                toolButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                console.log(`${button.id} clicked`);
+            });
+        });
     </script>
 </body>
 </html>
