@@ -139,10 +139,10 @@
             const offsetY = e.touches ? e.touches[0].clientY : e.clientY;
 
             if (currentTool === 'eraser') {
-                ctx.globalCompositeOperation = 'destination-out'; // Set to erase mode
+                ctx.globalCompositeOperation = 'destination-out';
                 ctx.strokeStyle = 'rgba(0,0,0,1)';
             } else {
-                ctx.globalCompositeOperation = 'source-over'; // Set to draw mode
+                ctx.globalCompositeOperation = 'source-over';
                 ctx.strokeStyle = currentColor;
             }
 
