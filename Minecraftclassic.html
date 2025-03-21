@@ -1,117 +1,247 @@
 <!DOCTYPE html>
-<html>
-<head>
-<link rel="icon" href="images/mclogo.png" type="image/gif" sizes="16x16">
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <title>Minecraft</title>
+    <meta
+      name="description"
+      content="Minecraft is a game about placing blocks to build anything you can imagine. At night monsters come out, make sure to build a shelter before that happens."
+    />
+    <meta name="author" content="Mojang AB" />
 
-<link rel="stylesheet" type="text/css" href="minecraft.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-
-<!-- jQuery library -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
-<!-- Latest compiled JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
-<title>Minecraft Game</title>
-</head>
-
-<body>
-    <audio id="music">
-      <source src="pokemon.mp3" type="audio/mp3">
-    </audio>
-
-    <div id="layout">
-        <div id="board"></div>
-        <div class="wrapper">
-            <div id="healthbar"></div>
-            <div id="tools"></div>
-            <div id="inventory"></div>
-            <button id="restore">Reset</button>
+    <link rel="shortcut icon" href="favicon.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="assets/css/main.css%3Fv=2.css" />
+    <link rel="stylesheet" media="handheld" href="handheld.css%3Fv=2.css" />
+  </head>
+  <body onload="maintenanceRedirect()">
+    <div id="iframe"></div>
+    <div id="wrap">
+      <header>
+        <div id="header_container" class="clearfix">
+          <a id="logo" href="index.html">Minecraft</a>
+          <ul id="menu">
+            <li><a href="index.html">Home</a></li>
+            <li>
+              <a href="game.html">Game</a>
+              <ul>
+                <li><a href="game.html">About the Game</a></li>
+                <li><a href="game/howtoplay.html">How to Play</a></li>
+                <li><a href="game/credits.html">Credits</a></li>
+              </ul>
+            </li>
+            <li><a href="community.html">Community</a></li>
+            <li><a href="store.html">Store</a></li>
+            <li><a href="index.html">Profile</a></li>
+          </ul>
+          <div id="userbox">
+            <span class="logged-out"
+              ><a href="login.html">Log in</a> |
+              <a href="https://register/">Register</a></span
+            >
+          </div>
         </div>
+      </header>
+
+      <noscript>
+        <div id="javascript-warning" class="warning warning-yellow">
+          Please, please enable JavaScript to use this site.
+        </div>
+      </noscript>
+
+      <div id="main" role="main" class="clearfix controller-Site action-game">
+        <section class="left">
+          <h1>About the game</h1>
+          <p>
+            Minecraft is developed by Markus Persson. It's been under
+            development since about May 10, 2009 Before Microsoft bought it. You
+            can read the <a href="game/credits.html">full credits here</a>, or
+            read about support and
+            <a href="http://www.minecraft.net/support"
+              >frequently asked questions here</a
+            >.
+          </p>
+
+          <h2>Origins</h2>
+          <p>
+            I started Minecraft after playing some Infiniminer with a couple of
+            people from TigSource. I realized that a game that simple yet that
+            dynamic had a lot of potential to turn into a really great game, and
+            kept coming up with things I wanted to change and stuff I wanted to
+            add.
+          </p>
+          <p>
+            I had recently quit my job as a game developer to be able to focus
+            more on indie game dev during my free time, and I was looking for a
+            new game to develop. I had a few ideas floating around, but most
+            required really long development times.
+          </p>
+          <p>These two factors led to Minecraft.</p>
+          <h2>Development and philosophy</h2>
+          <p>
+            <strong>Waterfall is dead, long live agile!</strong>
+          </p>
+          <p>
+            I've got a few plans and visions, but my only true design decision
+            is to keep it fun and accessible. There's no design doc, but there
+            are two lists; one for bugs, and one for features I want to add but
+            think I might forget.
+          </p>
+          <p>
+            I make sure to play the game a lot, and I've built my share of
+            towers, and flooded my share of caves. If something ever doesn't
+            feel fun, I'll remove it. I believe that I can combine enough fun,
+            accessibility and building blocks for this game to be a huge melting
+            pot of emergent gameplay.
+          </p>
+          <p>
+            I strongly believe that all good stories have a conflict, and that
+            all good games tell a good story regardless of if it's pre-written
+            or emergent. Free building mode is fine and dandy, but for many
+            people it will ultimately become boring once you've got it figured
+            out. It's like playing a first person shooter in god mode, or giving
+            yourself infinite funds in a strategy game.. a lack of challenge
+            kills the fun.
+          </p>
+          <p>
+            For survival mode, I'd rather make the game too difficult than too
+            easy. That also means I'm going to have to include some way of
+            winning the game (or some other climax) to prevent it becoming too
+            exhausting.
+          </p>
+          <p>But if it's no fun, I'll redesign.</p>
+          <h2>The future</h2>
+          <p>
+            I plan on developing Minecraft until it's a finished complete game,
+            with a downloadable client (with fullscreen mode), custom key re
+            mappings and possibly modding support.
+          </p>
+          <p>
+            For as long as people enjoy and purchase the game, I will develop
+            extensions after the game is done.
+          </p>
+          <p>
+            Once sales start dying and a minimum time has passed, I will release
+            the game source code as some kind of open source. I'm not very happy
+            with the draconian nature of (L)GPL, nor do I believe the other
+            licenses have much merit other than to boost the egos of the
+            original authors, so I might just possibly release it all as public
+            domain.
+          </p>
+        </section>
+        <aside class="right">
+          <p>Haven't purchased Minecraft?</p>
+          <p>
+            <a href="store.html" class="button button_buy_now">Download now</a>
+          </p>
+        </aside>
+      </div>
     </div>
 
-    <div class="modal fade bd-example-modal-sm" id="myModal">
-        <div class="modal-dialog modal-lg text-center">
-            <div id="logo"></div>
-            <div id="pokelogo"></div>
-            <div class="button-container">
-                <button id="play" class="button btn btn-lg btn-primary">Play Game</button>
-                <button id="tutorial" class="button btn btn-lg btn-primary">Tutorial</button>
-            </div>
-        </div>
-    </div>
+    <footer>
+      Mojang © 2009-2021 "Minecraft" is a trademark of Mojang — This website is
+      not affiliated with Mojang &mdash;
+      <a href="http://www.minecraft.net/terms">Terms of Use</a> &mdash; b209
+      r1666
+    </footer>
 
-    <div class="modal fade bd-example-modal-sm" id="tutorialModal">
-        <div class="modal-dialog modal-lg text-center">
-            <div id="rules">
-                <h2>Welcome Player!</h2>
-                <p>Minecraft-Pokemon Edition is a simplified version of the game Minecraft where you can catch pokemon, build, dig, mine, and more!</p>
-                <p>Use your axe to cut down trees and leaves.</p>
-                <p>Use your shovel to dig dirt and grass.</p>
-                <p>Use your pickaxe to mine rock.</p>
-                <p>Use your pokeball to catch pokemon.</p>
-                <p>There are six different types of pokemon for you to catch. The green health-bar on the right hand corner displays their health.</p>
-                <p>Attack the wild pokemon by selecting your pokemon and just click to weaken them. When their health is low, use your Pokeball to capture them</p>
-                <p>I've given you a Pikachu so you can fight other pokemon</p>
-                <p>Try to capture all the wild pokemon before the sun goes down</p>
-                <button id="returnToMain" class="button btn btn-lg btn-primary">Return</button>
-            </div>
-        </div>
-    </div>
+    <script src="https://oldminecraft.neocities.org/web/20111001205439js_/http://www.minecraft.net/javascripts/libs/json2.js"></script>
+    <script src="https://web.archive.org/web/20111001205439js_/http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script>
+      !window.jQuery &&
+        document.write(
+          unescape(
+            '%3Cscript src="/javascripts/libs/jquery-1.5.1.min.js"%3E%3C/script%3E'
+          )
+        );
+    </script>
+    <script src="https://oldminecraft.neocities.org/web/20111001205439js_/http://www.minecraft.net/javascripts/libs/jquery.dataTables.min.js"></script>
+    <script src="https://oldminecraft.neocities.org/web/20111001205439js_/http://www.minecraft.net/javascripts/libs/jquery.timeago.js"></script>
+    <script src="https://oldminecraft.neocities.org/web/20111001205439js_/http://www.minecraft.net/javascripts/libs/sammy.js"></script>
+    <script>
+      var _gaq = [["_setAccount", "UA-9482675-1"], ["_trackPageview"]];
+      (function (d, t) {
+        var g = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+        g.async = 1;
+        g.src =
+          ("https:" == location.protocol
+            ? "//web.archive.org/web/20111001205439/http://ssl/"
+            : "//web.archive.org/web/20111001205439/http://www/") +
+          ".google-analytics.com/ga.js";
+        s.parentNode.insertBefore(g, s);
+      })(document, "script");
+    </script>
+    <script type="text/javascript">
+      var accountServiceAddress =
+        "http://web.archive.org/web/20111001205439/http://account.mojang.local:9001/";
 
-    <div class="modal fade bd-example-modal-sm captureMessage">
-        <div class="modal-dialog modal-lg text-center">
-                <div id="capturedCaption"></div>
-            </div>
-        </div>
+      var app = $.sammy("#main", function () {
+        this.debug = true;
 
-        <div class="modal fade bd-example-modal-sm failcaptureMessage">
-            <div class="modal-dialog modal-lg text-center">
-                    <div id="failedCapture">Wild pokemon broke free! Try to weaken it with your pokemon first!</div>
-                </div>
-            </div>
+        this.get("/", function () {
+          var action = function (options) {
+            var pattern = "/";
+            for (key in options) {
+              pattern = pattern.replace(":" + key, options[key]);
+            }
+            return pattern;
+          };
+          this.partial(action());
+        });
 
+        this.get("/game", function () {
+          var action = function (options) {
+            var pattern = "/game";
+            for (key in options) {
+              pattern = pattern.replace(":" + key, options[key]);
+            }
+            return pattern;
+          };
+          this.partial(action());
+        });
 
+        this.get("/login", function () {
+          var action = function (options) {
+            var pattern = "/login";
+            for (key in options) {
+              pattern = pattern.replace(":" + key, options[key]);
+            }
+            return pattern;
+          };
+          this.partial(action());
+        });
 
+        this.get("/register", function () {
+          var action = function (options) {
+            var pattern = "/register";
+            for (key in options) {
+              pattern = pattern.replace(":" + key, options[key]);
+            }
+            return pattern;
+          };
+          this.partial(action());
+        });
+      });
 
-    <div class="modal fade bd-example-modal-sm" id="winningModal">
-        <div class="modal-dialog modal-lg text-center">
-            <div id="rules">
-                <h2>Congratulations Player!</h2>
-                <p>You caught all the wild pokemon!!!</p>
-                <p>The creators hope you enjoyed their game.</p>
-                <p>If you liked this game, be sure to share with your fellow trainers and check out their github.</p>
-                <div>
-
-                    <img src="images/charmander.png">
-                    <img src="images/bulbasaur.png">
-                    <img src="images/squirtle.png">
-                    <img src="images/pika.png">
-                    <img src="images/pidgey.png">
-                    <img src="images/mewtwo.png">
-                    <img src="images/diglett.png">
-
-
-                </div>
-                <div>
-                    <button class="button btn btn-lg btn-primary"><a href="https://github.com/baldetorres" target="_blank">Baldemar</a></button>
-                    <button class="button btn btn-lg btn-primary"><a href="https://github.com/nehemiahk" target="_blank">Nehemiah</a></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade bd-example-modal-sm professorMessage">
-        <div class="modal-dialog modal-lg text-center">
-                <div id="oakMessage"><div>
-            </div>
-        </div>
-
-
-
-<script src="minecraft.js">
-</script>
-</body>
+      $(document).ready(function () {
+        if ($("html").is(".history") && false) {
+          app.run(window.location.pathname);
+        } else {
+          $(document).trigger("changed");
+        }
+      });
+    </script>
+    <script src="javascripts/plugins.js"></script>
+    <script src="javascripts/main.js"></script>
+    <script src="maintenance.js"></script>
+  </body>
 </html>
