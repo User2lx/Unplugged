@@ -159,31 +159,6 @@
                 dropdownContent.style.display = 'block';
             }
         });
-
-        // JavaScript for the simple game
-        const player = document.getElementById('player');
-        const gameArea = document.getElementById('game-area');
-        let playerX = 0;
-        let playerY = 0;
-        const playerSpeed = 10;
-
-        document.addEventListener('keydown', function(event) {
-            switch (event.key) {
-                case 'ArrowUp':
-                    playerY = Math.max(0, playerY - playerSpeed);
-                    break;
-                case 'ArrowDown':
-                    playerY = Math.min(gameArea.clientHeight - player.clientHeight, playerY + playerSpeed);
-                    break;
-                case 'ArrowLeft':
-                    playerX = Math.max(0, playerX - playerSpeed);
-                    break;
-                case 'ArrowRight':
-                    playerX = Math.min(gameArea.clientWidth - player.clientWidth, playerX + playerSpeed);
-                    break;
-            }
-            player.style.transform = `translate(${playerX}px, ${playerY}px)`;
-        });
     </script>
 </body>
 </html>
