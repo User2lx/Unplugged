@@ -5,308 +5,528 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moon Video Editor</title>
     <style>
+        /* Add any required CSS here */
         body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
             margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
         }
-        #toolbar {
-            width: 100%;
-            background: #1e1e1e;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #333;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-        }
-        #toolbar button {
-            background: #333;
-            border: none;
-            border-radius: 4px;
-            color: #fff;
-            cursor: pointer;
-            padding: 10px 15px;
-            transition: background 0.3s;
-        }
-        #toolbar button:hover {
-            background: #444;
-        }
-        #toolbar .label {
-            margin: 0 10px;
-            padding: 10px;
-        }
-        #timeline-container {
-            display: flex;
-            flex-direction: column;
-            background: #1e1e1e;
-            border-top: 1px solid #333;
-            height: 30%;
-            overflow-x: auto;
-            padding: 10px;
-        }
-        #videoTrack, #audioTrack {
-            display: flex;
-            background: #555555;
-            margin-bottom: 10px;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        #videoTrack {
-            flex-direction: column;
-            height: 200px;
-        }
-        .frame {
-            width: 100px;
-            height: 50px;
-            border: 1px solid #666666;
-            background: #222222;
-            margin-right: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .frame.selected {
-            border-color: blue;
-        }
-        #preview-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #121212;
-        }
-        canvas {
-            border: 1px solid #555555;
-            background: #222222;
-        }
-        #videoElement, #audioElement {
-            display: none;
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
-    <div id="toolbar">
-        <input type="file" id="importFile" accept="video/*" style="display:none;">
-        <input type="file" id="importAudio" accept="audio/*" style="display:none;">
-        <button class="tool-button" id="import">Import Video</button>
-        <button class="tool-button" id="importAudioBtn">Import Audio</button>
-        <button class="tool-button" id="cut">Cut</button>
-        <button class="tool-button" id="trim">Trim</button>
-        <button class="tool-button" id="split">Split</button>
-        <button class="tool-button" id="addTransition">Add Transition</button>
-        <button class="tool-button" id="addText">Add Text</button>
-        <button class="tool-button" id="addOverlay">Add Overlay</button>
-        <button class="tool-button" id="addAudio">Add Audio</button>
-        <button class="tool-button" id="export">Export</button>
-        <label class="label">FPS: <input type="number" id="frameRate" min="1" max="60" value="30"></label>
-        <label class="label">Brightness: <input type="range" id="brightness" min="0" max="200" value="100"></label>
-        <label class="label">Contrast: <input type="range" id="contrast" min="0" max="200" value="100"></label>
-        <label class="label">Saturation: <input type="range" id="saturation" min="0" max="200" value="100"></label>
+    <div class="container">
+        <h1>Moon Video Editor</h1>
+        <!-- Add any required HTML content here -->
     </div>
-    <div id="timeline-container">
-        <div class="track" id="videoTrack">
-            <video id="videoElement" controls></video>
-            <div>Video Track</div>
-        </div>
-        <div class="track" id="audioTrack">
-            <audio id="audioElement" controls></audio>
-            <div>Audio Track</div>
-        </div>
-    </div>
-    <div id="preview-container">
-        <canvas id="previewCanvas"></canvas>
-    </div>
+
     <script>
-        const videoTrack = document.getElementById('videoTrack');
-        const audioTrack = document.getElementById('audioTrack');
-        const canvas = document.getElementById('previewCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - 200;
+        // JavaScript contents from index.js
+        const {app, BrowserWindow, ipcMain, dialog} = require('electron');
+        const os = require('os');
+        const fs = require('fs');
+        const process = require('process');
+        const DEBUG_MODE = process.env.DEBUG_MODE | false;
+        let win;
+        let splash;
 
-        const frameRate = document.getElementById('frameRate');
-        const brightness = document.getElementById('brightness');
-        const contrast = document.getElementById('contrast');
-        const saturation = document.getElementById('saturation');
-        const importFile = document.getElementById('importFile');
-        const importAudio = document.getElementById('importAudio');
-
-        const videoElement = document.getElementById('videoElement');
-        const audioElement = document.getElementById('audioElement');
-
-        const toolButtons = document.querySelectorAll('.tool-button');
-        toolButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                toolButtons.forEach(btn => btn.classList.remove('selected'));
-                button.classList.add('selected');
-                handleToolAction(button.id);
+        app.on('ready', () => {
+            showSplash();
+            createWindow();
+            pluginMan.mainWindow = win;
+            pluginMan.createListWindow();
+            win.once('ready-to-show', () => {
+                splash.destroy();
+                splash = null;
+                win.show();
             });
         });
 
-        function handleToolAction(action) {
-            switch(action) {
-                case 'import':
-                    importFile.click();
-                    break;
-                case 'importAudioBtn':
-                    importAudio.click();
-                    break;
-                case 'cut':
-                    cutVideo();
-                    break;
-                case 'trim':
-                    trimVideo();
-                    break;
-                case 'split':
-                    splitVideo();
-                    break;
-                case 'addTransition':
-                    addTransition();
-                    break;
-                case 'addText':
-                    addText();
-                    break;
-                case 'addOverlay':
-                    addOverlay();
-                    break;
-                case 'addAudio':
-                    addAudioToTrack();
-                    break;
-                case 'export':
-                    exportVideo();
-                    break;
-                default:
-                    console.log('Unknown action');
-            }
+        function showSplash() {
+            splash = new BrowserWindow({width: 400, height: 270, transparent: true,
+                frame: false, alwaysOnTop: true, resizable: false, title: "Moon"});
+            splash.loadFile("html/splash.html");
         }
 
-        importFile.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                loadVideo(url);
-            }
-        });
+        function createWindow () {
+            win = new BrowserWindow({width: 1000, height: 800, show: false, title: "Moon",
+            webPreferences: {nodeIntegration: true, enableRemoteModule: true}});
 
-        importAudio.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                loadAudio(url);
-            }
-        });
-
-        function loadVideo(url) {
-            videoElement.src = url;
-            videoElement.style.display = 'block';
-            videoElement.addEventListener('loadeddata', () => {
-                autoAdjustVideoSize();
-                drawVideoFrame();
+            win.loadFile('html/index.html');
+            win.on('closed', () => {
+                win = null;
+                pluginMan.listWindow = null;
             });
         }
 
-        function loadAudio(url) {
-            audioElement.src = url;
-            audioElement.style.display = 'block';
-        }
-
-        function autoAdjustVideoSize() {
-            const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
-            const containerWidth = videoTrack.clientWidth;
-            const containerHeight = videoTrack.clientHeight;
-
-            if (containerWidth / containerHeight > aspectRatio) {
-                videoElement.style.width = 'auto';
-                videoElement.style.height = '100%';
-            } else {
-                videoElement.style.width = '100%';
-                videoElement.style.height = 'auto';
-            }
-        }
-
-        function drawVideoFrame() {
-            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        }
-
-        function cutVideo() {
-            if (videoElement) {
-                const currentTime = videoElement.currentTime;
-                console.log(`Cutting video at ${currentTime} seconds`);
-            } else {
-                alert('No video loaded');
-            }
-        }
-
-        function trimVideo() {
-            if (videoElement) {
-                const currentTime = videoElement.currentTime;
-                console.log(`Trimming video to ${currentTime} seconds`);
-            } else {
-                alert('No video loaded');
-            }
-        }
-
-        function splitVideo() {
-            if (videoElement) {
-                const currentTime = videoElement.currentTime;
-                console.log(`Splitting video at ${currentTime} seconds`);
-            } else {
-                alert('No video loaded');
-            }
-        }
-
-        function addTransition() {
-            console.log('Adding transition to video');
-        }
-
-        function addText() {
-            const text = prompt('Enter the text to add:');
-            if (text) {
-                console.log(`Adding text: ${text}`);
-            }
-        }
-
-        function addOverlay() {
-            const overlay = prompt('Enter the overlay details:');
-            if (overlay) {
-                console.log(`Adding overlay: ${overlay}`);
-            }
-        }
-
-        function addAudioToTrack() {
-            if (audioElement) {
-                audioTrack.appendChild(audioElement);
-                audioElement.play();
-            } else {
-                alert('No audio loaded');
-            }
-        }
-
-        function exportVideo() {
-            console.log('Exporting video');
-        }
-
-        brightness.addEventListener('input', () => {
-            applyFilters();
+        app.on('window-all-closed', function () {
+            app.quit();
         });
 
-        contrast.addEventListener('input', () => {
-            applyFilters();
+        ipcMain.on('showSplash', (event, arg) => {
+            showSplash();
         });
 
-        saturation.addEventListener('input', () => {
-            applyFilters();
+        const VideoManager = require("./videoManager.js");
+        const PluginManager = require("./plugins.js");
+        const PreviewServer = require("./previewServer.js");
+
+        var path = app.getAppPath().replace('app.asar', 'app.asar.unpacked');
+        var workdir = app.getPath("userData");
+
+        var masterDir = workdir + "/master";
+
+        if (!fs.existsSync(masterDir)){
+            if (!fs.existsSync(workdir)) fs.mkdirSync(workdir);
+            fs.mkdirSync(masterDir);
+        }
+
+        var vidManager;
+
+        try {
+            if (os.platform() == "darwin") {
+                console.log(path + "/bin/darwin/ffmpeg");
+                vidManager = new VideoManager(
+                    path + "/bin/darwin/ffmpeg",
+                    path + "/bin/darwin/ffprobe",
+                    workdir);
+            } else if (os.platform() == "win32" && os.arch() == "x64") {
+                vidManager = new VideoManager(
+                    path + "/bin/win64/ffmpeg.exe",
+                    path + "/bin/win64/ffprobe.exe",
+                    workdir);
+            } else {
+                throw new Error("This platform or architecture is currently not supported.");
+            }
+        } catch (err) {
+            dialog.showErrorBox("Error while creating ffmpeg handler:", err.message);
+            app.exit(1);
+        }
+
+        vidManager.scheme = {
+            size: "1280x720",
+            format: ".mp4",
+            codec: "libx264",
+            bitrate: 1000,
+            fps: 24,
+            pad: true
+        };
+
+        var pluginMan = new PluginManager();
+
+        // Plugins
+
+        ipcMain.on('pluginListWin', () => {
+            pluginMan.listWindow.show();
+        });
+        ipcMain.on('openPlugin', (event, arg) => {
+            pluginMan.openPlugin(arg);
+        });
+        ipcMain.on('addPluginFromPackage', (event, arg) => {
+            pluginMan.addPluginFromPackage(arg);
         });
 
-        function applyFilters() {
-            ctx.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturation.value}%)`;
-            drawVideoFrame();
+        let server = new PreviewServer(vidManager);
+
+        // Settings for preview server
+
+        ipcMain.on('previewSettings', (event, arg) => {
+            server.settings = arg;
+        });
+
+        // Messaging between windows
+
+        ipcMain.on('toMainWindow', (event, arg) => {
+            win.webContents.send("relay", arg);
+        });
+
+        // Interface
+        ipcMain.on('setScheme', (event, arg) => {
+            vidManager.scheme = arg;
+        });
+        ipcMain.on('setWorkFiles', (event, arg) => {
+            vidManager.workFiles = arg;
+        });
+        ipcMain.on('setOutput', (event, arg) => {
+            vidManager.masterOutput = arg;
+        });
+        ipcMain.on('getMeta', (event, arg) => {
+            vidManager.getMeta(arg, (err, meta) => {
+                if (!err) event.sender.send("meta", meta);
+                else dialog.showErrorBox("Meta get error:", err);
+            });
+        });
+
+        // Render
+        ipcMain.on('make', (event) => {
+            var callback = { progress: (p) => {
+                    event.sender.send("progress", p);
+                }, };
+
+            if (DEBUG_MODE) {
+                callback.stderr = console.log;
+            }
+
+            vidManager.masterFiles = [];
+            vidManager.renderAll(0, callback)
+            .then(() => {return vidManager.stitchMaster(callback)})
+            .then(() => {event.sender.send("done")})
+            .catch((err) => {event.sender.send("error", err.message)});
+        });
+
+        // JavaScript contents from plugins.js
+        class PluginManager {
+            constructor(mainWindow) {
+                this.pluginList = {};
+                this.windowList = [];
+
+                this.saveFile = app.getPath("userData") + "/plugins.json";
+
+                if (fs.existsSync(this.saveFile)) {
+                    this.pluginList = JSON.parse(fs.readFileSync(this.saveFile, "utf8"));
+                } else {
+                    this.createDefault();
+                }
+
+            }
+
+            addPluginFromPackage(location) {
+                var settings = JSON.parse(fs.readFileSync(location, "utf8"));
+                settings.path = path.join(path.dirname(location), settings.file);
+                this.registerPlugin(settings.name, settings);
+            }
+
+            registerPlugin(name, settings) {
+                this.pluginList[name] = settings;
+                this.saveList();
+            }
+
+            removePlugin(name) {
+                delete this.pluginList[name];
+                this.saveList();
+            }
+
+            saveList() {
+                fs.writeFile(this.saveFile,
+                    JSON.stringify(this.pluginList),
+                    (err) => {
+                    if (err) throw err;
+                });
+            }
+
+            createDefault() {
+                this.pluginList = {
+                    textEditor: {
+                        path: "html/dialogs/textEditor.html",
+                        type: "filter",
+                        height: 550,
+                        width: 900
+                    },
+                    filter: {
+                        path: "html/dialogs/addFilter.html",
+                        type: "filter",
+                        height: 600,
+                        width: 800
+                    },
+                    scheme: {
+                        path: "html/dialogs/schemeManager.html",
+                        type: "meta",
+                        height: 250,
+                        width: 800
+                    }
+                };
+                this.saveList();
+            }
+
+            openPlugin(name) {
+                var pluginWindow = new BrowserWindow({
+                    width: this.pluginList[name].width,
+                    height: this.pluginList[name].height,
+                    parent: this.mainWindow,
+                    title: "Moon: " + name,
+                    backgroundColor: "#20242B",
+                    webPreferences: {nodeIntegration: true, enableRemoteModule: true}
+                });
+                this.windowList.push(pluginWindow);
+                pluginWindow.on('closed', () => {
+                    pluginWindow = null;
+                });
+                console.log(this.pluginList[name].path);
+                pluginWindow.loadFile(this.pluginList[name].path);
+            }
+
+            createListWindow(mainWindow) {
+                this.listWindow = new BrowserWindow({
+                    width: 270,
+                    height: 280,
+                    title: "Moon: Plugins",
+                    backgroundColor: "#20242B",
+                    minimizable: false,
+                    maximizable: false,
+                    parent: this.mainWindow,
+                    show: false,
+                    thickFrame: false,
+                    titleBarStyle: "hidden",
+                    webPreferences: {nodeIntegration: true, enableRemoteModule: true}
+                });
+                this.listWindow.on('close', (event) => {
+                    event.preventDefault();
+                    this.listWindow.hide();
+                });
+                this.listWindow.webContents.on('did-finish-load', () => {
+                    this.listWindow.webContents.send('plugin-list', this.pluginList);
+                });
+                this.listWindow.loadFile("html/dialogs/pluginList.html");
+            }
+        }
+
+        // JavaScript contents from previewServer.js
+        const express = require('express');
+        const PV_PORT = process.env.PV_PORT | 4000;
+
+        class PreviewServer {
+            constructor(videoManager) {
+                var app = this.app = express();
+                this.settings = {}; // this should be changed when rendering a filtered video
+
+                app.get('/', function(req, res) {
+                    res.send('Moon preview server');
+                });
+
+                app.get('/preview/:file/:seek', function(req, res) {
+                    res.contentType('mp4');
+                    var path = __dirname + "/wd/" + req.params.file;
+                    videoManager.renderPreview({
+                        path: path,
+                        seek: req.params.seek,
+                    }, res)
+                    .then(() => {res.end();});
+                });
+
+                app.get('/filtered', (req, res) => {
+                    res.contentType('mp4');
+                    videoManager.renderPreview({
+                        path: this.settings.path,
+                        seek: this.settings.seek,
+                        filters: this.settings.filters,
+                    }, res)
+                    .then(() => {res.end();});
+                });
+
+                app.on("error", (e) => {
+                    dialog.showErrorBox("Preview server error", e);
+                });
+
+                app.listen(PV_PORT);
+                console.log("Preview server running on " + PV_PORT + ". Change PV_PORT for a different port.");
+            }
+        }
+
+        // JavaScript contents from testing.js
+        var ffmpeg = require("fluent-ffmpeg");
+        ffmpeg.setFfmpegPath("bin/ffmpeg");
+
+        var command = ffmpeg();
+        command.input("wd/gopro.mov")
+        .on("stderr", console.log)
+        .videoFilters({
+            filter: 'drawtext',
+            options: {
+                text: 'Hello World',
+                fontfile: '/Users/daem_on/Documents/Moon/html/fonts/SourceSansPro-Regular.ttf',
+            }
+        })
+        .save("wd/out.mov");
+
+        // JavaScript contents from videoManager.js
+        class VideoManager {
+            constructor(path1=null, path2=null, workdir) {
+                if (path1) ffmpeg.setFfmpegPath(path1);
+                if (path2) ffmpeg.setFfprobePath(path2);
+                this.checkBinsExist(path1, path2);
+
+                this.wd = workdir; // working directory, master files in subdirectory master
+                this.scheme = {}; // common properties that all master files are rendered with
+                this.masterOutput = this.wd + "masterOutput";
+
+                this.workFiles = []; // files imported in current project
+                this.masterFiles = []; // list of processed "master" files
+
+                this.postProcessing = []; // TBA
+            }
+
+            checkBinsExist(path1, path2) {
+                if (fs.existsSync(path1) && fs.existsSync(path2))
+                    return;
+                else throw new Error("Binary not installed!");
+            }
+
+            getMeta(path, callback) {
+                ffmpeg.ffprobe(path, callback);
+            }
+
+            addWorkFile(file, properties) {
+                var cont = {
+                    file: file,
+                    properties: properties
+                };
+                this.workFiles.push(cont);
+            }
+
+            setCallbacks(command, cb) {
+                if (cb.progress) command.on("progress", cb.progress);
+                if (cb.start) command.on("start", cb.start);
+                if (cb.end) command.on("end", cb.end);
+                if (cb.error) command.on("error", cb.error);
+                if (cb.stderr) command.on("stderr", cb.stderr);
+            }
+
+            addWorkFileFilter(index, filter, options=undefined) {
+                var cont = {
+                    filter: filter,
+                    options: options
+                };
+                if (!this.workFiles[index].properties.filters) {
+                    this.workFiles[index].properties.filters = [];
+                }
+
+                this.workFiles[index].properties.filters.push(cont);
+            }
+
+            // go through all workFiles and render
+            renderAll(index, callbacks) {
+                if (this.workFiles.length <= 0)
+                    return Promise.reject(new Error("Files list empty"));
+
+                if (index >= this.workFiles.length)
+                    return Promise.resolve(); // at the end
+
+                // not at the end, rendering "index"
+                return this.render(index, callbacks)
+                .then(() => {
+                    return this.renderAll(index+1, callbacks);
+                });
+            }
+
+            // renders a workFile to be a masterFile
+            render(index, callbacks) {
+                return new Promise((resolve, reject) => {
+                    callbacks.end = resolve;
+                    callbacks.error = reject;
+
+                    var command = ffmpeg();
+                    var workFile = this.workFiles[index];
+
+                    if (workFile.properties.duration) // set duration
+                        command.duration(workFile.properties.duration);
+
+                    var complex = false;
+                    // workFile.properties.advanced: additional render settings
+                    if (workFile.properties.advanced) {
+
+                        if (workFile.properties.advanced.inputs) { // add multiple inputs
+                            var inputs = workFile.properties.inputs;
+                            for (var i = 0; i < inputs.length; i++) {
+                                command.input(inputs[i]);
+                            }
+                        }
+                        if (workFile.properties.advanced.complex) { // use complex filtergraph
+                            complex = true;
+                            if (workFile.properties.complexFilter)
+                                command.complexFilter(workFile.properties.complexFilter);
+                        }
+
+                    }
+
+                    if (!complex) { // don't use complex filtergraph
+                        this.fromScheme(command);
+                        if (workFile.properties.filters)
+                            command.videoFilters(workFile.properties.filters);
+                    }
+
+                    this.setCallbacks(command, callbacks);
+
+                    // render input to single file
+                    command.input(workFile.file);
+
+                    if (workFile.properties.seek) // set start time
+                        command.seekInput(workFile.properties.seek);
+
+                    command.keepDAR()
+                    .output(this.wd + "/master/master" + index + this.scheme.format)
+                    .run();
+
+                    this.masterFiles.push("master" + index + this.scheme.format);
+                });
+            }
+
+            // create complete master file from processed files in master folder
+            stitchMaster(callbacks) {
+                return new Promise((resolve, reject) => {
+                    callbacks.end = resolve;
+                    callbacks.error = reject;
+
+                    var command = ffmpeg();
+                    this.setCallbacks(command, callbacks);
+
+                    var fileList = this.masterFiles;
+                    var listFileName = this.wd + '/master/list.txt', fileNames = '';
+
+                    // create list with filenames
+                    fileList.forEach(function(fileName, index) {
+                        fileNames = fileNames + 'file ' + fileName + '\\n';
+                    });
+
+                    fs.writeFileSync(listFileName, fileNames);
+
+                    command.input(listFileName)
+                    .inputOptions(['-f concat', '-safe 0'])
+                    .outputOptions('-c copy')
+                    .save(this.masterOutput + this.scheme.format);
+                });
+            }
+
+            renderPreview(options, stream) {
+                return new Promise((resolve, reject) => {
+                    var command = ffmpeg();
+                    if (options.filters) command.videoFilters(options.filters);
+
+                    command.input(options.path)
+                    .on("end", resolve)
+                    .on("error", reject)
+                    .duration(10)
+                    .size("480x?")
+                    .format("mp4")
+                    .outputOptions('-movflags frag_keyframe+empty_moov') // seekability magic
+                    .videoCodec("libx264")
+                    .seekInput(options.seek)
+                    .pipe(stream, {end:true});
+                });
+            }
+
+            fromScheme(command) {
+                let sch = this.scheme;
+
+                command.size(sch.size)
+                    .fps(sch.fps)
+                    .videoBitrate(sch.bitrate)
+                    .videoCodec(sch.codec)
+                    .autopad(sch.pad);
+            }
+
+            convertToCompliant(input, name) {
+                var command = ffmpeg();
+                this.fromScheme(command);
+
+                command.input(input)
+                    .save(this.wd + name + sch.format);
+            }
         }
     </script>
 </body>
