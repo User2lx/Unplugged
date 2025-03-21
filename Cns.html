@@ -35,6 +35,7 @@
     <script>
         let scene, camera, renderer, monster, controls;
         let monsterSpeed = 0.02;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 
         function init() {
             // Initialize scene
@@ -61,11 +62,12 @@
             ground.rotation.x = -Math.PI / 2;
             scene.add(ground);
 
-            // Create walls
-            createWall(0, 1, -10, 20, 2, 1);
-            createWall(0, 1, 10, 20, 2, 1);
-            createWall(-10, 1, 0, 1, 2, 20);
-            createWall(10, 1, 0, 1, 2, 20);
+            // Create house map
+            createWall(0, 1, -10, 20, 2, 1); // Front wall
+            createWall(0, 1, 10, 20, 2, 1);  // Back wall
+            createWall(-10, 1, 0, 1, 2, 20); // Left wall
+            createWall(10, 1, 0, 1, 2, 20);  // Right wall
+            createWall(0, 1, -5, 10, 2, 1);  // Inner wall
 
             // Create monster
             const monsterGeometry = new THREE.BoxGeometry(1, 2, 1);
@@ -80,6 +82,18 @@
                 controls.lock();
             }, false);
 
+            controls.addEventListener('lock', () => {
+                document.getElementById('choices').style.display = 'none';
+            });
+
+            controls.addEventListener('unlock', () => {
+                document.getElementById('choices').style.display = 'flex';
+            });
+
+            // Add event listeners for movement
+            document.addEventListener('keydown', onKeyDown, false);
+            document.addEventListener('keyup', onKeyUp, false);
+
             // Animate the scene
             animate();
         }
@@ -92,8 +106,56 @@
             scene.add(wall);
         }
 
+        function onKeyDown(event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = true;
+                    break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = false;
+                    break;
+            }
+        }
+
         function animate() {
             requestAnimationFrame(animate);
+
+            // Handle movement
+            if (moveForward) controls.moveForward(0.1);
+            if (moveBackward) controls.moveBackward(0.1);
+            if (moveLeft) controls.moveRight(-0.1);
+            if (moveRight) controls.moveRight(0.1);
 
             // Monster movement
             monster.position.z += monsterSpeed;
@@ -101,8 +163,10 @@
                 monsterSpeed = -monsterSpeed;
             }
 
-            // Update controls
-            controls.update();
+            // Check for collision with monster
+            if (monster.position.distanceTo(camera.position) < 1) {
+                window.location.href = 'https://user2lx.github.io/Unplugged/jeff.html';
+            }
 
             // Render the scene
             renderer.render(scene, camera);
