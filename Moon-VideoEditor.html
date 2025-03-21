@@ -11,28 +11,37 @@
             padding: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
             height: 100vh;
             background-color: #f0f0f0;
         }
         .editor-container {
-            width: 800px;
-            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             border-radius: 10px;
+            margin: 20px;
+        }
+        .video-container {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
         }
         video {
             width: 100%;
             border-radius: 10px;
-            margin-bottom: 20px;
         }
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 10px;
         }
         .controls button, .controls input[type="range"] {
             padding: 10px;
@@ -57,13 +66,32 @@
             cursor: pointer;
             border-radius: 5px;
         }
+        .timeline-container {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        .timeline {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .timeline div {
+            height: 100%;
+            background-color: #007BFF;
+        }
     </style>
 </head>
 <body>
     <div class="editor-container">
-        <video id="video" controls>
-            Your browser does not support the video tag.
-        </video>
+        <div class="video-container">
+            <video id="video" controls>
+                Your browser does not support the video tag.
+            </video>
+        </div>
         <div class="controls">
             <button onclick="playPause()">Play/Pause</button>
             <button onclick="stopVideo()">Stop</button>
@@ -72,14 +100,24 @@
             <label for="file-input" class="label-button">Load Video</label>
             <input type="file" id="file-input" accept="video/*" onchange="loadVideo(event)">
         </div>
+        <div class="timeline-container">
+            <div class="timeline" id="timeline">
+                <div id="timeline-progress"></div>
+            </div>
+        </div>
     </div>
 
     <script>
         const video = document.getElementById('video');
         const progressBar = document.getElementById('progress-bar');
         const fileInput = document.getElementById('file-input');
+        const timeline = document.getElementById('timeline');
+        const timelineProgress = document.getElementById('timeline-progress');
 
         video.addEventListener('timeupdate', updateProgressBar);
+        video.addEventListener('loadedmetadata', () => {
+            progressBar.max = video.duration;
+        });
 
         function playPause() {
             if (video.paused) {
@@ -101,6 +139,7 @@
         function updateProgressBar() {
             const percentage = (video.currentTime / video.duration) * 100;
             progressBar.value = percentage;
+            timelineProgress.style.width = percentage + '%';
         }
 
         function seekVideo(event) {
@@ -115,6 +154,14 @@
             video.load();
             video.play();
         }
+
+        timeline.addEventListener('click', (event) => {
+            const rect = timeline.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const width = timeline.offsetWidth;
+            const clickPercentage = clickX / width;
+            video.currentTime = clickPercentage * video.duration;
+        });
     </script>
 </body>
 </html>
