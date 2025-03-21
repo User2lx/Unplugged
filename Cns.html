@@ -64,8 +64,8 @@
         function loadUrl() {
             const url = document.getElementById('urlInput').value;
             if (url) {
-                // Using the current Replit deployment URL
-                const proxyUrl = `https://${window.location.hostname}/proxy?url=${encodeURIComponent(url)}`;
+                // Form a proxy URL
+                const proxyUrl = `https://your-proxy-url.com/proxy?url=${encodeURIComponent(url)}`;
                 document.getElementById('proxyFrame').src = proxyUrl;
             }
         }
