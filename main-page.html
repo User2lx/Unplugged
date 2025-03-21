@@ -58,6 +58,10 @@
             color: #808080;
         }
 
+        #not-done {
+            background-color: #f44336;
+        }
+
         .dropdown {
             position: absolute;
             top: 10px;
@@ -79,4 +83,109 @@
         }
 
         .dropdown-content a {
-           * ▋
+            color: white;
+            padding: 8px 12px; /* Adjust padding to fit better */
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #575757;
+        }
+        
+        .game-area {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #fff;
+        }
+        
+        .player {
+            width: 30px;
+            height: 30px;
+            background-color: #00f;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div class="big-text">Welcome to Unplugged</div>
+    <div class="game-square" id="pacman">Pacman</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/clicks.html'">klicker</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/bomber.html'">bomber man</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/doodle.html'">doodle draw</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/THEGOD.html'">THE GOD.</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/bitlife.html'">bitlife</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/CatFact.html'">Cat Facts</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square">Not Done</div>
+    <div class="game-square" onclick="location.href='https://docs.google.com/forms/d/e/1FAIpQLSfDDx7p6wWfeKTB6OaH1vJBw_Ua0teVvFD4FIWkQkyQBIlAPg/viewform?usp=dialog'">Job Application Form</div>
+    <div class="game-square" onclick="location.href='https://user2lx.github.io/Unplugged/donation.html'">donate to me</div>
+
+    <div class="dropdown">
+        &#9662; <!-- Downward arrow icon -->
+        <div class="dropdown-content">
+            <a href="https://user2lx.github.io/Unplugged/login.html">Login</a>
+            <a href="https://user2lx.github.io/Unplugged/updates.html">Updates</a>
+            <a href="https://user2lx.github.io/Unplugged/Poll.html">Poll</a>
+        </div>
+    </div>
+
+    <div class="copyright">©Unplugged 2025</div>
+
+    <!-- Game area -->
+    <div class="game-area" id="game-area">
+        <div class="player" id="player"></div>
+    </div>
+
+    <script>
+        document.getElementById('pacman').addEventListener('click', function() {
+            window.location.href = 'https://user2lx.github.io/Unplugged/pacman.html';
+        });
+
+        // JavaScript for dropdown menu
+        document.querySelector('.dropdown').addEventListener('click', function() {
+            var dropdownContent = document.querySelector('.dropdown-content');
+            if (dropdownContent.style.display === 'block') {
+                dropdownContent.style.display = 'none';
+            } else {
+                dropdownContent.style.display = 'block';
+            }
+        });
+
+        // JavaScript for the simple game
+        const player = document.getElementById('player');
+        const gameArea = document.getElementById('game-area');
+        let playerX = 0;
+        let playerY = 0;
+        const playerSpeed = 10;
+
+        document.addEventListener('keydown', function(event) {
+            switch (event.key) {
+                case 'ArrowUp':
+                    playerY = Math.max(0, playerY - playerSpeed);
+                    break;
+                case 'ArrowDown':
+                    playerY = Math.min(gameArea.clientHeight - player.clientHeight, playerY + playerSpeed);
+                    break;
+                case 'ArrowLeft':
+                    playerX = Math.max(0, playerX - playerSpeed);
+                    break;
+                case 'ArrowRight':
+                    playerX = Math.min(gameArea.clientWidth - player.clientWidth, playerX + playerSpeed);
+                    break;
+            }
+            player.style.transform = `translate(${playerX}px, ${playerY}px)`;
+        });
+    </script>
+</body>
+</html>
