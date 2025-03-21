@@ -37,24 +37,21 @@
         }
         .controls {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             width: 100%;
             max-width: 800px;
             margin-top: 10px;
         }
-        .controls button, .controls input[type="range"] {
+        .controls button, .controls input[type="range"], .controls select {
             padding: 10px;
-            margin: 0 5px;
+            margin: 5px;
             border: none;
             background-color: #007BFF;
             color: #fff;
             cursor: pointer;
             border-radius: 5px;
-        }
-        .controls input[type="range"] {
-            width: 100%;
-            margin: 0 10px;
         }
         .controls input[type="file"] {
             display: none;
@@ -97,6 +94,19 @@
             <button onclick="stopVideo()">Stop</button>
             <button onclick="rewind()">Rewind</button>
             <input type="range" id="progress-bar" value="0" max="100" onchange="seekVideo(event)">
+            <button onclick="toggleMute()">Mute/Unmute</button>
+            <input type="range" id="volume-bar" value="100" max="100" onchange="setVolume(event)">
+            <select id="playbackRate" onchange="changePlaybackRate(event)">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+            </select>
+            <button onclick="toggleFullScreen()">Full Screen</button>
+            <button onclick="takeSnapshot()">Snapshot</button>
+            <button onclick="trimStart()">Trim Start</button>
+            <button onclick="trimEnd()">Trim End</button>
+            <button onclick="addText()">Add Text</button>
             <label for="file-input" class="label-button">Load Video</label>
             <input type="file" id="file-input" accept="video/*" onchange="loadVideo(event)">
         </div>
@@ -113,6 +123,8 @@
         const fileInput = document.getElementById('file-input');
         const timeline = document.getElementById('timeline');
         const timelineProgress = document.getElementById('timeline-progress');
+        let trimStartTime = 0;
+        let trimEndTime = 0;
 
         video.addEventListener('timeupdate', updateProgressBar);
         video.addEventListener('loadedmetadata', () => {
@@ -162,6 +174,62 @@
             const clickPercentage = clickX / width;
             video.currentTime = clickPercentage * video.duration;
         });
+
+        function toggleMute() {
+            video.muted = !video.muted;
+        }
+
+        function setVolume(event) {
+            video.volume = event.target.value / 100;
+        }
+
+        function changePlaybackRate(event) {
+            video.playbackRate = event.target.value;
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                video.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function takeSnapshot() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const img = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = img;
+            link.download = 'snapshot.png';
+            link.click();
+        }
+
+        function trimStart() {
+            trimStartTime = video.currentTime;
+        }
+
+        function trimEnd() {
+            trimEndTime = video.currentTime;
+        }
+
+        function addText() {
+            const text = prompt('Enter text to overlay:');
+            if (text) {
+                const textOverlay = document.createElement('div');
+                textOverlay.style.position = 'absolute';
+                textOverlay.style.top = '10px';
+                textOverlay.style.left = '10px';
+                textOverlay.style.color = 'white';
+                textOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                textOverlay.style.padding = '5px';
+                textOverlay.innerText = text;
+                video.parentNode.appendChild(textOverlay);
+            }
+        }
     </script>
 </body>
 </html>
