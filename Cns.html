@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moon Video Editor</title>
+    <title>DNS Information Viewer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -50,6 +50,18 @@
             height: 80vh;
             border: none;
         }
+        .dns-info {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .dns-info pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -59,14 +71,39 @@
             <button onclick="loadWebsite()">Load Website</button>
         </div>
         <iframe id="website-frame"></iframe>
+        <div class="dns-info" id="dns-info">
+            <pre id="dns-output"></pre>
+        </div>
     </div>
 
     <script>
-        function loadWebsite() {
+        async function loadWebsite() {
             const urlInput = document.getElementById('url-input').value;
             const websiteFrame = document.getElementById('website-frame');
-            // You can add DNS API logic here if needed
             websiteFrame.src = urlInput;
+
+            // Fetch DNS information
+            const dnsInfo = await fetchDNSInfo(urlInput);
+            displayDNSInfo(dnsInfo);
+        }
+
+        async function fetchDNSInfo(url) {
+            const apiUrl = 'https://api.yourdnsservice.com/dns'; // Replace with actual DNS API URL
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer your_api_key' // Replace with your actual API key
+                },
+                body: JSON.stringify({ url })
+            });
+            const data = await response.json();
+            return data;
+        }
+
+        function displayDNSInfo(dnsInfo) {
+            const dnsOutput = document.getElementById('dns-output');
+            dnsOutput.textContent = JSON.stringify(dnsInfo, null, 2);
         }
     </script>
 </body>
