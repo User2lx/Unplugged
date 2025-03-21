@@ -78,16 +78,34 @@
             background-color: #333;
             border-radius: 5px;
             overflow: hidden;
+            position: relative;
         }
         .timeline div {
             height: 100%;
             background-color: #007BFF;
         }
+        .audio-track {
+            position: absolute;
+            height: 10px;
+            background-color: #ff5722;
+            bottom: 0;
+        }
+        .draggable {
+            position: absolute;
+            border: 1px dashed #fff;
+            padding: 5px;
+            cursor: move;
+            user-select: none;
+        }
+        .resizable {
+            resize: both;
+            overflow: auto;
+        }
     </style>
 </head>
 <body>
     <div class="editor-container">
-        <div class="video-container">
+        <div class="video-container" id="video-container">
             <video id="video" controls>
                 Your browser does not support the video tag.
             </video>
@@ -107,8 +125,7 @@
             </select>
             <button onclick="toggleFullScreen()">Full Screen</button>
             <button onclick="takeSnapshot()">Snapshot</button>
-            <button onclick="trimStart()">Trim Start</button>
-            <button onclick="trimEnd()">Trim End</button>
+            <button onclick="cutVideo()">Cut</button>
             <button onclick="addText()">Add Text</button>
             <button onclick="exportVideo()">Export</button>
             <label for="audio-input" class="label-button">Add Audio</label>
@@ -135,9 +152,9 @@
         const overlayInput = document.getElementById('overlay-input');
         const timeline = document.getElementById('timeline');
         const timelineProgress = document.getElementById('timeline-progress');
-        let trimStartTime = 0;
-        let trimEndTime = 0;
-        let audioContext, audioSource, gainNode, overlayImage;
+        const videoContainer = document.getElementById('video-container');
+        let audioTracks = [];
+        let cuts = [];
 
         video.addEventListener('timeupdate', updateProgressBar);
         video.addEventListener('loadedmetadata', () => {
@@ -221,26 +238,30 @@
             link.click();
         }
 
-        function trimStart() {
-            trimStartTime = video.currentTime;
-        }
-
-        function trimEnd() {
-            trimEndTime = video.currentTime;
+        function cutVideo() {
+            const cutTime = video.currentTime;
+            const cutMarker = document.createElement('div');
+            cutMarker.className = 'cut-marker';
+            cutMarker.style.position = 'absolute';
+            cutMarker.style.left = `${(cutTime / video.duration) * 100}%`;
+            cutMarker.style.width = '2px';
+            cutMarker.style.height = '100%';
+            cutMarker.style.backgroundColor = '#f00';
+            timeline.appendChild(cutMarker);
+            cuts.push(cutTime);
         }
 
         function addText() {
             const text = prompt('Enter text to overlay:');
             if (text) {
                 const textOverlay = document.createElement('div');
-                textOverlay.style.position = 'absolute';
-                textOverlay.style.top = '10px';
-                textOverlay.style.left = '10px';
+                textOverlay.className = 'draggable resizable';
                 textOverlay.style.color = 'white';
                 textOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
                 textOverlay.style.padding = '5px';
                 textOverlay.innerText = text;
-                video.parentNode.appendChild(textOverlay);
+                makeDraggable(textOverlay);
+                videoContainer.appendChild(textOverlay);
             }
         }
 
@@ -251,27 +272,25 @@
         function addAudio(event) {
             const file = event.target.files[0];
             const url = URL.createObjectURL(file);
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                audioSource = audioContext.createMediaElementSource(video);
-                gainNode = audioContext.createGain();
-                audioSource.connect(gainNode).connect(audioContext.destination);
-            }
             const audio = new Audio(url);
             audio.play();
+            audioTracks.push(audio);
+            const audioTrack = document.createElement('div');
+            audioTrack.className = 'audio-track';
+            audioTrack.style.width = '100%';
+            timeline.appendChild(audioTrack);
         }
 
         function addOverlay(event) {
             const file = event.target.files[0];
             const url = URL.createObjectURL(file);
-            overlayImage = new Image();
-            overlayImage.src = url;
-            overlayImage.style.position = 'absolute';
-            overlayImage.style.top = '10px';
-            overlayImage.style.left = '10px';
-            overlayImage.style.width = '100px';
-            overlayImage.style.height = '100px';
-            video.parentNode.appendChild(overlayImage);
+            const overlay = document.createElement('img');
+            overlay.src = url;
+            overlay.className = 'draggable resizable';
+            overlay.style.width = '100px';
+            overlay.style.height = '100px';
+            makeDraggable(overlay);
+            videoContainer.appendChild(overlay);
         }
 
         function rotateVideo() {
@@ -282,6 +301,38 @@
         function adjustBrightness(event) {
             const brightness = event.target.value / 100;
             video.style.filter = `brightness(${brightness})`;
+        }
+
+        function makeDraggable(element) {
+            let isDragging = false;
+            let startX, startY;
+            element.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - element.offsetLeft;
+                startY = e.clientY - element.offsetTop;
+                element.style.border = '1px solid #007BFF';
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                element.style.left = `${e.clientX - startX}px`;
+                element.style.top = `${e.clientY - startY}px`;
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                element.style.border = '1px dashed #fff';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            element.addEventListener('dblclick', () => {
+                if (confirm('Do you want to delete this element?')) {
+                    element.remove();
+                }
+            });
         }
     </script>
 </body>
