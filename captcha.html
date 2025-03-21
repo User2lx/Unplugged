@@ -1,42 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
-  
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" 
-          content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" 
-    href="captcha.css">
-    <link rel="stylesheet" href=
-"https://use.fontawesome.com/releases/v5.15.3/css/all.css"
-        integrity=
-"sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk"
-        crossorigin="anonymous">
-    <script src="captcha.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPTCHA</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .captcha-container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .captcha-image {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+
+        .captcha-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .captcha-grid img {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 5px;
+        }
+
+        .captcha-grid img:hover {
+            border-color: blue;
+        }
+
+        .captcha-label {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .captcha-input {
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .captcha-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: blue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .captcha-button:hover {
+            background-color: darkblue;
+        }
+    </style>
 </head>
-
-<body onload="generate()">
-    <div id="user-input" class="inline">
-        <input type="text" 
-               id="submit" 
-               placeholder="Captcha code" />
+<body>
+    <div class="captcha-container">
+        <div id="step1">
+            <p class="captcha-label">Identify the image:</p>
+            <img id="captchaImage" class="captcha-image" src="" alt="CAPTCHA Image">
+            <input type="text" id="captchaInput" class="captcha-input" placeholder="Type the name of the image">
+            <button class="captcha-button" onclick="verifyCaptcha()">Submit</button>
+        </div>
+        <div id="step2" style="display: none;">
+            <p class="captcha-label">Click the image you identified:</p>
+            <div class="captcha-grid" id="captchaGrid"></div>
+        </div>
     </div>
 
-    <div class="inline" onclick="generate()">
-        <i class="fas fa-sync"></i>
-    </div>
+    <script>
+        const images = [
+            { src: 'https://via.placeholder.com/150?text=Cat', name: 'Cat' },
+            { src: 'https://via.placeholder.com/150?text=Dog', name: 'Dog' },
+            { src: 'https://via.placeholder.com/150?text=Bird', name: 'Bird' },
+            { src: 'https://via.placeholder.com/150?text=Fish', name: 'Fish' },
+            { src: 'https://via.placeholder.com/150?text=Horse', name: 'Horse' },
+            { src: 'https://via.placeholder.com/150?text=Cow', name: 'Cow' }
+        ];
 
-    <div id="image" 
-         class="inline" 
-         selectable="False">
-    </div>
-    <input type="submit" 
-           id="btn" 
-           onclick="printmsg()" />
+        const selectedImage = images[Math.floor(Math.random() * images.length)];
+        document.getElementById('captchaImage').src = selectedImage.src;
 
-    <p id="key"></p>
+        function verifyCaptcha() {
+            const userInput = document.getElementById('captchaInput').value.trim().toLowerCase();
+            if (userInput === selectedImage.name.toLowerCase()) {
+                showGrid();
+            } else {
+                alert('Incorrect! Please try again.');
+            }
+        }
+
+        function showGrid() {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+
+            const grid = document.getElementById('captchaGrid');
+            images.forEach(image => {
+                const imgElement = document.createElement('img');
+                imgElement.src = image.src;
+                imgElement.alt = image.name;
+                imgElement.addEventListener('click', () => {
+                    if (image.name === selectedImage.name) {
+                        window.location.href = 'https://user2lx.github.io/Unplugged/main-page.html';
+                    } else {
+                        alert('Incorrect! Please try again.');
+                    }
+                });
+                grid.appendChild(imgElement);
+            });
+        }
+    </script>
 </body>
-  
 </html>
-
