@@ -1,5 +1,3 @@
-<div style="position: relative;"><iframe src="https://publisher.linkvertise.com/cdn/ads/LV-728x90/index.html" frameborder="0" height="90" width="728"></iframe><a href="https://publisher.linkvertise.com/ac/1310331" target="_blank" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0;"></a></div>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,7 +62,6 @@
             background-color: #f44336;
         }
 
-        /* New styles for the dropdown menu */
         .dropdown {
             position: absolute;
             top: 10px;
@@ -94,6 +91,59 @@
 
         .dropdown-content a:hover {
             background-color: #575757;
+        }
+
+        /* Styles for the ad */
+        .ad-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .ad-content {
+            position: relative;
+            background-color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .ad-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .ad-content button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: blue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .ad-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -127,6 +177,15 @@
 
     <div class="copyright">©Unplugged 2025</div>
 
+    <!-- Ad container -->
+    <div class="ad-container" id="ad-container">
+        <div class="ad-content">
+            <button class="ad-close" id="ad-close">X</button>
+            <img src="CatAd.png" alt="Cat Ad">
+            <button onclick="location.href='https://user2lx.github.io/Unplugged/CatFact.html'">Random Cat Facts</button>
+        </div>
+    </div>
+
     <script>
         document.getElementById('pacman').addEventListener('click', function() {
             window.location.href = 'https://user2lx.github.io/Unplugged/pacman.html';
@@ -141,7 +200,23 @@
                 dropdownContent.style.display = 'block';
             }
         });
+
+        // Function to show the ad
+        function showAd() {
+            document.getElementById('ad-container').style.display = 'flex';
+        }
+
+        // Function to hide the ad and set a timer to show it again
+        function hideAd() {
+            document.getElementById('ad-container').style.display = 'none';
+            setTimeout(showAd, 300000); // Show ad again after 5 minutes
+        }
+
+        // Show the ad after 6 seconds
+        setTimeout(showAd, 6000);
+
+        // Add event listener to the close button
+        document.getElementById('ad-close').addEventListener('click', hideAd);
     </script>
-    <script data-grow-initializer="">!(function(){window.growMe||((window.growMe=function(e){window.growMe._.push(e);}),(window.growMe._=[]));var e=document.createElement("script");(e.type="text/javascript"),(e.src="https://faves.grow.me/main.js"),(e.defer=!0),e.setAttribute("data-grow-faves-site-id","U2l0ZTpiOWMzMzAxOC0zYmU5LTQ4YWQtYjkxZS0yNWY3YjQyYWNjYWQ=");var t=document.getElementsByTagName("script")[0];t.parentNode.insertBefore(e,t);})();</script>
 </body>
 </html>
