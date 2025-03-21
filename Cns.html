@@ -3,114 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNS Information Viewer</title>
+    <title>3D Horror Game</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+        body { margin: 0; overflow: hidden; }
+        #choices {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #121212;
-            color: #ffffff;
+            gap: 10px;
         }
-        .editor-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-            background-color: #1e1e1e;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px;
-        }
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 800px;
-            margin-top: 10px;
-        }
-        .controls button, .controls input[type="range"], .controls select, .controls input[type="text"] {
+        button {
             padding: 10px;
-            margin: 5px;
-            border: none;
-            background-color: #007BFF;
-            color: #fff;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .dns-info {
-            width: 100%;
-            max-width: 800px;
-            margin-top: 20px;
             background-color: #333;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .dns-info pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="editor-container">
-        <div class="controls">
-            <input type="text" id="url-input" placeholder="Enter website URL">
-            <button onclick="openWebsite()">Open Website</button>
-        </div>
-        <div class="dns-info" id="dns-info">
-            <pre id="dns-output"></pre>
-        </div>
+    <div id="choices">
+        <button onclick="makeChoice('left')">Go Left</button>
+        <button onclick="makeChoice('right')">Go Right</button>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        async function openWebsite() {
-            const urlInput = document.getElementById('url-input').value;
-            window.open(urlInput, '_blank');
+        let scene, camera, renderer;
 
-            try {
-                const dnsInfo = await fetchDNSInfo(urlInput);
-                displayDNSInfo(dnsInfo);
-            } catch (error) {
-                console.error('Error fetching DNS info:', error);
-                displayError(error.message);
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            camera.position.z = 5;
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function makeChoice(choice) {
+            if (choice === 'left') {
+                alert('You chose to go left!');
+            } else if (choice === 'right') {
+                alert('You chose to go right!');
             }
         }
 
-        async function fetchDNSInfo(url) {
-            const apiUrl = 'https://api.yourdnsservice.com/dns'; // Replace with actual DNS API URL
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer your_api_key' // Replace with your actual API key
-                },
-                body: JSON.stringify({ url })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error: ${response.statusText}`);
-            }
-
-            return await response.json();
-        }
-
-        function displayDNSInfo(dnsInfo) {
-            const dnsOutput = document.getElementById('dns-output');
-            dnsOutput.textContent = JSON.stringify(dnsInfo, null, 2);
-        }
-
-        function displayError(message) {
-            const dnsOutput = document.getElementById('dns-output');
-            dnsOutput.textContent = `Error: ${message}`;
-        }
+        window.onload = init;
     </script>
 </body>
 </html>
