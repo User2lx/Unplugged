@@ -5,528 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moon Video Editor</title>
     <style>
-        /* Add any required CSS here */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
         }
-        .container {
+        .editor-container {
+            width: 800px;
+            max-width: 100%;
             background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        video {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .controls button, .controls input[type="range"] {
+            padding: 10px;
+            margin: 0 5px;
+            border: none;
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .controls input[type="range"] {
+            width: 100%;
+            margin: 0 10px;
+        }
+        .controls input[type="file"] {
+            display: none;
+        }
+        .label-button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Moon Video Editor</h1>
-        <!-- Add any required HTML content here -->
+    <div class="editor-container">
+        <video id="video" controls>
+            Your browser does not support the video tag.
+        </video>
+        <div class="controls">
+            <button onclick="playPause()">Play/Pause</button>
+            <button onclick="stopVideo()">Stop</button>
+            <button onclick="rewind()">Rewind</button>
+            <input type="range" id="progress-bar" value="0" max="100" onchange="seekVideo(event)">
+            <label for="file-input" class="label-button">Load Video</label>
+            <input type="file" id="file-input" accept="video/*" onchange="loadVideo(event)">
+        </div>
     </div>
 
     <script>
-        // JavaScript contents from index.js
-        const {app, BrowserWindow, ipcMain, dialog} = require('electron');
-        const os = require('os');
-        const fs = require('fs');
-        const process = require('process');
-        const DEBUG_MODE = process.env.DEBUG_MODE | false;
-        let win;
-        let splash;
+        const video = document.getElementById('video');
+        const progressBar = document.getElementById('progress-bar');
+        const fileInput = document.getElementById('file-input');
 
-        app.on('ready', () => {
-            showSplash();
-            createWindow();
-            pluginMan.mainWindow = win;
-            pluginMan.createListWindow();
-            win.once('ready-to-show', () => {
-                splash.destroy();
-                splash = null;
-                win.show();
-            });
-        });
+        video.addEventListener('timeupdate', updateProgressBar);
 
-        function showSplash() {
-            splash = new BrowserWindow({width: 400, height: 270, transparent: true,
-                frame: false, alwaysOnTop: true, resizable: false, title: "Moon"});
-            splash.loadFile("html/splash.html");
-        }
-
-        function createWindow () {
-            win = new BrowserWindow({width: 1000, height: 800, show: false, title: "Moon",
-            webPreferences: {nodeIntegration: true, enableRemoteModule: true}});
-
-            win.loadFile('html/index.html');
-            win.on('closed', () => {
-                win = null;
-                pluginMan.listWindow = null;
-            });
-        }
-
-        app.on('window-all-closed', function () {
-            app.quit();
-        });
-
-        ipcMain.on('showSplash', (event, arg) => {
-            showSplash();
-        });
-
-        const VideoManager = require("./videoManager.js");
-        const PluginManager = require("./plugins.js");
-        const PreviewServer = require("./previewServer.js");
-
-        var path = app.getAppPath().replace('app.asar', 'app.asar.unpacked');
-        var workdir = app.getPath("userData");
-
-        var masterDir = workdir + "/master";
-
-        if (!fs.existsSync(masterDir)){
-            if (!fs.existsSync(workdir)) fs.mkdirSync(workdir);
-            fs.mkdirSync(masterDir);
-        }
-
-        var vidManager;
-
-        try {
-            if (os.platform() == "darwin") {
-                console.log(path + "/bin/darwin/ffmpeg");
-                vidManager = new VideoManager(
-                    path + "/bin/darwin/ffmpeg",
-                    path + "/bin/darwin/ffprobe",
-                    workdir);
-            } else if (os.platform() == "win32" && os.arch() == "x64") {
-                vidManager = new VideoManager(
-                    path + "/bin/win64/ffmpeg.exe",
-                    path + "/bin/win64/ffprobe.exe",
-                    workdir);
+        function playPause() {
+            if (video.paused) {
+                video.play();
             } else {
-                throw new Error("This platform or architecture is currently not supported.");
-            }
-        } catch (err) {
-            dialog.showErrorBox("Error while creating ffmpeg handler:", err.message);
-            app.exit(1);
-        }
-
-        vidManager.scheme = {
-            size: "1280x720",
-            format: ".mp4",
-            codec: "libx264",
-            bitrate: 1000,
-            fps: 24,
-            pad: true
-        };
-
-        var pluginMan = new PluginManager();
-
-        // Plugins
-
-        ipcMain.on('pluginListWin', () => {
-            pluginMan.listWindow.show();
-        });
-        ipcMain.on('openPlugin', (event, arg) => {
-            pluginMan.openPlugin(arg);
-        });
-        ipcMain.on('addPluginFromPackage', (event, arg) => {
-            pluginMan.addPluginFromPackage(arg);
-        });
-
-        let server = new PreviewServer(vidManager);
-
-        // Settings for preview server
-
-        ipcMain.on('previewSettings', (event, arg) => {
-            server.settings = arg;
-        });
-
-        // Messaging between windows
-
-        ipcMain.on('toMainWindow', (event, arg) => {
-            win.webContents.send("relay", arg);
-        });
-
-        // Interface
-        ipcMain.on('setScheme', (event, arg) => {
-            vidManager.scheme = arg;
-        });
-        ipcMain.on('setWorkFiles', (event, arg) => {
-            vidManager.workFiles = arg;
-        });
-        ipcMain.on('setOutput', (event, arg) => {
-            vidManager.masterOutput = arg;
-        });
-        ipcMain.on('getMeta', (event, arg) => {
-            vidManager.getMeta(arg, (err, meta) => {
-                if (!err) event.sender.send("meta", meta);
-                else dialog.showErrorBox("Meta get error:", err);
-            });
-        });
-
-        // Render
-        ipcMain.on('make', (event) => {
-            var callback = { progress: (p) => {
-                    event.sender.send("progress", p);
-                }, };
-
-            if (DEBUG_MODE) {
-                callback.stderr = console.log;
-            }
-
-            vidManager.masterFiles = [];
-            vidManager.renderAll(0, callback)
-            .then(() => {return vidManager.stitchMaster(callback)})
-            .then(() => {event.sender.send("done")})
-            .catch((err) => {event.sender.send("error", err.message)});
-        });
-
-        // JavaScript contents from plugins.js
-        class PluginManager {
-            constructor(mainWindow) {
-                this.pluginList = {};
-                this.windowList = [];
-
-                this.saveFile = app.getPath("userData") + "/plugins.json";
-
-                if (fs.existsSync(this.saveFile)) {
-                    this.pluginList = JSON.parse(fs.readFileSync(this.saveFile, "utf8"));
-                } else {
-                    this.createDefault();
-                }
-
-            }
-
-            addPluginFromPackage(location) {
-                var settings = JSON.parse(fs.readFileSync(location, "utf8"));
-                settings.path = path.join(path.dirname(location), settings.file);
-                this.registerPlugin(settings.name, settings);
-            }
-
-            registerPlugin(name, settings) {
-                this.pluginList[name] = settings;
-                this.saveList();
-            }
-
-            removePlugin(name) {
-                delete this.pluginList[name];
-                this.saveList();
-            }
-
-            saveList() {
-                fs.writeFile(this.saveFile,
-                    JSON.stringify(this.pluginList),
-                    (err) => {
-                    if (err) throw err;
-                });
-            }
-
-            createDefault() {
-                this.pluginList = {
-                    textEditor: {
-                        path: "html/dialogs/textEditor.html",
-                        type: "filter",
-                        height: 550,
-                        width: 900
-                    },
-                    filter: {
-                        path: "html/dialogs/addFilter.html",
-                        type: "filter",
-                        height: 600,
-                        width: 800
-                    },
-                    scheme: {
-                        path: "html/dialogs/schemeManager.html",
-                        type: "meta",
-                        height: 250,
-                        width: 800
-                    }
-                };
-                this.saveList();
-            }
-
-            openPlugin(name) {
-                var pluginWindow = new BrowserWindow({
-                    width: this.pluginList[name].width,
-                    height: this.pluginList[name].height,
-                    parent: this.mainWindow,
-                    title: "Moon: " + name,
-                    backgroundColor: "#20242B",
-                    webPreferences: {nodeIntegration: true, enableRemoteModule: true}
-                });
-                this.windowList.push(pluginWindow);
-                pluginWindow.on('closed', () => {
-                    pluginWindow = null;
-                });
-                console.log(this.pluginList[name].path);
-                pluginWindow.loadFile(this.pluginList[name].path);
-            }
-
-            createListWindow(mainWindow) {
-                this.listWindow = new BrowserWindow({
-                    width: 270,
-                    height: 280,
-                    title: "Moon: Plugins",
-                    backgroundColor: "#20242B",
-                    minimizable: false,
-                    maximizable: false,
-                    parent: this.mainWindow,
-                    show: false,
-                    thickFrame: false,
-                    titleBarStyle: "hidden",
-                    webPreferences: {nodeIntegration: true, enableRemoteModule: true}
-                });
-                this.listWindow.on('close', (event) => {
-                    event.preventDefault();
-                    this.listWindow.hide();
-                });
-                this.listWindow.webContents.on('did-finish-load', () => {
-                    this.listWindow.webContents.send('plugin-list', this.pluginList);
-                });
-                this.listWindow.loadFile("html/dialogs/pluginList.html");
+                video.pause();
             }
         }
 
-        // JavaScript contents from previewServer.js
-        const express = require('express');
-        const PV_PORT = process.env.PV_PORT | 4000;
-
-        class PreviewServer {
-            constructor(videoManager) {
-                var app = this.app = express();
-                this.settings = {}; // this should be changed when rendering a filtered video
-
-                app.get('/', function(req, res) {
-                    res.send('Moon preview server');
-                });
-
-                app.get('/preview/:file/:seek', function(req, res) {
-                    res.contentType('mp4');
-                    var path = __dirname + "/wd/" + req.params.file;
-                    videoManager.renderPreview({
-                        path: path,
-                        seek: req.params.seek,
-                    }, res)
-                    .then(() => {res.end();});
-                });
-
-                app.get('/filtered', (req, res) => {
-                    res.contentType('mp4');
-                    videoManager.renderPreview({
-                        path: this.settings.path,
-                        seek: this.settings.seek,
-                        filters: this.settings.filters,
-                    }, res)
-                    .then(() => {res.end();});
-                });
-
-                app.on("error", (e) => {
-                    dialog.showErrorBox("Preview server error", e);
-                });
-
-                app.listen(PV_PORT);
-                console.log("Preview server running on " + PV_PORT + ". Change PV_PORT for a different port.");
-            }
+        function stopVideo() {
+            video.pause();
+            video.currentTime = 0;
         }
 
-        // JavaScript contents from testing.js
-        var ffmpeg = require("fluent-ffmpeg");
-        ffmpeg.setFfmpegPath("bin/ffmpeg");
+        function rewind() {
+            video.currentTime -= 10;
+        }
 
-        var command = ffmpeg();
-        command.input("wd/gopro.mov")
-        .on("stderr", console.log)
-        .videoFilters({
-            filter: 'drawtext',
-            options: {
-                text: 'Hello World',
-                fontfile: '/Users/daem_on/Documents/Moon/html/fonts/SourceSansPro-Regular.ttf',
-            }
-        })
-        .save("wd/out.mov");
+        function updateProgressBar() {
+            const percentage = (video.currentTime / video.duration) * 100;
+            progressBar.value = percentage;
+        }
 
-        // JavaScript contents from videoManager.js
-        class VideoManager {
-            constructor(path1=null, path2=null, workdir) {
-                if (path1) ffmpeg.setFfmpegPath(path1);
-                if (path2) ffmpeg.setFfprobePath(path2);
-                this.checkBinsExist(path1, path2);
+        function seekVideo(event) {
+            const seekTime = (event.target.value / 100) * video.duration;
+            video.currentTime = seekTime;
+        }
 
-                this.wd = workdir; // working directory, master files in subdirectory master
-                this.scheme = {}; // common properties that all master files are rendered with
-                this.masterOutput = this.wd + "masterOutput";
-
-                this.workFiles = []; // files imported in current project
-                this.masterFiles = []; // list of processed "master" files
-
-                this.postProcessing = []; // TBA
-            }
-
-            checkBinsExist(path1, path2) {
-                if (fs.existsSync(path1) && fs.existsSync(path2))
-                    return;
-                else throw new Error("Binary not installed!");
-            }
-
-            getMeta(path, callback) {
-                ffmpeg.ffprobe(path, callback);
-            }
-
-            addWorkFile(file, properties) {
-                var cont = {
-                    file: file,
-                    properties: properties
-                };
-                this.workFiles.push(cont);
-            }
-
-            setCallbacks(command, cb) {
-                if (cb.progress) command.on("progress", cb.progress);
-                if (cb.start) command.on("start", cb.start);
-                if (cb.end) command.on("end", cb.end);
-                if (cb.error) command.on("error", cb.error);
-                if (cb.stderr) command.on("stderr", cb.stderr);
-            }
-
-            addWorkFileFilter(index, filter, options=undefined) {
-                var cont = {
-                    filter: filter,
-                    options: options
-                };
-                if (!this.workFiles[index].properties.filters) {
-                    this.workFiles[index].properties.filters = [];
-                }
-
-                this.workFiles[index].properties.filters.push(cont);
-            }
-
-            // go through all workFiles and render
-            renderAll(index, callbacks) {
-                if (this.workFiles.length <= 0)
-                    return Promise.reject(new Error("Files list empty"));
-
-                if (index >= this.workFiles.length)
-                    return Promise.resolve(); // at the end
-
-                // not at the end, rendering "index"
-                return this.render(index, callbacks)
-                .then(() => {
-                    return this.renderAll(index+1, callbacks);
-                });
-            }
-
-            // renders a workFile to be a masterFile
-            render(index, callbacks) {
-                return new Promise((resolve, reject) => {
-                    callbacks.end = resolve;
-                    callbacks.error = reject;
-
-                    var command = ffmpeg();
-                    var workFile = this.workFiles[index];
-
-                    if (workFile.properties.duration) // set duration
-                        command.duration(workFile.properties.duration);
-
-                    var complex = false;
-                    // workFile.properties.advanced: additional render settings
-                    if (workFile.properties.advanced) {
-
-                        if (workFile.properties.advanced.inputs) { // add multiple inputs
-                            var inputs = workFile.properties.inputs;
-                            for (var i = 0; i < inputs.length; i++) {
-                                command.input(inputs[i]);
-                            }
-                        }
-                        if (workFile.properties.advanced.complex) { // use complex filtergraph
-                            complex = true;
-                            if (workFile.properties.complexFilter)
-                                command.complexFilter(workFile.properties.complexFilter);
-                        }
-
-                    }
-
-                    if (!complex) { // don't use complex filtergraph
-                        this.fromScheme(command);
-                        if (workFile.properties.filters)
-                            command.videoFilters(workFile.properties.filters);
-                    }
-
-                    this.setCallbacks(command, callbacks);
-
-                    // render input to single file
-                    command.input(workFile.file);
-
-                    if (workFile.properties.seek) // set start time
-                        command.seekInput(workFile.properties.seek);
-
-                    command.keepDAR()
-                    .output(this.wd + "/master/master" + index + this.scheme.format)
-                    .run();
-
-                    this.masterFiles.push("master" + index + this.scheme.format);
-                });
-            }
-
-            // create complete master file from processed files in master folder
-            stitchMaster(callbacks) {
-                return new Promise((resolve, reject) => {
-                    callbacks.end = resolve;
-                    callbacks.error = reject;
-
-                    var command = ffmpeg();
-                    this.setCallbacks(command, callbacks);
-
-                    var fileList = this.masterFiles;
-                    var listFileName = this.wd + '/master/list.txt', fileNames = '';
-
-                    // create list with filenames
-                    fileList.forEach(function(fileName, index) {
-                        fileNames = fileNames + 'file ' + fileName + '\\n';
-                    });
-
-                    fs.writeFileSync(listFileName, fileNames);
-
-                    command.input(listFileName)
-                    .inputOptions(['-f concat', '-safe 0'])
-                    .outputOptions('-c copy')
-                    .save(this.masterOutput + this.scheme.format);
-                });
-            }
-
-            renderPreview(options, stream) {
-                return new Promise((resolve, reject) => {
-                    var command = ffmpeg();
-                    if (options.filters) command.videoFilters(options.filters);
-
-                    command.input(options.path)
-                    .on("end", resolve)
-                    .on("error", reject)
-                    .duration(10)
-                    .size("480x?")
-                    .format("mp4")
-                    .outputOptions('-movflags frag_keyframe+empty_moov') // seekability magic
-                    .videoCodec("libx264")
-                    .seekInput(options.seek)
-                    .pipe(stream, {end:true});
-                });
-            }
-
-            fromScheme(command) {
-                let sch = this.scheme;
-
-                command.size(sch.size)
-                    .fps(sch.fps)
-                    .videoBitrate(sch.bitrate)
-                    .videoCodec(sch.codec)
-                    .autopad(sch.pad);
-            }
-
-            convertToCompliant(input, name) {
-                var command = ffmpeg();
-                this.fromScheme(command);
-
-                command.input(input)
-                    .save(this.wd + name + sch.format);
-            }
+        function loadVideo(event) {
+            const file = event.target.files[0];
+            const url = URL.createObjectURL(file);
+            video.src = url;
+            video.load();
+            video.play();
         }
     </script>
 </body>
