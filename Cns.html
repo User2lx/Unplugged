@@ -45,11 +45,6 @@
             cursor: pointer;
             border-radius: 5px;
         }
-        iframe {
-            width: 100%;
-            height: 80vh;
-            border: none;
-        }
         .dns-info {
             width: 100%;
             max-width: 800px;
@@ -68,23 +63,22 @@
     <div class="editor-container">
         <div class="controls">
             <input type="text" id="url-input" placeholder="Enter website URL">
-            <button onclick="loadWebsite()">Load Website</button>
+            <button onclick="openWebsite()">Open Website</button>
         </div>
-        <iframe id="website-frame"></iframe>
         <div class="dns-info" id="dns-info">
             <pre id="dns-output"></pre>
         </div>
     </div>
 
     <script>
-        async function loadWebsite() {
+        function openWebsite() {
             const urlInput = document.getElementById('url-input').value;
-            const websiteFrame = document.getElementById('website-frame');
-            websiteFrame.src = urlInput;
+            window.open(urlInput, '_blank');
 
             // Fetch DNS information
-            const dnsInfo = await fetchDNSInfo(urlInput);
-            displayDNSInfo(dnsInfo);
+            fetchDNSInfo(urlInput).then(dnsInfo => {
+                displayDNSInfo(dnsInfo);
+            });
         }
 
         async function fetchDNSInfo(url) {
