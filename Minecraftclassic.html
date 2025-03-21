@@ -1,70 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>Minecraft classic | Alexx743</title>
+<link rel="icon" href="images/mclogo.png" type="image/gif" sizes="16x16">
+
+<link rel="stylesheet" type="text/css" href="minecraft.css">
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<title>Minecraft Game</title>
 </head>
+
 <body>
+    <audio id="music">
+      <source src="pokemon.mp3" type="audio/mp3">
+    </audio>
 
-    <h2>Minecraft classic</h2>
-
-    <div class="topnav">
-      <a href="games.html">
-      <button title="Games" id="Games" class="divbutton"> Games </button> 
-    </a> 
-  
-      <a href="Apps.html">
-      <button title="Apps" id="Apps" class="divbutton"> Apps</button>
-      </a>
-  
-    <a href="index.html">
-      <button title="home" id="home" class="divbutton">home</button>
-    </a>
-
-    <a href="shooter.html">
-      <button title="shooter" class="divbutton">shooter</button>
-    </a>
-
-    <a href="sports.html">
-      <button title="sports" class="divbutton">Sports</button>
-    </a>
-
-    <a href="cars.html">
-      <button title="cars" class="divbutton">Cars</button>
-    </a>
+    <div id="layout">
+        <div id="board"></div>
+        <div class="wrapper">
+            <div id="healthbar"></div>
+            <div id="tools"></div>
+            <div id="inventory"></div>
+            <button id="restore">Reset</button>
+        </div>
     </div>
 
-      <iframe 
-      src="https://universal-games-unblocked.vercel.app/projects/minecraft-classic/index.html?join=xnkw0vKx82V-6m9p"
-      ></iframe>
+    <div class="modal fade bd-example-modal-sm" id="myModal">
+        <div class="modal-dialog modal-lg text-center">
+            <div id="logo"></div>
+            <div id="pokelogo"></div>
+            <div class="button-container">
+                <button id="play" class="button btn btn-lg btn-primary">Play Game</button>
+                <button id="tutorial" class="button btn btn-lg btn-primary">Tutorial</button>
+            </div>
+        </div>
+    </div>
 
-      <button 
-      onclick=
-      "iffs('https://universal-games-unblocked.vercel.app/projects/minecraft-classic/index.html?join=xnkw0vKx82V-6m9p')"
-       class="fullscreen"></button>
-      
-       <script>
-        function iffs(href) {
-      const iframe = document.querySelector("iframe");
-      const stl = iframe.style;
-      stl.border = stl.outline = 'none';
-      stl.width = '100vw';
-      stl.height = '100vh';
-      stl.position = 'fixed';
-      stl.left = stl.right = stl.top = stl.bottom = '0';
-      iframe.src = href;
-      }
-      </script>
+    <div class="modal fade bd-example-modal-sm" id="tutorialModal">
+        <div class="modal-dialog modal-lg text-center">
+            <div id="rules">
+                <h2>Welcome Player!</h2>
+                <p>Minecraft-Pokemon Edition is a simplified version of the game Minecraft where you can catch pokemon, build, dig, mine, and more!</p>
+                <p>Use your axe to cut down trees and leaves.</p>
+                <p>Use your shovel to dig dirt and grass.</p>
+                <p>Use your pickaxe to mine rock.</p>
+                <p>Use your pokeball to catch pokemon.</p>
+                <p>There are six different types of pokemon for you to catch. The green health-bar on the right hand corner displays their health.</p>
+                <p>Attack the wild pokemon by selecting your pokemon and just click to weaken them. When their health is low, use your Pokeball to capture them</p>
+                <p>I've given you a Pikachu so you can fight other pokemon</p>
+                <p>Try to capture all the wild pokemon before the sun goes down</p>
+                <button id="returnToMain" class="button btn btn-lg btn-primary">Return</button>
+            </div>
+        </div>
+    </div>
 
-<script>
-  document.addEventListener("keydown", 
-  async (e) => { if ("`" == e.key) window.parent.window.location.replace("https://google.com/") });
-</script>
-    <script>
-  document.addEventListener("keydown", 
-  async (e) => { if ("`" == e.key) window.parent.window.location.replace("https://google.com/") });
+    <div class="modal fade bd-example-modal-sm captureMessage">
+        <div class="modal-dialog modal-lg text-center">
+                <div id="capturedCaption"></div>
+            </div>
+        </div>
+
+        <div class="modal fade bd-example-modal-sm failcaptureMessage">
+            <div class="modal-dialog modal-lg text-center">
+                    <div id="failedCapture">Wild pokemon broke free! Try to weaken it with your pokemon first!</div>
+                </div>
+            </div>
+
+
+
+
+    <div class="modal fade bd-example-modal-sm" id="winningModal">
+        <div class="modal-dialog modal-lg text-center">
+            <div id="rules">
+                <h2>Congratulations Player!</h2>
+                <p>You caught all the wild pokemon!!!</p>
+                <p>The creators hope you enjoyed their game.</p>
+                <p>If you liked this game, be sure to share with your fellow trainers and check out their github.</p>
+                <div>
+
+                    <img src="images/charmander.png">
+                    <img src="images/bulbasaur.png">
+                    <img src="images/squirtle.png">
+                    <img src="images/pika.png">
+                    <img src="images/pidgey.png">
+                    <img src="images/mewtwo.png">
+                    <img src="images/diglett.png">
+
+
+                </div>
+                <div>
+                    <button class="button btn btn-lg btn-primary"><a href="https://github.com/baldetorres" target="_blank">Baldemar</a></button>
+                    <button class="button btn btn-lg btn-primary"><a href="https://github.com/nehemiahk" target="_blank">Nehemiah</a></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bd-example-modal-sm professorMessage">
+        <div class="modal-dialog modal-lg text-center">
+                <div id="oakMessage"><div>
+            </div>
+        </div>
+
+
+
+<script src="minecraft.js">
 </script>
 </body>
 </html>
