@@ -40,10 +40,12 @@
         }
         .watermark {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            opacity: 0.2;
-            pointer-events: none;
+            top: 10px;
+            right: 10px;
+            opacity: 0.7; /* Adjust opacity for some transparency */
+            background: transparent; /* Make background invisible */
+            color: white; /* Change text color as needed */
+            padding: 5px;
         }
         .controls {
             display: flex;
@@ -122,7 +124,7 @@
             <video id="video" controls>
                 Your browser does not support the video tag.
             </video>
-            <img src="https://github.com/User2lx/Unplugged/raw/main/MoonWatermark.png" class="watermark" alt="Watermark">
+            <div class="watermark">Your Watermark</div>
         </div>
         <div class="controls">
             <button onclick="playPause()">Play/Pause</button>
