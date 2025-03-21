@@ -20,12 +20,20 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
         }
         img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
             margin-top: 20px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -35,6 +43,10 @@
         <p id="cat-fact">Loading...</p>
         <h1>Random Cat Photo</h1>
         <img id="cat-photo" src="" alt="Random Cat" />
+        <div>
+            <button onclick="fetchCatFact(); fetchCatPhoto();">New Fact</button>
+            <button onclick="downloadImage();">Download Image</button>
+        </div>
     </div>
     <script>
         async function fetchCatFact() {
@@ -53,8 +65,21 @@
                 const data = await response.json();
                 const imgUrl = data[0].url;
                 document.getElementById('cat-photo').src = imgUrl;
+                document.getElementById('cat-photo').setAttribute('data-src', imgUrl);
             } catch (error) {
                 document.getElementById('cat-photo').alt = 'Failed to load cat photo.';
+            }
+        }
+
+        function downloadImage() {
+            const imgUrl = document.getElementById('cat-photo').getAttribute('data-src');
+            if (imgUrl) {
+                const link = document.createElement('a');
+                link.href = imgUrl;
+                link.download = 'cat_photo.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
         }
 
