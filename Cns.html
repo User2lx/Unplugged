@@ -71,14 +71,17 @@
     </div>
 
     <script>
-        function openWebsite() {
+        async function openWebsite() {
             const urlInput = document.getElementById('url-input').value;
             window.open(urlInput, '_blank');
 
-            // Fetch DNS information
-            fetchDNSInfo(urlInput).then(dnsInfo => {
+            try {
+                const dnsInfo = await fetchDNSInfo(urlInput);
                 displayDNSInfo(dnsInfo);
-            });
+            } catch (error) {
+                console.error('Error fetching DNS info:', error);
+                displayError(error.message);
+            }
         }
 
         async function fetchDNSInfo(url) {
@@ -91,13 +94,22 @@
                 },
                 body: JSON.stringify({ url })
             });
-            const data = await response.json();
-            return data;
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+            }
+
+            return await response.json();
         }
 
         function displayDNSInfo(dnsInfo) {
             const dnsOutput = document.getElementById('dns-output');
             dnsOutput.textContent = JSON.stringify(dnsInfo, null, 2);
+        }
+
+        function displayError(message) {
+            const dnsOutput = document.getElementById('dns-output');
+            dnsOutput.textContent = `Error: ${message}`;
         }
     </script>
 </body>
