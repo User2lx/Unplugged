@@ -1,203 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Horror Game</title>
+    <title>Simple Web Proxy</title>
     <style>
-        body { margin: 0; overflow: hidden; }
-        #choices {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background: #f0f0f0;
+        }
+        .input-group {
             display: flex;
             gap: 10px;
+            margin: 20px 0;
+        }
+        input[type="url"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
         }
         button {
-            padding: 10px;
-            background-color: #333;
+            padding: 12px 24px;
+            background: #007bff;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
+        .disclaimer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div id="choices">
-        <button onclick="makeChoice('left')">Go Left</button>
-        <button onclick="makeChoice('right')">Go Right</button>
-        <button onclick="makeChoice('forward')">Go Forward</button>
-        <button onclick="makeChoice('backward')">Go Backward</button>
+    <h1>Web Proxy</h1>
+    <div class="input-group">
+        <input type="url" id="urlInput" placeholder="Enter website URL (e.g., https://example.com)" />
+        <button onclick="loadUrl()">Load</button>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/PointerLockControls.js"></script>
+    <iframe id="proxyFrame" src="about:blank"></iframe>
+    <div class="disclaimer">
+        <p>Note: This proxy is running on Replit's servers. For best performance, please use the hosted version.</p>
+    </div>
+
     <script>
-        let scene, camera, renderer, monster, controls;
-        let monsterSpeed = 0.02;
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-
-        function init() {
-            // Initialize scene
-            scene = new THREE.Scene();
-
-            // Initialize camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 1.6, 0); // Player spawns inside the house
-            scene.add(camera);
-
-            // Initialize renderer
-            renderer = new THREE.WebGLRenderer();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            // Initialize lighting
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(0, 1, 0).normalize();
-            scene.add(light);
-
-            // Create ground
-            const groundGeometry = new THREE.PlaneGeometry(100, 100);
-            const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
-            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-            ground.rotation.x = -Math.PI / 2;
-            scene.add(ground);
-
-            // Create house map
-            createWall(0, 1, -10, 20, 2, 1); // Front wall
-            createWall(0, 1, 10, 20, 2, 1);  // Back wall
-            createWall(-10, 1, 0, 1, 2, 20); // Left wall
-            createWall(10, 1, 0, 1, 2, 20);  // Right wall
-            createWall(0, 1, -5, 10, 2, 1);  // Inner wall
-
-            // Create monster
-            const monsterGeometry = new THREE.BoxGeometry(1, 2, 1);
-            const monsterMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-            monster = new THREE.Mesh(monsterGeometry, monsterMaterial);
-            monster.position.set(0, 1, -20);
-            scene.add(monster);
-
-            // Initialize controls
-            controls = new THREE.PointerLockControls(camera, document.body);
-            document.addEventListener('click', () => {
-                controls.lock();
-            }, false);
-
-            controls.addEventListener('lock', () => {
-                document.getElementById('choices').style.display = 'none';
-            });
-
-            controls.addEventListener('unlock', () => {
-                document.getElementById('choices').style.display = 'flex';
-            });
-
-            // Add event listeners for movement
-            document.addEventListener('keydown', onKeyDown, false);
-            document.addEventListener('keyup', onKeyUp, false);
-
-            // Animate the scene
-            animate();
-        }
-
-        function createWall(x, y, z, width, height, depth) {
-            const geometry = new THREE.BoxGeometry(width, height, depth);
-            const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-            const wall = new THREE.Mesh(geometry, material);
-            wall.position.set(x, y, z);
-            scene.add(wall);
-        }
-
-        function onKeyDown(event) {
-            switch (event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    moveForward = true;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    moveLeft = true;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    moveBackward = true;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    moveRight = true;
-                    break;
+        function loadUrl() {
+            const url = document.getElementById('urlInput').value;
+            if (url) {
+                // Using the current Replit deployment URL
+                const proxyUrl = `https://${window.location.hostname}/proxy?url=${encodeURIComponent(url)}`;
+                document.getElementById('proxyFrame').src = proxyUrl;
             }
         }
-
-        function onKeyUp(event) {
-            switch (event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    moveForward = false;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    moveLeft = false;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    moveBackward = false;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    moveRight = false;
-                    break;
-            }
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Handle movement
-            if (moveForward) controls.moveForward(0.1);
-            if (moveBackward) controls.moveBackward(0.1);
-            if (moveLeft) controls.moveRight(-0.1);
-            if (moveRight) controls.moveRight(0.1);
-
-            // Monster movement
-            monster.position.z += monsterSpeed;
-            if (monster.position.z > 5 || monster.position.z < -20) {
-                monsterSpeed = -monsterSpeed;
-            }
-
-            // Check for collision with monster
-            if (monster.position.distanceTo(camera.position) < 1) {
-                window.location.href = 'https://user2lx.github.io/Unplugged/jeff.html';
-            }
-
-            // Render the scene
-            renderer.render(scene, camera);
-        }
-
-        function makeChoice(choice) {
-            switch (choice) {
-                case 'left':
-                    camera.position.x -= 1;
-                    break;
-                case 'right':
-                    camera.position.x += 1;
-                    break;
-                case 'forward':
-                    camera.position.z -= 1;
-                    break;
-                case 'backward':
-                    camera.position.z += 1;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        window.onload = init;
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
