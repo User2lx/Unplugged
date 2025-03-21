@@ -90,13 +90,11 @@
     </div>
 
     <script>
+        let currentStep = 1;
         const images = [
-            { src: 'https://via.placeholder.com/150?text=Cat', name: 'Cat' },
-            { src: 'https://via.placeholder.com/150?text=Dog', name: 'Dog' },
-            { src: 'https://via.placeholder.com/150?text=Bird', name: 'Bird' },
-            { src: 'https://via.placeholder.com/150?text=Fish', name: 'Fish' },
-            { src: 'https://via.placeholder.com/150?text=Horse', name: 'Horse' },
-            { src: 'https://via.placeholder.com/150?text=Cow', name: 'Cow' }
+            { src: 'https://content.dogagingproject.org/wp-content/uploads/2020/11/helena-lopes-S3TPJCOIRoo-unsplash-scaled.jpg', name: 'Dog', correctGrid: [1, 1] },
+            { src: 'https://t4.ftcdn.net/jpg/03/10/42/27/360_F_310422728_gvGj4cxa8MZDbJOPws9MgQXUslt7jpxF.jpg', name: 'Taxi', correctGrid: [0, 2] },
+            { src: 'https://www.aacounty.org/sites/default/files/styles/large/public/2023-07/street-signals.jpg?itok=ESpc2w8B', name: '', correctGrid: [0, 0] }
         ];
 
         const selectedImage = images[Math.floor(Math.random() * images.length)];
@@ -116,19 +114,38 @@
             document.getElementById('step2').style.display = 'block';
 
             const grid = document.getElementById('captchaGrid');
-            images.forEach(image => {
-                const imgElement = document.createElement('img');
-                imgElement.src = image.src;
-                imgElement.alt = image.name;
-                imgElement.addEventListener('click', () => {
-                    if (image.name === selectedImage.name) {
-                        window.location.href = 'https://user2lx.github.io/Unplugged/main-page.html';
-                    } else {
-                        alert('Incorrect! Please try again.');
-                    }
-                });
-                grid.appendChild(imgElement);
-            });
+            grid.innerHTML = ''; // Clear previous content if any
+
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 3; col++) {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = 'https://via.placeholder.com/100'; // Placeholder image
+                    imgElement.alt = 'Placeholder';
+                    imgElement.addEventListener('click', () => {
+                        if (row === selectedImage.correctGrid[0] && col === selectedImage.correctGrid[1]) {
+                            if (currentStep === 1) {
+                                currentStep++;
+                                alert('Correct! Proceeding to the next CAPTCHA.');
+                                loadNextCaptcha();
+                            } else {
+                                window.location.href = 'https://user2lx.github.io/Unplugged/main-page.html';
+                            }
+                        } else {
+                            alert('Incorrect! Please try again.');
+                        }
+                    });
+                    grid.appendChild(imgElement);
+                }
+            }
+        }
+
+        function loadNextCaptcha() {
+            const nextImage = images[1]; // Load the next image for the second CAPTCHA
+            document.getElementById('captchaImage').src = nextImage.src;
+            selectedImage.name = nextImage.name;
+            selectedImage.correctGrid = nextImage.correctGrid;
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
         }
     </script>
 </body>
