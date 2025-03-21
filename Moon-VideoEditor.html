@@ -38,6 +38,13 @@
             width: 100%;
             border-radius: 10px;
         }
+        .watermark {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -115,6 +122,7 @@
             <video id="video" controls>
                 Your browser does not support the video tag.
             </video>
+            <img src="file:///C:/Users/User2/Downloads/Untitled%20(4).png" class="watermark" alt="Watermark">
         </div>
         <div class="controls">
             <button onclick="playPause()">Play/Pause</button>
