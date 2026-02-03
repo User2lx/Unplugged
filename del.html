@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Canvas Maze Game</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="game-container">
+        <!-- The canvas element is where the maze and player will be drawn -->
+        <canvas id="mazeCanvas" width="400" height="400">
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+        <div class="message-box">
+            <h2 id="messageText">Find the Exit!</h2>
+            <button id="tryAgainButton" style="display: none;">Try Again</button>
+        </div>
+    </div>
+    <!-- Link to the JavaScript file that contains the game logic -->
+    <script src="script.js"></script>
+</body>
+</html>
