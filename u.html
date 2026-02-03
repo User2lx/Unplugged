@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Galaga Level Up</title>
+<style>
+  html, body { margin:0; padding:0; background:black; overflow:hidden; font-family:monospace; color:white; }
+  canvas { display:block; margin:auto; background: radial-gradient(circle at bottom, #001, #000); }
+</style>
+</head>
+<body>
+<canvas id="game" width="480" height="640"></canvas>
+<script>
+// ====== SETUP ======
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ====== INPUT ======
+const keys = {};
+addEventListener('keydown', e => keys[e.key] = true);
+addEventListener('keyup', e => keys[e.key] = false);
+
+// ====== UTILS ======
+const rand = (a,b)=>Math.random()*(b-a)+a;
+function playSound(freq,duration){ 
+  const ctxAudio = new (window.AudioContext||window.webkitAudioContext)();
+  const osc = ctxAudio.createOscillator();
+  const gain = ctxAudio.createGain();
+  osc.connect(gain); gain.connect(ctxAudio.destination);
+  osc.type='square'; osc.frequency.value=freq;
+  osc.start(); osc.stop(ctxAudio.currentTime+duration/1000);
+  gain.gain.setValueAtTime(0.2,ctxAudio.currentTime);
+}
+
+// ====== STARFIELD ======
+const stars = Array.from({length:150}, ()=>({x:rand(0,W),y:rand(0,H),s:rand(0.5,2)}));
+
+// ====== PLAYER ======
+const player = {
+  x: W/2, y: H-60, w:28, h:20, speed:5, cooldown:0, lives:3, power:1, shield:false
+};
+const bullets = [];
+const enemies = [];
+const powerups = [];
+const explosions = [];
+let score = 0, gameOver = false, wave = 1;
+
+// ====== ENEMY SPAWN ======
+function spawnWave(){
+  if(wave%3===0){ // Boss wave
+    enemies.push({x:W/2,y:80,w:60,h:40,hp:10,boss:true,t:0});
+  } else {
+    for(let r=0;r<3;r++){
+      for(let c=0;c<8;c++){
+        enemies.push({x:60+c*45,y:60+r*40,baseX:60+c*45,t:rand(0,Math.PI*2),hp:1});
+      }
+    }
+  }
+}
+spawnWave();
+
+// ====== UPDATE ======
+function update(){
+  if(gameOver) return;
+
+  // Stars
+  stars.forEach(s=>{ s.y+=s.s; if(s.y>H)s.y=0; });
+
+  // Player movement
+  if((keys['ArrowLeft']||keys['a']) && player.x>20) player.x-=player.speed;
+  if((keys['ArrowRight']||keys['d']) && player.x<W-20) player.x+=player.speed;
+
+  // Shooting
+  if(keys[' '] && player.cooldown<=0){
+    if(player.power===1) bullets.push({x:player.x,y:player.y,dx:0});
+    else if(player.power===2){
+      bullets.push({x:player.x-5,y:player.y,dx:-1});
+      bullets.push({x:player.x+5,y:player.y,dx:1});
+    }
+    playSound(440,100);
+    player.cooldown = 10;
+  }
+  if(player.cooldown>0) player.cooldown--;
+
+  bullets.forEach(b=>{ b.y-=8; b.x+=b.dx*2; });
+
+  // Enemies
+  enemies.forEach(e=>{
+    if(!e.boss){
+      e.t+=0.02; e.x=e.baseX+Math.sin(e.t)*20;
+      if(Math.random()<0.002) e.y+=40;
+    } else { e.t+=0.01; e.x=W/2+Math.sin(e.t)*100; }
+  });
+
+  // Collisions
+  bullets.forEach((b,bi)=>{
+    enemies.forEach((e,ei)=>{
+      if(Math.hypot(b.x-e.x,b.y-e.y)<(e.boss?40:14)){
+        bullets.splice(bi,1);
+        e.hp--;
+        explosions.push({x:e.x,y:e.y,life:20});
+        playSound(220,100);
+        if(e.hp<=0){
+          enemies.splice(ei,1);
+          score+=e.boss?1000:100;
+          // chance to drop powerup
+          if(Math.random()<0.2) powerups.push({x:e.x,y:e.y,type:'power'});
+        }
+      }
+    });
+  });
+
+  // Player collision with enemies
+  enemies.forEach((e,ei)=>{
+    if(Math.hypot(e.x-player.x,e.y-player.y)<20){
+      if(player.shield){ player.shield=false; } 
+      else { player.lives--; if(player.lives<=0) gameOver=true; }
+      explosions.push({x:player.x,y:player.y,life:20});
+      playSound(110,200);
+      enemies.splice(ei,1);
+    }
+  });
+
+  // Powerups
+  powerups.forEach((p,pi)=>{
+    p.y+=2;
+    if(Math.hypot(p.x-player.x,p.y-player.y)<20){
+      if(p.type==='power'){ player.power=Math.min(player.power+1,2); }
+      powerups.splice(pi,1);
+    }
+  });
+
+  // Explosions
+  explosions.forEach(ex=>ex.life--);
+  for(let i=explosions.length-1;i>=0;i--) if(explosions[i].life<=0) explosions.splice(i,1);
+
+  // Next wave
+  if(enemies.length===0) { wave++; spawnWave(); }
+}
+
+// ====== DRAW ======
+function drawPlayer(){
+  ctx.fillStyle = player.shield?'cyan':'#0ff';
+  ctx.beginPath();
+  ctx.moveTo(player.x,player.y);
+  ctx.lineTo(player.x-player.w/2,player.y+player.h);
+  ctx.lineTo(player.x+player.w/2,player.y+player.h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawEnemy(e){
+  ctx.fillStyle = e.boss?'red':'#f0f';
+  if(e.boss){
+    ctx.fillRect(e.x-30,e.y-20,60,40);
+  } else {
+    ctx.beginPath();
+    ctx.arc(e.x,e.y,12,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawExplosion(ex){
+  ctx.strokeStyle = `rgba(255,200,0,${ex.life/20})`;
+  ctx.beginPath();
+  ctx.arc(ex.x,ex.y,20-ex.life,0,Math.PI*2);
+  ctx.stroke();
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  // Stars
+  ctx.fillStyle='white';
+  stars.forEach(s=>ctx.fillRect(s.x,s.y,s.s,s.s));
+
+  drawPlayer();
+
+  ctx.fillStyle='yellow';
+  bullets.forEach(b=>ctx.fillRect(b.x-2,b.y,4,10));
+
+  enemies.forEach(drawEnemy);
+  powerups.forEach(p=>{ ctx.fillStyle='lime'; ctx.fillRect(p.x-5,p.y-5,10,10); });
+  explosions.forEach(drawExplosion);
+
+  ctx.fillStyle='white';
+  ctx.fillText("Score: "+score,10,20);
+  ctx.fillText("Lives: "+player.lives,W-70,20);
+  ctx.fillText("Wave: "+wave,W/2-20,20);
+
+  if(gameOver){
+    ctx.fillStyle='red'; ctx.font='30px monospace';
+    ctx.fillText("GAME OVER",W/2-90,H/2);
+  }
+}
+
+// ====== LOOP ======
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>
