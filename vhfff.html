@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Donkey Kong Arcade Visual</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  canvas {
+    image-rendering: pixelated;
+    background: #000;
+    border: 6px solid #e31b23;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+/* ================== SETUP ================== */
+const SCALE = 3;
+const WIDTH = 224;
+const HEIGHT = 256;
+
+const canvas = document.getElementById("game");
+canvas.width = WIDTH * SCALE;
+canvas.height = HEIGHT * SCALE;
+
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+const g = document.createElement("canvas").getContext("2d");
+g.canvas.width = WIDTH;
+g.canvas.height = HEIGHT;
+
+const GRAVITY = 0.4;
+const keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+/* ================== GAME STATE ================== */
+let frame = 0;
+let score = 0;
+let lives = 3;
+let shake = 0;
+
+/* ================== PLAYER ================== */
+const player = {
+  x: 16, y: 232,
+  vx: 0, vy: 0,
+  w: 8, h: 12,
+  dir: 1,
+  onGround: false,
+  hammer: false,
+  hammerTime: 0
+};
+
+/* ================== PLATFORMS ================== */
+const platforms = [
+  {x:0,y:244,w:224,dir:1},
+  {x:16,y:208,w:192,dir:-1},
+  {x:0,y:172,w:192,dir:1},
+  {x:16,y:136,w:192,dir:-1},
+  {x:0,y:100,w:192,dir:1},
+  {x:16,y:64,w:192,dir:-1}
+];
+
+/* ================== LADDERS ================== */
+const ladders = [
+  {x:48,y:208,h:36},
+  {x:144,y:172,h:36},
+  {x:72,y:136,h:36},
+  {x:176,y:100,h:36},
+  {x:112,y:64,h:36}
+];
+
+/* ================== DK / PAULINE ================== */
+const donkey = {x:96,y:32,frame:0};
+const pauline = {x:180,y:40};
+
+/* ================== HAMMER ================== */
+const hammer = {x:88,y:196,active:true};
+
+/* ================== BARRELS ================== */
+let barrels = [];
+function spawnBarrel() {
+  barrels.push({x:104,y:48,vx:1.5,vy:0,spin:0});
+}
+setInterval(spawnBarrel, 1800);
+
+/* ================== LOGIC ================== */
+function updatePlayer() {
+  player.vx = 0;
+  if (keys["ArrowLeft"]) { player.vx = -1.5; player.dir = -1; }
+  if (keys["ArrowRight"]) { player.vx = 1.5; player.dir = 1; }
+
+  let onLadder = ladders.some(l =>
+    player.x+player.w > l.x &&
+    player.x < l.x+8 &&
+    player.y+player.h > l.y &&
+    player.y < l.y+l.h
+  );
+
+  if (onLadder) {
+    player.vy = 0;
+    if (keys["ArrowUp"]) player.y -= 1.2;
+    if (keys["ArrowDown"]) player.y += 1.2;
+  } else {
+    player.vy += GRAVITY;
+  }
+
+  if (keys["ArrowUp"] && player.onGround && !onLadder) {
+    player.vy = -6;
+  }
+
+  player.x += player.vx;
+  player.y += player.vy;
+  player.onGround = false;
+
+  for (let p of platforms) {
+    if (
+      player.x < p.x + p.w &&
+      player.x + player.w > p.x &&
+      player.y + player.h <= p.y + 4 &&
+      player.y + player.h + player.vy >= p.y
+    ) {
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+    }
+  }
+
+  // Hammer pickup
+  if (hammer.active &&
+      Math.abs(player.x - hammer.x) < 8 &&
+      Math.abs(player.y - hammer.y) < 8) {
+    hammer.active = false;
+    player.hammer = true;
+    player.hammerTime = 480;
+  }
+
+  if (player.hammer && --player.hammerTime <= 0) {
+    player.hammer = false;
+  }
+}
+
+function updateBarrels() {
+  for (let b of barrels) {
+    b.vy += GRAVITY;
+    b.y += b.vy;
+
+    for (let p of platforms) {
+      if (
+        b.x > p.x && b.x < p.x+p.w &&
+        b.y+4 > p.y && b.y+4 < p.y+4
+      ) {
+        b.y = p.y - 4;
+        b.vy = 0;
+        b.vx = 1.5 * p.dir;
+      }
+    }
+    b.x += b.vx;
+    b.spin += 0.2;
+  }
+}
+
+/* ================== DRAW HELPERS ================== */
+function drawRect(x,y,w,h,c) {
+  g.fillStyle = c;
+  g.fillRect(x,y,w,h);
+}
+
+/* ================== SPRITES ================== */
+function drawMario() {
+  const walk = Math.floor(frame/8)%2;
+  drawRect(player.x,player.y,8,12, "#1e90ff");
+  if (player.hammer) {
+    drawRect(player.x + (player.dir>0?8:-4), player.y+2, 4, 2, "#ffd700");
+  }
+}
+
+function drawDK() {
+  drawRect(donkey.x,donkey.y,16,16,"#8b4513");
+  if (frame%30<15)
+    drawRect(donkey.x+2,donkey.y+16,12,4,"#8b4513");
+}
+
+function drawPauline() {
+  drawRect(pauline.x,pauline.y,6,12,"#ff69b4");
+}
+
+/* ================== DRAW ================== */
+function draw() {
+  g.clearRect(0,0,WIDTH,HEIGHT);
+
+  platforms.forEach(p => drawRect(p.x,p.y,p.w,4,"#e31b23"));
+  ladders.forEach(l => drawRect(l.x,l.y,8,l.h,"#00bfff"));
+
+  drawDK();
+  drawPauline();
+
+  if (hammer.active)
+    drawRect(hammer.x,hammer.y,6,6,"#ffd700");
+
+  barrels.forEach(b => drawRect(b.x,b.y,6,6,"#ff8c00"));
+  drawMario();
+
+  g.fillStyle = "#fff";
+  g.font = "8px monospace";
+  g.fillText("SCORE " + score, 8, 8);
+  g.fillText("LIVES " + lives, 160, 8);
+
+  ctx.setTransform(SCALE,0,0,SCALE,shake?Math.random()*2:0,shake?Math.random()*2:0);
+  ctx.drawImage(g.canvas,0,0);
+}
+
+/* ================== LOOP ================== */
+function loop() {
+  frame++;
+  updatePlayer();
+  updateBarrels();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>
