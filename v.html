@@ -1,22 +1,193 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Donkey Kong</title>
+<style>
+  body {
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: monospace;
+  }
 
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
-		<title>Donkey Kong with Phaser</title>
-		<script type="text/javascript" src="js/phaser.js"></script>
-		<style>
-		  body {
-		    padding: 0px;
-		    margin: 0px;
-		    background-color: black;
-		  }
-		  </style>
-	</head>
+  canvas {
+    background: #111;
+    border: 4px solid #f00;
+  }
+</style>
+</head>
+<body>
 
-	<body>
-		<!-- include the main game file -->
-		<script src="js/main.js"></script>
-	</body>
+<canvas id="game" width="400" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const gravity = 0.5;
+let keys = {};
+
+const player = {
+  x: 50,
+  y: 440,
+  w: 20,
+  h: 20,
+  vx: 0,
+  vy: 0,
+  onGround: false
+};
+
+const platforms = [
+  { x: 0, y: 480, w: 400, h: 20 },
+  { x: 50, y: 380, w: 300, h: 10 },
+  { x: 0, y: 280, w: 300, h: 10 },
+  { x: 100, y: 180, w: 300, h: 10 },
+  { x: 0, y: 80, w: 300, h: 10 }
+];
+
+const donkey = { x: 170, y: 40, w: 40, h: 40 };
+let barrels = [];
+
+function spawnBarrel() {
+  barrels.push({
+    x: donkey.x + 10,
+    y: donkey.y + donkey.h,
+    r: 8,
+    vx: Math.random() > 0.5 ? 2 : -2,
+    vy: 0
+  });
+}
+
+setInterval(spawnBarrel, 2000);
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function updatePlayer() {
+  player.vx = 0;
+
+  if (keys["ArrowLeft"]) player.vx = -3;
+  if (keys["ArrowRight"]) player.vx = 3;
+
+  if (keys["ArrowUp"] && player.onGround) {
+    player.vy = -10;
+    player.onGround = false;
+  }
+
+  player.vy += gravity;
+
+  player.x += player.vx;
+  player.y += player.vy;
+
+  player.onGround = false;
+
+  for (let p of platforms) {
+    if (
+      player.x < p.x + p.w &&
+      player.x + player.w > p.x &&
+      player.y + player.h < p.y + 10 &&
+      player.y + player.h + player.vy >= p.y
+    ) {
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+    }
+  }
+
+  player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+
+  if (player.y > canvas.height) resetGame();
+}
+
+function updateBarrels() {
+  for (let b of barrels) {
+    b.vy += gravity;
+    b.x += b.vx;
+    b.y += b.vy;
+
+    for (let p of platforms) {
+      if (
+        b.x > p.x &&
+        b.x < p.x + p.w &&
+        b.y + b.r > p.y &&
+        b.y + b.r < p.y + 10
+      ) {
+        b.y = p.y - b.r;
+        b.vy = 0;
+      }
+    }
+
+    // Collision with player
+    if (
+      b.x > player.x &&
+      b.x < player.x + player.w &&
+      b.y > player.y &&
+      b.y < player.y + player.h
+    ) {
+      resetGame();
+    }
+  }
+
+  barrels = barrels.filter(b => b.y < canvas.height + 50);
+}
+
+function resetGame() {
+  player.x = 50;
+  player.y = 440;
+  player.vx = 0;
+  player.vy = 0;
+  barrels = [];
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Platforms
+  ctx.fillStyle = "#f00";
+  for (let p of platforms) {
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+  }
+
+  // Donkey Kong
+  ctx.fillStyle = "#964B00";
+  ctx.fillRect(donkey.x, donkey.y, donkey.w, donkey.h);
+
+  // Player
+  ctx.fillStyle = "#00f";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // Barrels
+  ctx.fillStyle = "#ff0";
+  for (let b of barrels) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Goal
+  ctx.fillStyle = "#0f0";
+  ctx.fillRect(330, 40, 20, 20);
+
+  if (player.x > 330 && player.y < 80) {
+    ctx.fillStyle = "#fff";
+    ctx.font = "24px monospace";
+    ctx.fillText("YOU WIN!", 120, 250);
+  }
+}
+
+function loop() {
+  updatePlayer();
+  updateBarrels();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
 </html>
