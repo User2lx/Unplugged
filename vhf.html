@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Retro Donkey Kong</title>
+<style>
+  body {
+    margin: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  canvas {
+    background: #000;
+    image-rendering: pixelated;
+    border: 4px solid red;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game" width="448" height="512"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const GRAVITY = 0.5;
+const keys = {};
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+// PLAYER
+const player = {
+  x: 40,
+  y: 460,
+  w: 16,
+  h: 16,
+  vx: 0,
+  vy: 0,
+  climbing: false
+};
+
+// PLATFORMS
+const platforms = [
+  {x:0,y:480,w:448,h:16},
+  {x:40,y:400,w:360,h:8},
+  {x:0,y:320,w:360,h:8},
+  {x:40,y:240,w:360,h:8},
+  {x:0,y:160,w:360,h:8},
+  {x:40,y:80,w:360,h:8}
+];
+
+// LADDERS
+const ladders = [
+  {x:100,y:400,h:80},
+  {x:260,y:320,h:80},
+  {x:140,y:240,h:80},
+  {x:300,y:160,h:80},
+  {x:200,y:80,h:80}
+];
+
+// DONKEY KONG
+const donkey = {x:200,y:40,w:32,h:32};
+
+// BARRELS
+let barrels = [];
+
+function spawnBarrel() {
+  barrels.push({
+    x: donkey.x + 16,
+    y: donkey.y + 32,
+    r: 6,
+    vx: Math.random() > 0.5 ? 1.5 : -1.5,
+    vy: 0
+  });
+}
+setInterval(spawnBarrel, 1800);
+
+// GAME LOGIC
+function updatePlayer() {
+  player.vx = 0;
+
+  if (keys["ArrowLeft"]) player.vx = -2;
+  if (keys["ArrowRight"]) player.vx = 2;
+
+  let onLadder = ladders.some(l =>
+    player.x + player.w > l.x &&
+    player.x < l.x + 16 &&
+    player.y + player.h > l.y &&
+    player.y < l.y + l.h
+  );
+
+  if (onLadder) {
+    player.climbing = true;
+    player.vy = 0;
+    if (keys["ArrowUp"]) player.y -= 2;
+    if (keys["ArrowDown"]) player.y += 2;
+  } else {
+    player.climbing = false;
+    player.vy += GRAVITY;
+  }
+
+  if (keys["ArrowUp"] && !player.climbing && player.vy === 0) {
+    player.vy = -8;
+  }
+
+  player.x += player.vx;
+  player.y += player.vy;
+
+  for (let p of platforms) {
+    if (
+      player.x < p.x + p.w &&
+      player.x + player.w > p.x &&
+      player.y + player.h <= p.y + 8 &&
+      player.y + player.h + player.vy >= p.y
+    ) {
+      player.y = p.y - player.h;
+      player.vy = 0;
+    }
+  }
+
+  if (player.y > canvas.height) reset();
+}
+
+function updateBarrels() {
+  for (let b of barrels) {
+    b.vy += GRAVITY;
+    b.x += b.vx;
+    b.y += b.vy;
+
+    for (let p of platforms) {
+      if (
+        b.x > p.x &&
+        b.x < p.x + p.w &&
+        b.y + b.r > p.y &&
+        b.y + b.r < p.y + 8
+      ) {
+        b.y = p.y - b.r;
+        b.vy = 0;
+      }
+    }
+
+    // Hit player
+    if (
+      b.x > player.x &&
+      b.x < player.x + player.w &&
+      b.y > player.y &&
+      b.y < player.y + player.h
+    ) {
+      reset();
+    }
+  }
+  barrels = barrels.filter(b => b.y < canvas.height + 20);
+}
+
+function reset() {
+  player.x = 40;
+  player.y = 460;
+  barrels = [];
+}
+
+// DRAWING
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Platforms
+  ctx.fillStyle = "red";
+  platforms.forEach(p => ctx.fillRect(p.x,p.y,p.w,p.h));
+
+  // Ladders
+  ctx.fillStyle = "#00aaff";
+  ladders.forEach(l => ctx.fillRect(l.x,l.y,16,l.h));
+
+  // Donkey Kong
+  ctx.fillStyle = "brown";
+  ctx.fillRect(donkey.x,donkey.y,donkey.w,donkey.h);
+
+  // Player
+  ctx.fillStyle = "blue";
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+
+  // Barrels
+  ctx.fillStyle = "orange";
+  barrels.forEach(b => {
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  // Goal
+  ctx.fillStyle = "green";
+  ctx.fillRect(380,40,20,20);
+
+  if (player.x > 380 && player.y < 80) {
+    ctx.fillStyle = "white";
+    ctx.font = "20px monospace";
+    ctx.fillText("YOU WIN!", 160, 260);
+  }
+}
+
+function loop() {
+  updatePlayer();
+  updateBarrels();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
