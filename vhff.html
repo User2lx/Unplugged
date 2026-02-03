@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Retro Donkey Kong</title>
+<title>Donkey Kong Arcade++</title>
 <style>
   body {
     margin: 0;
@@ -29,9 +29,14 @@ const ctx = canvas.getContext("2d");
 
 const GRAVITY = 0.5;
 const keys = {};
-
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
+
+// GAME STATE
+let score = 0;
+let lives = 3;
+let gameOver = false;
+let win = false;
 
 // PLAYER
 const player = {
@@ -41,17 +46,19 @@ const player = {
   h: 16,
   vx: 0,
   vy: 0,
-  climbing: false
+  onGround: false,
+  hammer: false,
+  hammerTime: 0
 };
 
-// PLATFORMS
+// PLATFORMS (slanted)
 const platforms = [
-  {x:0,y:480,w:448,h:16},
-  {x:40,y:400,w:360,h:8},
-  {x:0,y:320,w:360,h:8},
-  {x:40,y:240,w:360,h:8},
-  {x:0,y:160,w:360,h:8},
-  {x:40,y:80,w:360,h:8}
+  {x:0,y:480,w:448,h:16,dir:1},
+  {x:40,y:400,w:360,h:8,dir:-1},
+  {x:0,y:320,w:360,h:8,dir:1},
+  {x:40,y:240,w:360,h:8,dir:-1},
+  {x:0,y:160,w:360,h:8,dir:1},
+  {x:40,y:80,w:360,h:8,dir:-1}
 ];
 
 // LADDERS
@@ -63,8 +70,12 @@ const ladders = [
   {x:200,y:80,h:80}
 ];
 
-// DONKEY KONG
+// DONKEY KONG + PAULINE
 const donkey = {x:200,y:40,w:32,h:32};
+const pauline = {x:360,y:40,w:16,h:24};
+
+// HAMMER
+const hammer = {x:180,y:360,w:16,h:16,active:true};
 
 // BARRELS
 let barrels = [];
@@ -74,16 +85,17 @@ function spawnBarrel() {
     x: donkey.x + 16,
     y: donkey.y + 32,
     r: 6,
-    vx: Math.random() > 0.5 ? 1.5 : -1.5,
+    vx: 2,
     vy: 0
   });
 }
-setInterval(spawnBarrel, 1800);
+setInterval(() => !gameOver && !win && spawnBarrel(), 1800);
 
-// GAME LOGIC
+// PLAYER UPDATE
 function updatePlayer() {
-  player.vx = 0;
+  if (gameOver || win) return;
 
+  player.vx = 0;
   if (keys["ArrowLeft"]) player.vx = -2;
   if (keys["ArrowRight"]) player.vx = 2;
 
@@ -95,21 +107,21 @@ function updatePlayer() {
   );
 
   if (onLadder) {
-    player.climbing = true;
     player.vy = 0;
     if (keys["ArrowUp"]) player.y -= 2;
     if (keys["ArrowDown"]) player.y += 2;
   } else {
-    player.climbing = false;
     player.vy += GRAVITY;
   }
 
-  if (keys["ArrowUp"] && !player.climbing && player.vy === 0) {
+  if (keys["ArrowUp"] && player.onGround && !onLadder) {
     player.vy = -8;
   }
 
   player.x += player.vx;
   player.y += player.vy;
+
+  player.onGround = false;
 
   for (let p of platforms) {
     if (
@@ -120,16 +132,42 @@ function updatePlayer() {
     ) {
       player.y = p.y - player.h;
       player.vy = 0;
+      player.onGround = true;
     }
   }
 
-  if (player.y > canvas.height) reset();
+  // Hammer pickup
+  if (hammer.active &&
+      player.x < hammer.x + hammer.w &&
+      player.x + player.w > hammer.x &&
+      player.y < hammer.y + hammer.h &&
+      player.y + player.h > hammer.y) {
+    hammer.active = false;
+    player.hammer = true;
+    player.hammerTime = 600;
+  }
+
+  if (player.hammer) {
+    player.hammerTime--;
+    if (player.hammerTime <= 0) player.hammer = false;
+  }
+
+  // Pauline rescue
+  if (
+    player.x > pauline.x &&
+    player.y < 80
+  ) {
+    win = true;
+    score += 5000;
+  }
+
+  if (player.y > canvas.height) loseLife();
 }
 
+// BARRELS
 function updateBarrels() {
   for (let b of barrels) {
     b.vy += GRAVITY;
-    b.x += b.vx;
     b.y += b.vy;
 
     for (let p of platforms) {
@@ -141,49 +179,83 @@ function updateBarrels() {
       ) {
         b.y = p.y - b.r;
         b.vy = 0;
+        b.vx = 2 * p.dir;
       }
+    }
+
+    b.x += b.vx;
+
+    // Smash with hammer
+    if (
+      player.hammer &&
+      Math.abs(player.x - b.x) < 20 &&
+      Math.abs(player.y - b.y) < 20
+    ) {
+      score += 300;
+      b.dead = true;
     }
 
     // Hit player
     if (
+      !player.hammer &&
       b.x > player.x &&
       b.x < player.x + player.w &&
       b.y > player.y &&
       b.y < player.y + player.h
     ) {
-      reset();
+      loseLife();
     }
   }
-  barrels = barrels.filter(b => b.y < canvas.height + 20);
+
+  barrels = barrels.filter(b => !b.dead && b.y < canvas.height + 20);
 }
 
-function reset() {
+// LIFE / RESET
+function loseLife() {
+  lives--;
+  barrels = [];
   player.x = 40;
   player.y = 460;
-  barrels = [];
+  player.hammer = false;
+  hammer.active = true;
+  if (lives <= 0) gameOver = true;
 }
 
-// DRAWING
+function restart() {
+  score = 0;
+  lives = 3;
+  gameOver = false;
+  win = false;
+  barrels = [];
+  player.x = 40;
+  player.y = 460;
+  hammer.active = true;
+}
+
+// DRAW
 function draw() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Platforms
   ctx.fillStyle = "red";
   platforms.forEach(p => ctx.fillRect(p.x,p.y,p.w,p.h));
 
-  // Ladders
   ctx.fillStyle = "#00aaff";
   ladders.forEach(l => ctx.fillRect(l.x,l.y,16,l.h));
 
-  // Donkey Kong
   ctx.fillStyle = "brown";
   ctx.fillRect(donkey.x,donkey.y,donkey.w,donkey.h);
 
-  // Player
-  ctx.fillStyle = "blue";
+  ctx.fillStyle = "purple";
+  ctx.fillRect(pauline.x,pauline.y,pauline.w,pauline.h);
+
+  if (hammer.active) {
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(hammer.x,hammer.y,hammer.w,hammer.h);
+  }
+
+  ctx.fillStyle = player.hammer ? "gold" : "blue";
   ctx.fillRect(player.x,player.y,player.w,player.h);
 
-  // Barrels
   ctx.fillStyle = "orange";
   barrels.forEach(b => {
     ctx.beginPath();
@@ -191,24 +263,36 @@ function draw() {
     ctx.fill();
   });
 
-  // Goal
-  ctx.fillStyle = "green";
-  ctx.fillRect(380,40,20,20);
+  ctx.fillStyle = "white";
+  ctx.font = "14px monospace";
+  ctx.fillText("SCORE: " + score, 10, 20);
+  ctx.fillText("LIVES: " + lives, 360, 20);
 
-  if (player.x > 380 && player.y < 80) {
-    ctx.fillStyle = "white";
-    ctx.font = "20px monospace";
-    ctx.fillText("YOU WIN!", 160, 260);
+  if (player.hammer) {
+    ctx.fillText("HAMMER!", 190, 20);
+  }
+
+  if (gameOver) {
+    ctx.font = "24px monospace";
+    ctx.fillText("GAME OVER", 140, 260);
+    ctx.font = "14px monospace";
+    ctx.fillText("Press R", 190, 290);
+  }
+
+  if (win) {
+    ctx.font = "24px monospace";
+    ctx.fillText("YOU SAVED PAULINE!", 90, 260);
   }
 }
 
+// LOOP
 function loop() {
+  if (keys["r"] && (gameOver || win)) restart();
   updatePlayer();
   updateBarrels();
   draw();
   requestAnimationFrame(loop);
 }
-
 loop();
 </script>
 
