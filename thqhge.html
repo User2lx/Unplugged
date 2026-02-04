@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sand Tetris 4x4 Blocks</title>
+<style>
+body{margin:0;background:#0d0d0d;display:flex;justify-content:center;align-items:center;height:100vh;}
+canvas{border:3px solid #333;image-rendering:pixelated;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/* CONFIG */
+const COLS=10, ROWS=20, SUB=4; // SUB = pixels per cell
+let SCALE=3;
+const W=COLS*SUB, H=ROWS*SUB;
+
+const EMPTY=0, SAND=1, WATER=2;
+const BASE_SAND=[null,[240,240,0],[0,240,240],[160,0,240],[240,160,0],[0,0,240],[0,240,0],[240,0,0]];
+const WATER_COLOR=[60,120,255];
+
+const canvas=document.getElementById("c"), ctx=canvas.getContext("2d");
+
+/* RESIZE TO HALF SCREEN */
+function resizeCanvas(){
+  canvas.width=Math.floor(window.innerWidth/2);
+  SCALE=Math.floor(canvas.width/W);
+  canvas.height=H*SCALE;
+}
+window.addEventListener("resize",resizeCanvas);
+resizeCanvas();
+
+/* 4x4 tetromino shapes */
+const SHAPES=[
+  [[1,1,1,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]], // I
+  [[1,1,0,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]], // O
+  [[0,1,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], // T
+  [[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], // L
+  [[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], // J
+  [[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]], // S
+  [[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]]  // Z
+];
+
+/* GAME STATE */
+let mat,color,shade,piece,gameOver=false;
+
+function idx(x,y){return x+y*W;}
+function pw(s){return s[0].length;}
+function ph(s){return s.length;}
+function rotate(m){return m[0].map((_,i)=>m.map(r=>r[i]).reverse());}
+
+/* RESET GAME */
+function reset(){
+  mat=new Uint8Array(W*H);
+  color=new Uint8Array(W*H);
+  shade=new Int8Array(W*H);
+  piece=spawn();
+  gameOver=false;
+}
+reset();
+
+/* SPAWN PIECE */
+function spawn(){
+  const t=Math.random()*SHAPES.length|0;
+  const p={shape:SHAPES[t],color:t+1,x:3,y:0};
+  if(collide(p.x,p.y,p.shape)) gameOver=true;
+  return p;
+}
+
+/* COLLISION CHECK */
+function collide(px,py,s){
+  if(px<0||px+pw(s)>COLS) return true;
+  if(py+ph(s)>ROWS) return true;
+  return false;
+}
+
+/* SPAWN SAND BLOCK */
+function spawnSandBlock(tx,ty,c){
+  for(let y=0;y<SUB;y++)
+    for(let x=0;x<SUB;x++){
+      const i=idx(tx*SUB+x,ty*SUB+y);
+      if(mat[i]===EMPTY){
+        mat[i]=SAND;
+        color[i]=c;
+        shade[i]=(Math.random()*30-15)|0;
+      }
+    }
+}
+
+/* LOCK PIECE INTO MAT */
+function lockPiece(){
+  piece.shape.forEach((r,y0)=>
+    r.forEach((v,x0)=>{
+      if(v) spawnSandBlock(piece.x+x0,piece.y+y0,piece.color);
+    })
+  );
+  piece=spawn();
+}
+
+/* PHYSICS */
+function update(){
+  for(let y=H-2;y>=0;y--)
+    for(let x=0;x<W;x++){
+      const i=idx(x,y);
+      if(!mat[i]) continue;
+
+      if(mat[i]===SAND) tryMove(i,x,y,[[0,1],[-1,1],[1,1]]);
+      else if(mat[i]===WATER) tryMove(i,x,y,[[0,1],[-1,0],[1,0],[-1,1],[1,1]]);
+    }
+}
+
+function tryMove(i,x,y,dirs){
+  for(const [dx,dy] of dirs){
+    const nx=x+dx, ny=y+dy;
+    if(nx<0||nx>=W||ny>=H) continue;
+    const ni=idx(nx,ny);
+    if(mat[ni]===EMPTY){
+      mat[ni]=mat[i]; color[ni]=color[i]; shade[ni]=shade[i];
+      mat[i]=color[i]=shade[i]=0;
+      return;
+    }
+    if(mat[i]===WATER && mat[ni]===SAND){
+      mat[ni]=WATER;
+      mat[i]=SAND;
+      return;
+    }
+  }
+}
+
+/* DRAW */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  for(let i=0;i<mat.length;i++){
+    if(!mat[i]) continue;
+    const x=i%W, y=(i/W)|0;
+    if(mat[i]===SAND){
+      const [r,g,b]=BASE_SAND[color[i]];
+      const s=shade[i];
+      ctx.fillStyle=`rgb(${r+s},${g+s},${b+s})`;
+    } else {
+      const s=shade[i];
+      ctx.fillStyle=`rgb(${WATER_COLOR[0]+s},${WATER_COLOR[1]+s},${WATER_COLOR[2]+s})`;
+    }
+    ctx.fillRect(x*SCALE,y*SCALE,SCALE,SCALE);
+  }
+
+  if(!gameOver){
+    const [r,g,b]=BASE_SAND[piece.color];
+    ctx.fillStyle=`rgb(${r},${g},${b})`;
+    piece.shape.forEach((r0,y0)=>
+      r0.forEach((v,x0)=>{
+        if(v)
+          for(let sy=0;sy<SUB;sy++)
+            for(let sx=0;sx<SUB;sx++)
+              ctx.fillRect((piece.x*SUB + x0*SUB + sx)*SCALE,
+                           (piece.y*SUB + y0*SUB + sy)*SCALE,
+                           SCALE,SCALE);
+      })
+    );
+  }
+}
+
+/* DROP PIECE */
+let drop=0;
+function loop(){
+  drop++;
+  if(!gameOver){
+    if(drop>25){
+      if(!collide(piece.x,piece.y+1,piece.shape)) piece.y++;
+      else lockPiece();
+      drop=0;
+    }
+    update();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* INPUT */
+document.addEventListener("keydown",e=>{
+  if(gameOver && e.key==="r") reset();
+  if(gameOver) return;
+
+  if(e.key==="ArrowLeft"&&!collide(piece.x-1,piece.y,piece.shape)) piece.x--;
+  if(e.key==="ArrowRight"&&!collide(piece.x+1,piece.y,piece.shape)) piece.x++;
+  if(e.key==="ArrowDown"&&!collide(piece.x,piece.y+1,piece.shape)) piece.y++;
+
+  if(e.key===" "){
+    const r=rotate(piece.shape);
+    if(!collide(piece.x,piece.y,r)) piece.shape=r;
+  }
+
+  if(e.key==="w"){
+    for(let i=0;i<20;i++)
+      const rx=Math.floor(Math.random()*W);
+      spawnWater(rx,0);
+  }
+});
+
+loop();
+</script>
+</body>
+</html>
