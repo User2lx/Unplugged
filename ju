@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sand Tetris</title>
+<style>
+  body { background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+  canvas { border: 2px solid #fff; background: #000; }
+</style>
+</head>
+<body>
+<canvas id="canvas" width="300" height="600"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const cols = 30;
+const rows = 60;
+const size = 10;
+
+// Create grid
+let grid = [];
+for(let y=0; y<rows; y++){
+  grid[y] = new Array(cols).fill(0);
+}
+
+// Random sand colors
+const colors = ["#FFD700","#FFA500","#FFB347","#FFC300"];
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let y=0; y<rows; y++){
+    for(let x=0; x<cols; x++){
+      if(grid[y][x]){
+        ctx.fillStyle = grid[y][x];
+        ctx.fillRect(x*size, y*size, size, size);
+      }
+    }
+  }
+}
+
+function dropSand(){
+  // Randomly drop new sand blocks at the top
+  if(Math.random() < 0.5){
+    const x = Math.floor(Math.random() * cols);
+    grid[0][x] = colors[Math.floor(Math.random() * colors.length)];
+  }
+}
+
+// Simple sand physics
+function update(){
+  for(let y=rows-2; y>=0; y--){
+    for(let x=0; x<cols; x++){
+      if(grid[y][x] && !grid[y+1][x]){
+        grid[y+1][x] = grid[y][x];
+        grid[y][x] = 0;
+      } else if(grid[y][x]){
+        // try to slide left/right
+        if(x>0 && !grid[y+1][x-1] && Math.random()<0.5){
+          grid[y+1][x-1] = grid[y][x];
+          grid[y][x] = 0;
+        } else if(x<cols-1 && !grid[y+1][x+1] && Math.random()<0.5){
+          grid[y+1][x+1] = grid[y][x];
+          grid[y][x] = 0;
+        }
+      }
+    }
+  }
+}
+
+function loop(){
+  dropSand();
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
