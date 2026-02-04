@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D Side Scroller Shooter</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #222;
+    color: white;
+    font-family: sans-serif;
+  }
+  canvas {
+    display: block;
+    background: #333;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let keys = {};
+document.addEventListener('keydown', (e) => keys[e.key] = true);
+document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+class Player {
+    constructor() {
+        this.width = 50;
+        this.height = 50;
+        this.x = 100;
+        this.y = canvas.height - this.height - 50;
+        this.speed = 5;
+        this.color = 'lime';
+        this.bullets = [];
+    }
+
+    move() {
+        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
+        if (keys['ArrowRight'] && this.x + this.width < canvas.width) this.x += this.speed;
+    }
+
+    shoot() {
+        if (keys[' ']) {
+            if (!this.lastShot || Date.now() - this.lastShot > 300) { // fire rate control
+                this.bullets.push(new Bullet(this.x + this.width, this.y + this.height/2));
+                this.lastShot = Date.now();
+            }
+        }
+    }
+
+    update() {
+        this.move();
+        this.shoot();
+        this.bullets.forEach(b => b.update());
+        this.bullets = this.bullets.filter(b => !b.offscreen);
+    }
+
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        this.bullets.forEach(b => b.draw());
+    }
+}
+
+class Bullet {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 10;
+        this.height = 5;
+        this.speed = 10;
+        this.color = 'yellow';
+        this.offscreen = false;
+    }
+
+    update() {
+        this.x += this.speed;
+        if (this.x > canvas.width) this.offscreen = true;
+    }
+
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
+const player = new Player();
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    player.update();
+    player.draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
