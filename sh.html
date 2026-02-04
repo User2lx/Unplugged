@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>Pixel Shooter with Thrusters</title>
 <style>
-  body { margin: 0; overflow: hidden; background: black; }
-  canvas { display: block; margin: auto; background: #000; image-rendering: pixelated; }
+body { margin: 0; overflow: hidden; background: black; }
+canvas { display: block; margin: auto; background: #000; image-rendering: pixelated; }
 </style>
 </head>
 <body>
@@ -35,14 +35,37 @@ let highScore = localStorage.getItem('highScore') || 0;
 for(let i=0;i<120;i++) stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:Math.random()*2+1,speed:Math.random()*1+0.5});
 
 // Key events
-document.addEventListener('keydown', e => { keys[e.key]=true; if(state==='start' && e.key==='Enter') startGame(); if(state==='gameover' && e.key==='Enter') startGame(); if(state==='playing' && e.key==='p') togglePause();});
+document.addEventListener('keydown', e => {
+    keys[e.key]=true;
+    if(state==='start' && e.key==='Enter') startGame();
+    if(state==='gameover' && e.key==='Enter') startGame();
+    if(state==='playing' && e.key==='p') togglePause();
+});
 document.addEventListener('keyup', e => keys[e.key]=false);
 
 // Functions
-function startGame(){ state='playing'; score=0; lives=3; level=1; player.health=5; bullets=[]; enemies=[]; powerups=[]; particles=[]; boss=null; bgMusic.currentTime=0; bgMusic.play();}
-function togglePause(){ if(state==='playing'){state='paused'; bgMusic.pause();} else if(state==='paused'){state='playing'; bgMusic.play();}
-function spawnEnemy(){ let x=Math.random()*(canvas.width-16); let type=enemyTypes[Math.floor(Math.random()*enemyTypes.length)]; let health=type==='armored'?3:1; let speed=type==='fast'?3:type==='armored'?1:2; enemies.push({x,y:0,w:16,h:16,type,health,speed,direction:1});}
-function spawnPowerup(){ let x=Math.random()*(canvas.width-12); let types=['health','shield','rapid','weapon']; let type=types[Math.floor(Math.random()*types.length)]; powerups.push({x,y:0,w:12,h:12,speed:1.5,type});}
+function startGame(){
+    state='playing'; score=0; lives=3; level=1; player.health=5;
+    bullets=[]; enemies=[]; powerups=[]; particles=[]; boss=null;
+    bgMusic.currentTime=0; bgMusic.play();
+}
+function togglePause(){
+    if(state==='playing'){state='paused'; bgMusic.pause();}
+    else if(state==='paused'){state='playing'; bgMusic.play();}
+}
+function spawnEnemy(){
+    let x=Math.random()*(canvas.width-16);
+    let type=enemyTypes[Math.floor(Math.random()*enemyTypes.length)];
+    let health=type==='armored'?3:1;
+    let speed=type==='fast'?3:type==='armored'?1:2;
+    enemies.push({x,y:0,w:16,h:16,type,health,speed,direction:1});
+}
+function spawnPowerup(){
+    let x=Math.random()*(canvas.width-12);
+    let types=['health','shield','rapid','weapon'];
+    let type=types[Math.floor(Math.random()*types.length)];
+    powerups.push({x,y:0,w:12,h:12,speed:1.5,type});
+}
 
 // Explosions
 function createExplosion(x,y,count=15){
@@ -60,7 +83,7 @@ function createExplosion(x,y,count=15){
     }
 }
 
-// Thruster flame particles
+// Thruster flames
 function createThruster(x,y){
     for(let i=0;i<2;i++){
         particles.push({
@@ -84,9 +107,15 @@ function update(){
     if(state!=='playing') return;
 
     // Player movement
-    if(keys['ArrowLeft']) player.speed-=0.2; if(keys['ArrowRight']) player.speed+=0.2; player.speed*=player.friction; if(player.speed>player.maxSpeed) player.speed=player.maxSpeed; if(player.speed<-player.maxSpeed) player.speed=-player.maxSpeed; player.x+=player.speed; player.x=Math.max(0,Math.min(canvas.width-player.w,player.x));
+    if(keys['ArrowLeft']) player.speed-=0.2;
+    if(keys['ArrowRight']) player.speed+=0.2;
+    player.speed*=player.friction;
+    if(player.speed>player.maxSpeed) player.speed=player.maxSpeed;
+    if(player.speed<-player.maxSpeed) player.speed=-player.maxSpeed;
+    player.x+=player.speed;
+    player.x=Math.max(0,Math.min(canvas.width-player.w,player.x));
 
-    // Thruster flames when moving
+    // Thruster flames
     if(keys['ArrowLeft'] || keys['ArrowRight']) createThruster(player.x, player.y);
 
     // Shooting
@@ -101,10 +130,58 @@ function update(){
     // Bullets
     bullets.forEach((b,i)=>{b.y-=b.speed;b.x+=b.vx;if(b.y<-b.h) bullets.splice(i,1);});
 
-    // Enemies, powerups, boss, and particles remain the same...
-    // (same logic as previous explosion-enhanced version)
-    
-    // Particles with gravity
+    // Enemies
+    enemies.forEach((e,i)=>{
+        if(e.type==='kamikaze'){ e.y+=e.speed; if(player.x>e.x)e.x+=0.5; if(player.x<e.x)e.x-=0.5;}
+        else { e.y+=e.speed; e.x+=Math.sin(e.y/50)*0.5; }
+        bullets.forEach((b,j)=>{
+            if(b.x<b.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){
+                bullets.splice(j,1); e.health--; createExplosion(b.x+b.w/2,b.y+b.h/2,8);
+                if(e.health<=0){ createExplosion(e.x+e.w/2,e.y+e.h/2,12); enemies.splice(i,1); score+=10; }
+            }
+        });
+        if(!player.shield && player.x<e.x+e.w && player.x+player.w>e.x && player.y<e.y+e.h && player.y+player.h>e.y){
+            createExplosion(player.x+player.w/2,player.y+player.h/2,20);
+            player.health--; enemies.splice(i,1);
+            if(player.health<=0){ lives--; player.health=5; if(lives<=0){ state='gameover'; bgMusic.pause(); if(score>highScore){ highScore=score; localStorage.setItem('highScore',highScore); } } }
+        }
+        if(e.y>canvas.height) enemies.splice(i,1);
+    });
+
+    // Powerups
+    powerups.forEach((p,i)=>{
+        p.y+=p.speed;
+        if(player.x<p.x+p.w && player.x+player.w>p.x && player.y<p.y+p.h && player.y+player.h>p.y){
+            powerupSound.currentTime=0; powerupSound.play();
+            if(p.type==='health')player.health=Math.min(player.health+2,5);
+            if(p.type==='shield'){player.shield=true; setTimeout(()=>player.shield=false,5000);}
+            if(p.type==='rapid'){player.weapon='rapid'; setTimeout(()=>player.weapon='spread',5000);}
+            if(p.type==='weapon'){player.weapon='laser'; setTimeout(()=>player.weapon='spread',5000);}
+            powerups.splice(i,1);
+        }
+        if(p.y>canvas.height) powerups.splice(i,1);
+    });
+
+    // Boss
+    if(score>=level*100 && !boss) spawnBoss();
+    if(boss){
+        if(boss.y<50) boss.y+=boss.speed;
+        boss.shootCooldown--;
+        if(boss.shootCooldown<=0){ bullets.push({x:boss.x+16,y:boss.y+boss.h,w:4,h:6,speed:-3,vx:0}); bullets.push({x:boss.x+boss.w-16,y:boss.y+boss.h,w:4,h:6,speed:-3,vx:0}); boss.shootCooldown=50; }
+        bullets.forEach((b,j)=>{
+            if(b.x<boss.x+boss.w && b.x+b.w>boss.x && b.y<boss.y+boss.h && b.y+b.h>boss.y){
+                bullets.splice(j,1); bossHitSound.currentTime=0; bossHitSound.play(); boss.health--; createExplosion(b.x+b.w/2,b.y+b.h/2,6);
+                if(boss.health<=0){ createExplosion(boss.x+boss.w/2,boss.y+boss.h/2,25); boss=null; score+=50; level++; }
+            }
+        });
+        if(!player.shield && player.x<boss.x+boss.w && player.x+player.w>boss.x && player.y<boss.y+boss.h && player.y+player.h>boss.y){
+            createExplosion(player.x+player.w/2,player.y+player.h/2,15);
+            player.health-=2;
+            if(player.health<=0){ lives--; player.health=5; if(lives<=0){ state='gameover'; bgMusic.pause(); if(score>highScore){ highScore=score; localStorage.setItem('highScore',highScore); } } }
+        }
+    }
+
+    // Particles
     particles.forEach((p,i)=>{ p.vy+=p.gravity; p.x+=p.vx; p.y+=p.vy; p.alpha-=0.03; if(p.alpha<=0) particles.splice(i,1); });
 
     stars.forEach(s=>{s.y+=s.speed;if(s.y>canvas.height)s.y=0;});
@@ -126,9 +203,15 @@ function draw(){
     // Player
     drawPixelRect(player.x,player.y,player.w,player.h,player.shield?'cyan':'lime');
 
-    // Bullets, enemies, powerups, boss (same as previous code)...
-
-    // Particles (explosions + thrusters)
+    // Bullets
+    bullets.forEach(b=>drawPixelRect(b.x,b.y,b.w,b.h,'yellow'));
+    // Enemies
+    enemies.forEach(e=>drawPixelRect(e.x,e.y,e.w,e.h,e.type==='armored'?'orange':e.type==='fast'?'red':'pink'));
+    // Powerups
+    powerups.forEach(p=>drawPixelRect(p.x,p.y,p.w,p.h,p.type==='health'?'green':p.type==='shield'?'cyan':p.type==='rapid'?'yellow':'magenta'));
+    // Boss
+    if(boss) drawPixelRect(boss.x,boss.y,boss.w,boss.h,'purple');
+    // Particles
     particles.forEach(p=>{
         let col = p.color;
         ctx.fillStyle=`rgba(${col==='red'?255:col==='orange'?255:col==='yellow'?255:0},${col==='red'?0:col==='orange'?165:col==='yellow'?255:0},${col==='magenta'?255:0},${p.alpha})`;
