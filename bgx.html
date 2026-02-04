@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcade Car Game - Enemies & Powerups</title>
+<style>
+  body { margin:0; overflow:hidden; font-family:sans-serif; }
+  canvas { display:block; }
+  #ui { position:absolute; top:10px; left:10px; color:black; font-weight:bold; z-index:2; }
+  #restartBtn { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; padding:10px 20px; display:none; cursor:pointer; z-index:2; }
+  #carSelect { position:absolute; top:40px; left:10px; z-index:2; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div id="score">Score: 0</div>
+  <div id="carInfo">Car: Speedy</div>
+  <div id="powerInfo">Power: None</div>
+  <label for="carSelect">Select Car:</label>
+  <select id="carSelect">
+    <option value="speedy">Speedy</option>
+    <option value="jumper">Jumper</option>
+    <option value="tank">Tank</option>
+  </select>
+</div>
+<button id="restartBtn">Restart Game</button>
+<canvas id="gameCanvas"></canvas>
+
+<audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_15e173b7b4.mp3?filename=happy-background-music-loop-11329.mp3"></audio>
+<audio id="jumpSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<audio id="coinSound" src="https://www.soundjay.com/misc/sounds/coin-1.mp3"></audio>
+<audio id="powerupSound" src="https://www.soundjay.com/button/button-3.wav"></audio>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+let score=0, gameOver=false, frameCount=0, cameraX=0;
+let obstacles=[], coins=[], enemies=[], powerups=[], particles=[];
+let timeOfDay=0;
+let activePower=null;
+
+// Lanes (3)
+const lanes=[canvas.height*0.75-50, canvas.height*0.75-120, canvas.height*0.75-190];
+let currentLane=0;
+
+// Car types
+const carTypes = {
+  speedy:{color:'red', speed:8, jumpForce:-14},
+  jumper:{color:'blue', speed:6, jumpForce:-20},
+  tank:{color:'green', speed:4, jumpForce:-12}
+};
+
+let currentCar='speedy';
+
+// Resize canvas
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; lanes[0]=canvas.height*0.75-50; lanes[1]=canvas.height*0.75-120; lanes[2]=canvas.height*0.75-190; }
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Sounds
+const bgMusic=document.getElementById('bgMusic');
+const jumpSound=document.getElementById('jumpSound');
+const coinSound=document.getElementById('coinSound');
+const powerupSound=document.getElementById('powerupSound');
+bgMusic.volume=0.2;
+bgMusic.play();
+
+// Car
+const car={
+  x:150, y:lanes[currentLane], width:50, height:30, dy:0, gravity:0.8, onGround:true, wheelAngle:0,
+  color:'red', speed:carTypes.speedy.speed, jumpForce:carTypes.speedy.jumpForce,
+  draw(){
+    ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,this.width,this.height);
+    this.wheelAngle+=0.3;
+    ctx.fillStyle='black';
+    [10,40].forEach(offsetX=>{
+      ctx.beginPath(); ctx.arc(this.x+offsetX,this.y+this.height,7,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='gray';
+      ctx.beginPath(); ctx.moveTo(this.x+offsetX,this.y+this.height);
+      ctx.lineTo(this.x+offsetX+7*Math.cos(this.wheelAngle), this.y+this.height+7*Math.sin(this.wheelAngle)); ctx.stroke();
+    });
+  }
+};
+
+// Controls
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space' && car.onGround && !gameOver){ car.dy=car.jumpForce; car.onGround=false; jumpSound.play(); for(let i=0;i<5;i++) particles.push({x:car.x+car.width/2, y:car.y+car.height, dx:(Math.random()-0.5)*2, dy:Math.random()*-2, alpha:1, type:'dust'});}
+  if(e.code==='ArrowUp'){ currentLane=Math.max(0,currentLane-1); car.y=lanes[currentLane]; }
+  if(e.code==='ArrowDown'){ currentLane=Math.min(lanes.length-1,currentLane+1); car.y=lanes[currentLane]; }
+});
+
+document.getElementById('carSelect').addEventListener('change',e=>{
+  const type=e.target.value; currentCar=type;
+  car.color=carTypes[type].color; car.speed=carTypes[type].speed; car.jumpForce=carTypes[type].jumpForce;
+  document.getElementById('carInfo').textContent='Car: '+type.charAt(0).toUpperCase()+type.slice(1);
+});
+
+document.getElementById('restartBtn').addEventListener('click',()=>{ resetGame(); });
+
+// Day/Night
+function getBackgroundColor(){ let t=Math.sin(timeOfDay*Math.PI); return `rgb(${135+50*(1-t)},${206+30*(1-t)},${235+20*(1-t)})`; }
+
+// Particles
+function updateParticles(){
+  for(let i=particles.length-1;i>=0;i--){ let p=particles[i]; p.x+=p.dx; p.y+=p.dy; if(p.type==='dust') p.dy+=0.1; p.alpha-=0.02;
+    if(p.alpha<=0) particles.splice(i,1);
+    else{ ctx.globalAlpha=p.alpha; ctx.fillStyle=(p.type==='dust'?'brown':'gold'); ctx.beginPath(); ctx.arc(p.x,p.y,p.type==='dust'?3:5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+  }
+}
+
+// Game loop
+function gameLoop(){
+  timeOfDay+=0.001; if(timeOfDay>2) timeOfDay=0;
+  ctx.fillStyle=getBackgroundColor(); ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Ground
+  const groundY = canvas.height*0.75; ctx.fillStyle='darkgreen'; ctx.fillRect(0,groundY,canvas.width,canvas.height-groundY);
+
+  if(!gameOver){
+    car.dy+=car.gravity; car.y+=car.dy;
+    if(car.y+car.height>=groundY){ car.y=lanes[currentLane]; car.dy=-car.dy*0.3; car.onGround=true; for(let i=0;i<5;i++) particles.push({x:car.x+car.width/2, y:car.y+car.height, dx:(Math.random()-0.5)*2, dy:(Math.random()-1)*-1, alpha:1, type:'dust'}); }
+
+    car.draw(); cameraX+=car.speed;
+
+    // Obstacles
+    if(frameCount%120===0) obstacles.push({x:cameraX+canvas.width,y:lanes[Math.floor(Math.random()*3)],width:30,height:30});
+    for(let i=obstacles.length-1;i>=0;i--){ let obs=obstacles[i]; let drawX=obs.x-cameraX+car.x; ctx.fillStyle='black'; ctx.fillRect(drawX,obs.y,obs.width,obs.height);
+      if(!activePower || activePower.type!=='shield'){ if(car.x<drawX+obs.width && car.x+car.width>drawX && car.y<obs.y+obs.height && car.y+car.height>obs.y) endGame(); } 
+      if(drawX+obs.width<-50) obstacles.splice(i,1);
+    }
+
+    // Coins
+    if(frameCount%200===0) coins.push({x:cameraX+canvas.width,y:lanes[Math.floor(Math.random()*3)]-50,radius:10,angle:0});
+    for(let i=coins.length-1;i>=0;i--){ let coin=coins[i]; coin.angle+=0.2; let drawX=coin.x-cameraX+car.x;
+      ctx.fillStyle='gold'; ctx.beginPath(); ctx.arc(drawX,coin.y,coin.radius,coin.angle,coin.angle+Math.PI*1.8); ctx.fill();
+      if(car.x<drawX+coin.radius && car.x+car.width>drawX-coin.radius && car.y<coin.y+coin.radius && car.y+car.height>coin.y-coin.radius){ score+=50; coinSound.play(); coins.splice(i,1); for(let j=0;j<10;j++) particles.push({x:drawX,y:coin.y,dx:(Math.random()-0.5)*4,dy:(Math.random()-0.5)*4,alpha:1,type:'spark'});}
+      if(drawX+coin.radius<-50) coins.splice(i,1);
+    }
+
+    // Enemies
+    if(frameCount%300===0) enemies.push({x:cameraX+canvas.width, lane:Math.floor(Math.random()*3), width:50, height:30});
+    for(let i=enemies.length-1;i>=0;i--){ let e=enemies[i]; e.x-=car.speed; let drawX=e.x-cameraX+car.x; let drawY=lanes[e.lane];
+      ctx.fillStyle='orange'; ctx.fillRect(drawX,drawY,e.width,e.height);
+      if(!activePower || activePower.type!=='shield'){ if(car.x<drawX+e.width && car.x+car.width>drawX && car.y<drawY+e.height && car.y+car.height>drawY) endGame(); }
+      if(drawX+e.width<-50) enemies.splice(i,1);
+    }
+
+    // Powerups
+    if(frameCount%600===0) powerups.push({x:cameraX+canvas.width, lane:Math.floor(Math.random()*3), type:Math.random()<0.5?'boost':'shield', width:30, height:30});
+    for(let i=powerups.length-1;i>=0;i--){ let p=powerups[i]; let drawX=p.x-cameraX+car.x; let drawY=lanes[p.lane]; ctx.fillStyle=(p.type==='boost'?'purple':'cyan'); ctx.fillRect(drawX,drawY,p.width,p.height);
+      if(car.x<drawX+p.width && car.x+car.width>drawX && car.y<drawY+p.height && car.y+car.height>drawY){ activatePower(p); powerups.splice(i,1);}
+      if(drawX+p.width<-50) powerups.splice(i,1);}
+    
+    updateParticles();
+
+    score++; document.getElementById('score').textContent='Score: '+score;
+    frameCount++; requestAnimationFrame(gameLoop);
+  }
+}
+
+function activatePower(p){
+  activePower=p; powerupSound.play(); document.getElementById('powerInfo').textContent='Power: '+p.type;
+  if(p.type==='boost'){ car.speed+=5; setTimeout(()=>{ car.speed=carTypes[currentCar].speed; activePower=null; document.getElementById('powerInfo').textContent='Power: None';},5000);}
+  if(p.type==='shield'){ setTimeout(()=>{ activePower=null; document.getElementById('powerInfo').textContent='Power: None';},5000);}
+}
+
+function endGame(){ gameOver=true; bgMusic.pause(); document.getElementById('restartBtn').style.display='block'; }
+
+function resetGame(){
+  obstacles=[]; coins=[]; enemies=[]; powerups=[]; particles=[]; score=0; frameCount=0; gameOver=false; cameraX=0; activePower=null;
+  car.y=lanes[currentLane]; car.dy=0; car.onGround=true; car.speed=carTypes[currentCar].speed;
+  document.getElementById('powerInfo').textContent='Power: None';
+  bgMusic.currentTime=0; bgMusic.play(); document.getElementById('restartBtn').style.display='none';
+  gameLoop();
+}
+
+gameLoop();
+</script>
+</body>
+</html>
