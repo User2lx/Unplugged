@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcade Side-Scroller Shooter</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #222;
+    color: white;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let keys = {};
+document.addEventListener('keydown', (e) => keys[e.key] = true);
+document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+let score = 0;
+let gameOver = false;
+const gravity = 0.7;
+const groundLevel = canvas.height - 50;
+
+// --- Images ---
+const playerImg = new Image();
+playerImg.src = 'https://i.imgur.com/6XKzSxK.png'; // player sprite
+
+const bulletImg = new Image();
+bulletImg.src = 'https://i.imgur.com/8yOQxQO.png'; // bullet sprite
+
+const enemyImgs = [
+    'https://i.imgur.com/0w3bD8l.png', // normal enemy
+    'https://i.imgur.com/6HqF2vj.png'  // stronger enemy
+].map(src => {
+    const img = new Image();
+    img.src = src;
+    return img;
+});
+
+const bgLayers = [
+    { img: new Image(), speed: 0.2 },
+    { img: new Image(), speed: 0.5 },
+    { img: new Image(), speed: 1 }
+];
+bgLayers[0].img.src = 'https://i.imgur.com/7cKnO0l.png';
+bgLayers[1].img.src = 'https://i.imgur.com/wZc1QjY.png';
+bgLayers[2].img.src = 'https://i.imgur.com/n0qfQH0.png';
+
+// --- Classes ---
+class Player {
+    constructor() {
+        this.width = 50;
+        this.height = 50;
+        this.x = 100;
+        this.y = groundLevel - 50;
+        this.speed = 6;
+        this.velocityY = 0;
+        this.onGround = true;
+        this.bullets = [];
+        this.fireRate = 300;
+        this.lastShot = 0;
+        this.health = 3;
+    }
+
+    move() {
+        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
+        if (keys['ArrowRight'] && this.x + this.width < canvas.width) this.x += this.speed;
+        if (keys['ArrowUp'] && this.onGround) {
+            this.velocityY = -15;
+            this.onGround = false;
+        }
+
+        this.y += this.velocityY;
+        this.velocityY += gravity;
+
+        if (this.y + this.height >= groundLevel) {
+            this.y = groundLevel - this.height;
+            this.velocityY = 0;
+            this.onGround = true;
+        }
+    }
+
+    shoot() {
+        if (keys[' ']) {
+            if (Date.now() - this.lastShot > this.fireRate) {
+                this.bullets.push(new Bullet(this.x + this.width, this.y + this.height/2));
+                this.lastShot = Date.now();
+            }
+        }
+    }
+
+    update() {
+        this.move();
+        this.shoot();
+        this.bullets.forEach(b => b.update());
+        this.bullets = this.bullets.filter(b => !b.offscreen);
+    }
+
+    draw() {
+        ctx.drawImage(playerImg, this.x, this.y, this.width, this.height);
+        this.bullets.forEach(b => b.draw());
+        // Draw health
+        for (let i = 0; i < this.health; i++) {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(20 + i * 30, 60, 20, 20);
+        }
+    }
+}
+
+class Bullet {
+    constructor(x, y) {
+        this.width = 20;
+        this.height = 10;
+        this.x = x;
+        this.y = y;
+        this.speed = 12;
+        this.offscreen = false;
+    }
+
+    update() {
+        this.x += this.speed;
+        if (this.x > canvas.width) this.offscreen = true;
+    }
+
+    draw() {
+        ctx.drawImage(bulletImg, this.x, this.y, this.width, this.height);
+    }
+}
+
+class Enemy {
+    constructor(type = 0) {
+        this.width = 50;
+        this.height = 50;
+        this.x = canvas.width + Math.random() * 300;
+        this.y = groundLevel - 50;
+        this.speed = 2 + Math.random() * 2;
+        this.type = type;
+        this.health = type === 0 ? 1 : 3; // stronger enemy has more health
+        this.offscreen = false;
+    }
+
+    update() {
+        this.x -= this.speed;
+        if (this.x + this.width < 0) this.offscreen = true;
+    }
+
+    draw() {
+        ctx.drawImage(enemyImgs[this.type], this.x, this.y, this.width, this.height);
+        // Draw health bar
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x, this.y - 10, (this.width) * (this.health / (this.type === 0 ? 1 : 3)), 5);
+    }
+}
+
+class PowerUp {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.width = 30;
+        this.height = 30;
+        this.type = type; // 'health' or 'rapid'
+        this.speed = 3;
+        this.collected = false;
+    }
+
+    update() {
+        this.x -= this.speed;
+        if (this.x + this.width < 0) this.collected = true;
+    }
+
+    draw() {
+        ctx.fillStyle = this.type === 'health' ? 'pink' : 'cyan';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
+class BackgroundLayer {
+    constructor(img, speed) {
+        this.img = img;
+        this.speed = speed;
+        this.x = 0;
+    }
+
+    update() {
+        this.x -= this.speed;
+        if (this.x <= -canvas.width) this.x = 0;
+    }
+
+    draw() {
+        ctx.drawImage(this.img, this.x, 0, canvas.width, canvas.height);
+        ctx.drawImage(this.img, this.x + canvas.width, 0, canvas.width, canvas.height);
+    }
+}
+
+// --- Game Setup ---
+let player = new Player();
+let enemies = [];
+let powerUps = [];
+let enemySpawnTimer = 0;
+let powerUpTimer = 0;
+let backgroundObjects = bgLayers.map(layer => new BackgroundLayer(layer.img, layer.speed));
+
+function detectCollision(a, b) {
+    return a.x < b.x + b.width &&
+           a.x + a.width > b.x &&
+           a.y < b.y + b.height &&
+           a.y + a.height > b.y;
+}
+
+function spawnEnemies() {
+    enemySpawnTimer += 1;
+    if (enemySpawnTimer > 90) {
+        let type = Math.random() < 0.7 ? 0 : 1;
+        enemies.push(new Enemy(type));
+        enemySpawnTimer = 0;
+    }
+}
+
+function spawnPowerUps() {
+    powerUpTimer += 1;
+    if (powerUpTimer > 600) { // roughly every 10 seconds
+        let type = Math.random() < 0.5 ? 'health' : 'rapid';
+        let y = groundLevel - 80 - Math.random() * 100;
+        powerUps.push(new PowerUp(canvas.width, y, type));
+        powerUpTimer = 0;
+    }
+}
+
+function updateGameObjects() {
+    spawnEnemies();
+    spawnPowerUps();
+
+    enemies.forEach((enemy, eIndex) => {
+        enemy.update();
+
+        player.bullets.forEach((bullet, bIndex) => {
+            if (detectCollision(bullet, enemy)) {
+                enemy.health -= 1;
+                player.bullets.splice(bIndex, 1);
+                if (enemy.health <= 0) {
+                    enemies.splice(eIndex, 1);
+                    score += enemy.type === 0 ? 10 : 30;
+                }
+            }
+        });
+
+        if (detectCollision(player, enemy)) {
+            player.health -= 1;
+            enemies.splice(eIndex, 1);
+            if (player.health <= 0) gameOver = true;
+        }
+    });
+
+    powerUps.forEach((p, pIndex) => {
+        p.update();
+        if (detectCollision(player, p)) {
+            if (p.type === 'health' && player.health < 3) player.health += 1;
+            if (p.type === 'rapid') player.fireRate = 100;
+            setTimeout(() => player.fireRate = 300, 5000); // 5 sec rapid fire
+            powerUps.splice(pIndex, 1);
+        }
+    });
+
+    enemies = enemies.filter(e => !e.offscreen);
+    powerUps = powerUps.filter(p => !p.collected);
+}
+
+function drawScore() {
+    ctx.fillStyle = 'white';
+    ctx.font = '28px Arial';
+    ctx.fillText('Score: ' + score, 20, 40);
+}
+
+function drawGround() {
+    ctx.fillStyle = '#444';
+    ctx.fillRect(0, groundLevel, canvas.width, canvas.height - groundLevel);
+}
+
+function gameLoop() {
+    if (gameOver) {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'red';
+        ctx.font = '60px Arial';
+        ctx.fillText('GAME OVER', canvas.width / 2 - 180, canvas.height / 2);
+        ctx.font = '36px Arial';
+        ctx.fillText('Score: ' + score, canvas.width / 2 - 70, canvas.height / 2 + 60);
+        return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    backgroundObjects.forEach(layer => {
+        layer.update();
+        layer.draw();
+    });
+
+    drawGround();
+    player.update();
+    player.draw();
+
+    updateGameObjects();
+
+    enemies.forEach(e => e.draw());
+    powerUps.forEach(p => p.draw());
+    drawScore();
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
