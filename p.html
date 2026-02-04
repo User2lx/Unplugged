@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pong vs CPU</title>
+<style>
+  body {
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  canvas {
+    border: 2px solid white;
+    background: black;
+  }
+</style>
+</head>
+<body>
+<canvas id="pong" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("pong");
+const ctx = canvas.getContext("2d");
+
+// Game objects
+const paddleWidth = 10, paddleHeight = 100;
+let player = { x: 10, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0 };
+let cpu = { x: canvas.width - 20, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 4 };
+let ball = { x: canvas.width/2, y: canvas.height/2, radius: 10, speed: 5, dx: 5, dy: 5 };
+
+// Scores and game state
+let playerScore = 0;
+let cpuScore = 0;
+let maxScore = 10;
+let gameOver = false;
+
+// Sound effects
+const paddleHitSound = new Audio("https://freesound.org/data/previews/26/26163_512123-lq.mp3");
+const scoreSound = new Audio("https://freesound.org/data/previews/66/66717_634166-lq.mp3");
+
+// Draw functions
+function drawRect(x, y, w, h, color="white") {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+
+function drawCircle(x, y, r, color="white") {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawText(text, x, y, size=30) {
+  ctx.fillStyle = "white";
+  ctx.font = `${size}px Arial`;
+  ctx.fillText(text, x, y);
+}
+
+// Draw center dashed line
+function drawCenterLine() {
+  ctx.strokeStyle = "white";
+  ctx.setLineDash([10, 15]);
+  ctx.beginPath();
+  ctx.moveTo(canvas.width/2, 0);
+  ctx.lineTo(canvas.width/2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// Control player paddle
+document.addEventListener("keydown", e => {
+  if (!gameOver) {
+    if (e.key === "ArrowUp") player.dy = -7;
+    if (e.key === "ArrowDown") player.dy = 7;
+  }
+});
+document.addEventListener("keyup", e => {
+  if (e.key === "ArrowUp" || e.key === "ArrowDown") player.dy = 0;
+});
+
+// Reset ball
+function resetBall() {
+  ball.x = canvas.width/2;
+  ball.y = canvas.height/2;
+  ball.speed = 5;
+  ball.dx = 5 * (Math.random() > 0.5 ? 1 : -1);
+  ball.dy = 5 * (Math.random() > 0.5 ? 1 : -1);
+}
+
+// Collision detection
+function collision(paddle, ball) {
+  return ball.x - ball.radius < paddle.x + paddle.width &&
+         ball.x + ball.radius > paddle.x &&
+         ball.y - ball.radius < paddle.y + paddle.height &&
+         ball.y + ball.radius > paddle.y;
+}
+
+// Update game objects
+function update() {
+  if (gameOver) return;
+
+  // Move player
+  player.y += player.dy;
+  if (player.y < 0) player.y = 0;
+  if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+
+  // Move CPU (smooth AI)
+  let cpuCenter = cpu.y + cpu.height / 2;
+  if (cpuCenter < ball.y - 10) cpu.y += cpu.dy;
+  else if (cpuCenter > ball.y + 10) cpu.y -= cpu.dy;
+  if (cpu.y < 0) cpu.y = 0;
+  if (cpu.y + cpu.height > canvas.height) cpu.y = canvas.height - cpu.height;
+
+  // Move ball
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Wall collision
+  if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+    ball.dy = -ball.dy;
+  }
+
+  // Paddle collision
+  if (collision(player, ball)) {
+    ball.dx = -ball.dx;
+    ball.speed += 0.5;
+    ball.dx = Math.sign(ball.dx) * ball.speed;
+    ball.dy = Math.sign(ball.dy) * ball.speed * (Math.random() * 0.8 + 0.6);
+    paddleHitSound.play();
+  }
+  if (collision(cpu, ball)) {
+    ball.dx = -ball.dx;
+    ball.speed += 0.5;
+    ball.dx = Math.sign(ball.dx) * ball.speed;
+    ball.dy = Math.sign(ball.dy) * ball.speed * (Math.random() * 0.8 + 0.6);
+    paddleHitSound.play();
+  }
+
+  // Score
+  if (ball.x - ball.radius < 0) {
+    cpuScore++;
+    scoreSound.play();
+    checkGameOver();
+    resetBall();
+  }
+  if (ball.x + ball.radius > canvas.width) {
+    playerScore++;
+    scoreSound.play();
+    checkGameOver();
+    resetBall();
+  }
+}
+
+// Check for game over
+function checkGameOver() {
+  if (playerScore >= maxScore || cpuScore >= maxScore) {
+    gameOver = true;
+  }
+}
+
+// Render everything
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawRect(player.x, player.y, player.width, player.height);
+  drawRect(cpu.x, cpu.y, cpu.width, cpu.height);
+  drawCircle(ball.x, ball.y, ball.radius);
+  drawText(playerScore, canvas.width/4, 50);
+  drawText(cpuScore, 3 * canvas.width/4, 50);
+  drawCenterLine();
+
+  if (gameOver) {
+    ctx.fillStyle = "white";
+    ctx.font = "50px Arial";
+    ctx.textAlign = "center";
+    let winner = playerScore > cpuScore ? "PLAYER WINS!" : "CPU WINS!";
+    ctx.fillText(winner, canvas.width/2, canvas.height/2 - 20);
+    ctx.font = "25px Arial";
+    ctx.fillText("Press SPACE to Restart", canvas.width/2, canvas.height/2 + 30);
+  }
+}
+
+// Restart game
+document.addEventListener("keydown", e => {
+  if (gameOver && e.code === "Space") {
+    playerScore = 0;
+    cpuScore = 0;
+    gameOver = false;
+    resetBall();
+  }
+});
+
+// Game loop
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// Start game
+loop();
+</script>
+</body>
+</html>
