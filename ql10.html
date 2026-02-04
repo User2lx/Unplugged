@@ -2,20 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sand Tetris</title>
+<title>Sand Tetris – Fullscreen</title>
 <style>
-  body {
+  html, body {
     margin: 0;
+    padding: 0;
     background: #0d0d0d;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
   canvas {
-    background: #000;
+    display: block;
     image-rendering: pixelated;
-    border: 2px solid #444;
   }
 </style>
 </head>
@@ -25,28 +24,39 @@
 
 <script>
 /* ================= CONFIG ================= */
-const tCols = 10;
-const tRows = 20;
+const sandRes = 4;
 const cellSize = 24;
-const sandRes = 4; // micro-pixels per tetris cell
-
-const sCols = tCols * sandRes;
-const sRows = tRows * sandRes;
-const pixel = cellSize / sandRes;
 
 /* ================= CANVAS ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
-canvas.width = tCols * cellSize;
-canvas.height = tRows * cellSize;
 
-/* ================= SAND GRID ================= */
-// 0 = empty, 1 = sand, 2 = wall
-let sand = Array.from({ length: sRows }, (_, y) =>
-  Array.from({ length: sCols }, (_, x) =>
-    (x === 0 || x === sCols - 1 || y === sRows - 1) ? 2 : 0
-  )
-);
+/* ================= RESIZE ================= */
+let tCols, tRows, sCols, sRows, pixel, sand;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  tCols = Math.floor(canvas.width / cellSize);
+  tRows = Math.floor(canvas.height / cellSize);
+
+  sCols = tCols * sandRes;
+  sRows = tRows * sandRes;
+  pixel = cellSize / sandRes;
+
+  // rebuild sand grid with walls
+  sand = Array.from({ length: sRows }, (_, y) =>
+    Array.from({ length: sCols }, (_, x) =>
+      (x === 0 || x === sCols - 1 || y === sRows - 1) ? 2 : 0
+    )
+  );
+
+  piece = spawnPiece();
+}
+
+window.addEventListener("resize", resize);
+resize();
 
 /* ================= TETRIS ================= */
 const SHAPES = [
@@ -68,7 +78,7 @@ function spawnPiece() {
   };
 }
 
-let piece = spawnPiece();
+let piece;
 
 /* ================= COLLISION ================= */
 function collide(p) {
@@ -79,30 +89,26 @@ function collide(p) {
       const sy = (p.y + y) * sandRes;
       const sx = (p.x + x) * sandRes;
 
-      for (let yy = 0; yy < sandRes; yy++) {
-        for (let xx = 0; xx < sandRes; xx++) {
+      for (let yy = 0; yy < sandRes; yy++)
+        for (let xx = 0; xx < sandRes; xx++)
           if (sand[sy + yy]?.[sx + xx]) return true;
-        }
-      }
     }
   }
   return false;
 }
 
-/* ================= LOCK PIECE ================= */
+/* ================= LOCK ================= */
 function lockPiece() {
-  piece.shape.forEach((row, y) => {
+  piece.shape.forEach((row, y) =>
     row.forEach((v, x) => {
       if (!v) return;
       const sy = (piece.y + y) * sandRes;
       const sx = (piece.x + x) * sandRes;
-      for (let yy = 0; yy < sandRes; yy++) {
-        for (let xx = 0; xx < sandRes; xx++) {
+      for (let yy = 0; yy < sandRes; yy++)
+        for (let xx = 0; xx < sandRes; xx++)
           sand[sy + yy][sx + xx] = 1;
-        }
-      }
-    });
-  });
+    })
+  );
 }
 
 /* ================= ROTATE ================= */
@@ -145,19 +151,16 @@ function updateSand() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (let y = 0; y < sRows; y++) {
+  for (let y = 0; y < sRows; y++)
     for (let x = 0; x < sCols; x++) {
       if (sand[y][x] === 1) ctx.fillStyle = "#f5c542";
       else if (sand[y][x] === 2) ctx.fillStyle = "#333";
       else continue;
-
       ctx.fillRect(x * pixel, y * pixel, pixel, pixel);
     }
-  }
 
-  // active piece preview
   ctx.fillStyle = "rgba(245,197,66,0.4)";
-  piece.shape.forEach((row, y) => {
+  piece.shape.forEach((row, y) =>
     row.forEach((v, x) => {
       if (!v) return;
       ctx.fillRect(
@@ -166,14 +169,12 @@ function draw() {
         cellSize,
         cellSize
       );
-    });
-  });
+    })
+  );
 }
 
 /* ================= LOOP ================= */
-let drop = 0;
-let last = 0;
-
+let drop = 0, last = 0;
 function loop(t = 0) {
   const dt = t - last;
   last = t;
@@ -196,18 +197,9 @@ function loop(t = 0) {
 
 /* ================= INPUT ================= */
 document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") {
-    piece.x--;
-    if (collide(piece)) piece.x++;
-  }
-  if (e.key === "ArrowRight") {
-    piece.x++;
-    if (collide(piece)) piece.x--;
-  }
-  if (e.key === "ArrowDown") {
-    piece.y++;
-    if (collide(piece)) piece.y--;
-  }
+  if (e.key === "ArrowLeft")  { piece.x--; if (collide(piece)) piece.x++; }
+  if (e.key === "ArrowRight") { piece.x++; if (collide(piece)) piece.x--; }
+  if (e.key === "ArrowDown")  { piece.y++; if (collide(piece)) piece.y--; }
   if (e.key === "ArrowUp") rotate();
 });
 
