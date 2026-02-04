@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Melting Sand Tetris</title>
+<title>Melting Sand Tetris with Score</title>
 <style>
-body {margin:0; background:#0d0d0d; display:flex; justify-content:center; align-items:center; height:100vh;}
-canvas {border:3px solid #333; image-rendering:pixelated;}
+body {margin:0; background:#0d0d0d; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:white; font-family:sans-serif;}
+canvas {border:3px solid #333; image-rendering:pixelated; margin-top:10px;}
+#score {font-size:24px;}
 </style>
 </head>
 <body>
+<div id="score">Score: 0</div>
 <canvas id="c"></canvas>
 <script>
 const COLS=10, ROWS=20, SCALE=8, SUB=4; // SUB = sand pixels per block
@@ -29,6 +31,9 @@ const canvas=document.getElementById("c");
 const ctx=canvas.getContext("2d");
 canvas.width=COLS*SUB*SCALE;
 canvas.height=ROWS*SUB*SCALE;
+const scoreEl=document.getElementById("score");
+
+let score = 0;
 
 // Tetromino shapes (4x4)
 const SHAPES=[
@@ -63,6 +68,8 @@ function reset(){
     arenaColor.forEach(row=>row.fill(0));
     fallingBlocks = [];
     piece = spawnPiece();
+    score = 0;
+    updateScore();
 }
 reset();
 
@@ -103,8 +110,9 @@ function merge(){
     });
 }
 
-// clear full lines
+// clear full lines (in blocks, not sand pixels)
 function clearLines(){
+    let linesCleared = 0;
     for(let y=ROWS-1;y>=0;y--){
         let full=true;
         for(let x=0;x<COLS;x++){
@@ -115,6 +123,7 @@ function clearLines(){
             if(!colFull) full=false;
         }
         if(full){
+            linesCleared++;
             arena.splice(y*SUB, SUB);
             arenaColor.splice(y*SUB, SUB);
             for(let i=0;i<SUB;i++){
@@ -124,6 +133,15 @@ function clearLines(){
             y++;
         }
     }
+    if(linesCleared>0){
+        score += linesCleared * 100; // 100 points per line
+        updateScore();
+    }
+}
+
+// update score display
+function updateScore(){
+    scoreEl.textContent = `Score: ${score}`;
 }
 
 // move
@@ -178,9 +196,7 @@ function sandPhysics(){
 function blocksSink(){
     for(let i=0;i<fallingBlocks.length;i++){
         const b = fallingBlocks[i];
-        // check if block can move down
         if(!collide(b.x,b.y+1*SUB,b.shape)){
-            // clear old pixels
             for(let y=0;y<4;y++)
                 for(let x=0;x<4;x++)
                     if(b.shape[y][x]){
@@ -192,7 +208,6 @@ function blocksSink(){
                             }
                     }
             b.y += 1*SUB;
-            // draw at new position
             for(let y=0;y<4;y++)
                 for(let x=0;x<4;x++)
                     if(b.shape[y][x]){
@@ -212,7 +227,6 @@ function draw(){
     ctx.fillStyle="#0d0d0d";
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // arena
     for(let y=0;y<ROWS*SUB;y++){
         for(let x=0;x<COLS*SUB;x++){
             if(arena[y][x]){
@@ -223,7 +237,6 @@ function draw(){
         }
     }
 
-    // piece
     for(let y=0;y<4;y++)
         for(let x=0;x<4;x++)
             if(piece.shape[y][x]){
