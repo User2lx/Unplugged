@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sand Tetris – Fullscreen</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0d0d0d;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<script>
+/* ================= CONFIG ================= */
+const sandRes = 4;
+const cellSize = 24;
+
+/* ================= CANVAS ================= */
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+/* ================= RESIZE ================= */
+let tCols, tRows, sCols, sRows, pixel, sand;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  tCols = Math.floor(canvas.width / cellSize);
+  tRows = Math.floor(canvas.height / cellSize);
+
+  sCols = tCols * sandRes;
+  sRows = tRows * sandRes;
+  pixel = cellSize / sandRes;
+
+  // rebuild sand grid with walls
+  sand = Array.from({ length: sRows }, (_, y) =>
+    Array.from({ length: sCols }, (_, x) =>
+      (x === 0 || x === sCols - 1 || y === sRows - 1) ? 2 : 0
+    )
+  );
+
+  piece = spawnPiece();
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+/* ================= TETRIS ================= */
+const SHAPES = [
+  [[1,1,1,1]],
+  [[1,1],[1,1]],
+  [[0,1,0],[1,1,1]],
+  [[1,0,0],[1,1,1]],
+  [[0,0,1],[1,1,1]],
+  [[0,1,1],[1,1,0]],
+  [[1,1,0],[0,1,1]]
+];
+
+function spawnPiece() {
+  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  return {
+    shape,
+    x: Math.floor(tCols / 2) - Math.floor(shape[0].length / 2),
+    y: 0
+  };
+}
+
+let piece;
+
+/* ================= COLLISION ================= */
+function collide(p) {
+  for (let y = 0; y < p.shape.length; y++) {
+    for (let x = 0; x < p.shape[y].length; x++) {
+      if (!p.shape[y][x]) continue;
+
+      const sy = (p.y + y) * sandRes;
+      const sx = (p.x + x) * sandRes;
+
+      for (let yy = 0; yy < sandRes; yy++)
+        for (let xx = 0; xx < sandRes; xx++)
+          if (sand[sy + yy]?.[sx + xx]) return true;
+    }
+  }
+  return false;
+}
+
+/* ================= LOCK ================= */
+function lockPiece() {
+  piece.shape.forEach((row, y) =>
+    row.forEach((v, x) => {
+      if (!v) return;
+      const sy = (piece.y + y) * sandRes;
+      const sx = (piece.x + x) * sandRes;
+      for (let yy = 0; yy < sandRes; yy++)
+        for (let xx = 0; xx < sandRes; xx++)
+          sand[sy + yy][sx + xx] = 1;
+    })
+  );
+}
+
+/* ================= ROTATE ================= */
+function rotate() {
+  const r = piece.shape[0].map((_, i) =>
+    piece.shape.map(row => row[i]).reverse()
+  );
+  const old = piece.shape;
+  piece.shape = r;
+  if (collide(piece)) piece.shape = old;
+}
+
+/* ================= SAND PHYSICS ================= */
+function updateSand() {
+  for (let y = sRows - 2; y >= 0; y--) {
+    for (let x = 1; x < sCols - 1; x++) {
+      if (sand[y][x] !== 1) continue;
+
+      if (sand[y + 1][x] === 0) {
+        sand[y][x] = 0;
+        sand[y + 1][x] = 1;
+      } else {
+        const dirs = Math.random() < 0.5 ? [-1, 1] : [1, -1];
+        for (const d of dirs) {
+          if (
+            sand[y][x + d] === 0 &&
+            sand[y + 1][x + d] === 0
+          ) {
+            sand[y][x] = 0;
+            sand[y + 1][x + d] = 1;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ================= DRAW ================= */
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < sRows; y++)
+    for (let x = 0; x < sCols; x++) {
+      if (sand[y][x] === 1) ctx.fillStyle = "#f5c542";
+      else if (sand[y][x] === 2) ctx.fillStyle = "#333";
+      else continue;
+      ctx.fillRect(x * pixel, y * pixel, pixel, pixel);
+    }
+
+  ctx.fillStyle = "rgba(245,197,66,0.4)";
+  piece.shape.forEach((row, y) =>
+    row.forEach((v, x) => {
+      if (!v) return;
+      ctx.fillRect(
+        (piece.x + x) * cellSize,
+        (piece.y + y) * cellSize,
+        cellSize,
+        cellSize
+      );
+    })
+  );
+}
+
+/* ================= LOOP ================= */
+let drop = 0, last = 0;
+function loop(t = 0) {
+  const dt = t - last;
+  last = t;
+  drop += dt;
+
+  if (drop > 500) {
+    piece.y++;
+    if (collide(piece)) {
+      piece.y--;
+      lockPiece();
+      piece = spawnPiece();
+    }
+    drop = 0;
+  }
+
+  updateSand();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* ================= INPUT ================= */
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft")  { piece.x--; if (collide(piece)) piece.x++; }
+  if (e.key === "ArrowRight") { piece.x++; if (collide(piece)) piece.x--; }
+  if (e.key === "ArrowDown")  { piece.y++; if (collide(piece)) piece.y--; }
+  if (e.key === "ArrowUp") rotate();
+});
+
+loop();
+</script>
+</body>
+</html>
