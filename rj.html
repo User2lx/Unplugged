@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sand Tetris – Fullscreen</title>
+<title>Fullscreen Sand Tetris</title>
 <style>
   html, body {
     margin: 0;
     padding: 0;
-    background: #0d0d0d;
     width: 100%;
     height: 100%;
+    background: #0d0d0d;
     overflow: hidden;
   }
   canvas {
@@ -23,17 +23,34 @@
 <canvas id="c"></canvas>
 
 <script>
-/* ================= CONFIG ================= */
-const sandRes = 4;
-const cellSize = 24;
+/* ================= GLOBAL CONFIG ================= */
+const sandRes = 4;        // micro-pixels per tetris cell
+const cellSize = 24;     // size of tetris cell (visual)
 
 /* ================= CANVAS ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-/* ================= RESIZE ================= */
-let tCols, tRows, sCols, sRows, pixel, sand;
+/* ================= STATE ================= */
+let tCols, tRows;
+let sCols, sRows;
+let pixel;
+let sand = [];
+let piece = null;
+let running = false;
 
+/* ================= TETRIS SHAPES ================= */
+const SHAPES = [
+  [[1,1,1,1]],
+  [[1,1],[1,1]],
+  [[0,1,0],[1,1,1]],
+  [[1,0,0],[1,1,1]],
+  [[0,0,1],[1,1,1]],
+  [[0,1,1],[1,1,0]],
+  [[1,1,0],[0,1,1]]
+];
+
+/* ================= RESIZE / INIT ================= */
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -45,7 +62,7 @@ function resize() {
   sRows = tRows * sandRes;
   pixel = cellSize / sandRes;
 
-  // rebuild sand grid with walls
+  // build sand grid with walls
   sand = Array.from({ length: sRows }, (_, y) =>
     Array.from({ length: sCols }, (_, x) =>
       (x === 0 || x === sCols - 1 || y === sRows - 1) ? 2 : 0
@@ -53,22 +70,16 @@ function resize() {
   );
 
   piece = spawnPiece();
+
+  if (!running) {
+    running = true;
+    requestAnimationFrame(loop);
+  }
 }
 
 window.addEventListener("resize", resize);
-resize();
 
-/* ================= TETRIS ================= */
-const SHAPES = [
-  [[1,1,1,1]],
-  [[1,1],[1,1]],
-  [[0,1,0],[1,1,1]],
-  [[1,0,0],[1,1,1]],
-  [[0,0,1],[1,1,1]],
-  [[0,1,1],[1,1,0]],
-  [[1,1,0],[0,1,1]]
-];
-
+/* ================= PIECE ================= */
 function spawnPiece() {
   const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
   return {
@@ -77,8 +88,6 @@ function spawnPiece() {
     y: 0
   };
 }
-
-let piece;
 
 /* ================= COLLISION ================= */
 function collide(p) {
@@ -97,7 +106,7 @@ function collide(p) {
   return false;
 }
 
-/* ================= LOCK ================= */
+/* ================= LOCK PIECE ================= */
 function lockPiece() {
   piece.shape.forEach((row, y) =>
     row.forEach((v, x) => {
@@ -149,16 +158,21 @@ function updateSand() {
 
 /* ================= DRAW ================= */
 function draw() {
+  if (!piece) return;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (let y = 0; y < sRows; y++)
+  for (let y = 0; y < sRows; y++) {
     for (let x = 0; x < sCols; x++) {
       if (sand[y][x] === 1) ctx.fillStyle = "#f5c542";
       else if (sand[y][x] === 2) ctx.fillStyle = "#333";
       else continue;
+
       ctx.fillRect(x * pixel, y * pixel, pixel, pixel);
     }
+  }
 
+  // active piece preview
   ctx.fillStyle = "rgba(245,197,66,0.4)";
   piece.shape.forEach((row, y) =>
     row.forEach((v, x) => {
@@ -174,7 +188,9 @@ function draw() {
 }
 
 /* ================= LOOP ================= */
-let drop = 0, last = 0;
+let drop = 0;
+let last = 0;
+
 function loop(t = 0) {
   const dt = t - last;
   last = t;
@@ -197,13 +213,16 @@ function loop(t = 0) {
 
 /* ================= INPUT ================= */
 document.addEventListener("keydown", e => {
+  if (!piece) return;
+
   if (e.key === "ArrowLeft")  { piece.x--; if (collide(piece)) piece.x++; }
   if (e.key === "ArrowRight") { piece.x++; if (collide(piece)) piece.x--; }
   if (e.key === "ArrowDown")  { piece.y++; if (collide(piece)) piece.y--; }
   if (e.key === "ArrowUp") rotate();
 });
 
-loop();
+/* ================= START ================= */
+resize();
 </script>
 </body>
 </html>
