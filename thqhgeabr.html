@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Melting Sand Tetris</title>
+<style>
+body {margin:0; background:#0d0d0d; display:flex; justify-content:center; align-items:center; height:100vh;}
+canvas {border:3px solid #333; image-rendering:pixelated;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const COLS=10, ROWS=20, SCALE=8, SUB=4; // SUB = sand pixels per block
+const EMPTY=0;
+
+const COLORS=[
+  null,
+  [240,240,0],   // Yellow
+  [0,240,240],   // Cyan
+  [160,0,240],   // Purple
+  [240,160,0],   // Orange
+  [0,0,240],     // Blue
+  [0,240,0],     // Green
+  [240,0,0]      // Red
+];
+
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
+canvas.width=COLS*SUB*SCALE;
+canvas.height=ROWS*SUB*SCALE;
+
+// Tetromino shapes (4x4)
+const SHAPES=[
+[[1,1,1,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+[[1,1,0,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]],
+[[0,1,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+[[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+[[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+[[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]],
+[[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]]
+];
+
+// arena stores sand and blocks
+let arena = Array.from({length:ROWS*SUB},()=>Array(COLS*SUB).fill(EMPTY));
+let arenaColor = Array.from({length:ROWS*SUB},()=>Array(COLS*SUB).fill(0)); // color of each pixel
+let fallingBlocks = []; // array of blocks that can sink
+
+let piece = null;
+let dropCounter=0;
+let dropInterval=500;
+let lastTime=0;
+
+// spawn piece
+function spawnPiece(){
+    const t=Math.floor(Math.random()*SHAPES.length);
+    return {shape:SHAPES[t],x:3*SUB,y:0,color:t+1};
+}
+
+// reset
+function reset(){
+    arena.forEach(row=>row.fill(EMPTY));
+    arenaColor.forEach(row=>row.fill(0));
+    fallingBlocks = [];
+    piece = spawnPiece();
+}
+reset();
+
+// collision
+function collide(px,py,s){
+    for(let y=0;y<4;y++)
+        for(let x=0;x<4;x++){
+            if(s[y][x]){
+                const cx=px+x*SUB, cy=py+y*SUB;
+                for(let sy=0;sy<SUB;sy++)
+                    for(let sx=0;sx<SUB;sx++){
+                        const ax=cx+sx, ay=cy+sy;
+                        if(ax<0||ax>=COLS*SUB||ay>=ROWS*SUB) return true;
+                        if(arena[ay][ax]) return true;
+                    }
+            }
+        }
+    return false;
+}
+
+// merge piece into arena and add to falling blocks
+function merge(){
+    for(let y=0;y<4;y++){
+        for(let x=0;x<4;x++){
+            if(piece.shape[y][x]){
+                const cx=piece.x+x*SUB, cy=piece.y+y*SUB;
+                for(let sy=0;sy<SUB;sy++)
+                    for(let sx=0;sx<SUB;sx++){
+                        arena[cy+sy][cx+sx]=1;
+                        arenaColor[cy+sy][cx+sx]=piece.color;
+                    }
+            }
+        }
+    }
+    // add this block to fallingBlocks
+    fallingBlocks.push({
+        x:piece.x, y:piece.y, shape:piece.shape.map(r=>r.slice()), color:piece.color
+    });
+}
+
+// clear full lines
+function clearLines(){
+    for(let y=ROWS-1;y>=0;y--){
+        let full=true;
+        for(let x=0;x<COLS;x++){
+            let colFull=true;
+            for(let sy=0;sy<SUB;sy++)
+                for(let sx=0;sx<SUB;sx++)
+                    if(arena[y*SUB+sy][x*SUB+sx]===EMPTY) colFull=false;
+            if(!colFull) full=false;
+        }
+        if(full){
+            arena.splice(y*SUB, SUB);
+            arenaColor.splice(y*SUB, SUB);
+            for(let i=0;i<SUB;i++){
+                arena.unshift(Array(COLS*SUB).fill(EMPTY));
+                arenaColor.unshift(Array(COLS*SUB).fill(0));
+            }
+            y++;
+        }
+    }
+}
+
+// move
+function move(dir){
+    piece.x+=dir*SUB;
+    if(collide(piece.x,piece.y,piece.shape)) piece.x-=dir*SUB;
+}
+
+// rotate
+function rotatePiece(){
+    const s = piece.shape;
+    const n = s[0].map((_,i)=>s.map(r=>r[i]).reverse());
+    const oldX = piece.x;
+    piece.shape = n;
+    if(collide(piece.x,piece.y,piece.shape)) piece.x=oldX;
+}
+
+// drop
+function drop(){
+    piece.y++;
+    if(collide(piece.x,piece.y,piece.shape)){
+        piece.y--;
+        merge();
+        clearLines();
+        piece = spawnPiece();
+        if(collide(piece.x,piece.y,piece.shape)) reset();
+    }
+    dropCounter=0;
+}
+
+// falling sand physics
+function sandPhysics(){
+    for(let y=ROWS*SUB-2;y>=0;y--){
+        for(let x=0;x<COLS*SUB;x++){
+            if(arena[y][x]===1){
+                if(arena[y+1][x]===0){
+                    arena[y+1][x]=1; arena[y][x]=0;
+                    arenaColor[y+1][x]=arenaColor[y][x]; arenaColor[y][x]=0;
+                } else if(x>0 && arena[y+1][x-1]===0){
+                    arena[y+1][x-1]=1; arena[y][x]=0;
+                    arenaColor[y+1][x-1]=arenaColor[y][x]; arenaColor[y][x]=0;
+                } else if(x<COLS*SUB-1 && arena[y+1][x+1]===0){
+                    arena[y+1][x+1]=1; arena[y][x]=0;
+                    arenaColor[y+1][x+1]=arenaColor[y][x]; arenaColor[y][x]=0;
+                }
+            }
+        }
+    }
+}
+
+// make blocks sink slowly into sand
+function blocksSink(){
+    for(let i=0;i<fallingBlocks.length;i++){
+        const b = fallingBlocks[i];
+        // check if block can move down
+        if(!collide(b.x,b.y+1*SUB,b.shape)){
+            // clear old pixels
+            for(let y=0;y<4;y++)
+                for(let x=0;x<4;x++)
+                    if(b.shape[y][x]){
+                        const cx=b.x+x*SUB, cy=b.y+y*SUB;
+                        for(let sy=0;sy<SUB;sy++)
+                            for(let sx=0;sx<SUB;sx++){
+                                arena[cy+sy][cx+sx]=0;
+                                arenaColor[cy+sy][cx+sx]=0;
+                            }
+                    }
+            b.y += 1*SUB;
+            // draw at new position
+            for(let y=0;y<4;y++)
+                for(let x=0;x<4;x++)
+                    if(b.shape[y][x]){
+                        const cx=b.x+x*SUB, cy=b.y+y*SUB;
+                        for(let sy=0;sy<SUB;sy++)
+                            for(let sx=0;sx<SUB;sx++){
+                                arena[cy+sy][cx+sx]=1;
+                                arenaColor[cy+sy][cx+sx]=b.color;
+                            }
+                    }
+        }
+    }
+}
+
+// draw
+function draw(){
+    ctx.fillStyle="#0d0d0d";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // arena
+    for(let y=0;y<ROWS*SUB;y++){
+        for(let x=0;x<COLS*SUB;x++){
+            if(arena[y][x]){
+                const col = COLORS[arenaColor[y][x]];
+                ctx.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`;
+                ctx.fillRect(x*SCALE,y*SCALE,SCALE,SCALE);
+            }
+        }
+    }
+
+    // piece
+    for(let y=0;y<4;y++)
+        for(let x=0;x<4;x++)
+            if(piece.shape[y][x]){
+                const cx=piece.x+x*SUB, cy=piece.y+y*SUB;
+                const col=COLORS[piece.color];
+                for(let sy=0;sy<SUB;sy++)
+                    for(let sx=0;sx<SUB;sx++){
+                        ctx.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`;
+                        ctx.fillRect((cx+sx)*SCALE,(cy+sy)*SCALE,SCALE,SCALE);
+                    }
+            }
+}
+
+// main loop
+function update(time=0){
+    const delta = time-lastTime;
+    lastTime=time;
+    dropCounter+=delta;
+    if(dropCounter>dropInterval) drop();
+    sandPhysics();
+    blocksSink();
+    draw();
+    requestAnimationFrame(update);
+}
+
+// controls
+document.addEventListener("keydown",e=>{
+    if(e.key==="ArrowLeft") move(-1);
+    if(e.key==="ArrowRight") move(1);
+    if(e.key==="ArrowDown") drop();
+    if(e.key===" ") rotatePiece();
+    if(e.key==="r") reset();
+});
+
+update();
+</script>
+</body>
+</html>
