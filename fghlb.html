@@ -27,13 +27,15 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  // make sure player is above ground
+  if(player.y + player.h > getGroundY()) player.y = getGroundY() - player.h;
 }
 window.addEventListener("resize", resize);
 resize();
 
-// ===== CONSTANTS =====
-const gravity = 0.6;
-const CHUNK = 800;
+function getGroundY() {
+  return canvas.height - 50;
+}
 
 // ===== BIOMES =====
 const biomes = [
@@ -54,7 +56,7 @@ addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 // ===== PLAYER =====
 const player = {
-  x: 100, y: 0, w: 40, h: 50,
+  x: 100, y: getGroundY() - 50, w: 40, h: 50,
   dx: 0, dy: 0,
   speed: 4,
   jump: 12,
@@ -73,6 +75,7 @@ let groundChunks = [];
 let platforms = [];
 let enemies = [];
 let upgrades = [];
+const CHUNK = 800;
 
 // ===== UTILS =====
 function hit(a,b){
@@ -97,7 +100,7 @@ function createChunk(index) {
   groundChunks.push({
     index,
     x: baseX,
-    y: canvas.height - 50,
+    y: getGroundY(),
     w: CHUNK,
     h: 50,
     color: biome.ground
@@ -107,7 +110,7 @@ function createChunk(index) {
   for (let i = 0; i < 2; i++) {
     platforms.push({
       x: baseX + 100 + Math.random() * 500,
-      y: canvas.height - 200 - Math.random() * 150,
+      y: getGroundY() - 150 - Math.random() * 100,
       w: 80 + Math.random() * 80,
       h: 20,
       color: biome.ground
@@ -118,11 +121,9 @@ function createChunk(index) {
   if (Math.random() < 0.6) {
     enemies.push({
       x: baseX + 400,
-      y: canvas.height - 90,
+      y: getGroundY() - 40,
       w: 40, h: 40,
-      dx: (Math.random()<0.5?-1:1) *
-          biome.enemySpeed *
-          (1 + difficulty * 0.1),
+      dx: (Math.random()<0.5?-1:1) * biome.enemySpeed * (1 + difficulty*0.1),
       hp: 1 + Math.floor(difficulty / 4)
     });
   }
@@ -131,7 +132,7 @@ function createChunk(index) {
   if (Math.random() < 0.4) {
     upgrades.push({
       x: baseX + 300 + Math.random() * 200,
-      y: canvas.height - 260,
+      y: getGroundY() - 220,
       w: 25,
       h: 25
     });
@@ -157,7 +158,7 @@ function applyUpgrade() {
 function update() {
   player.dx = 0;
   if (keys["a"]) { player.dx = -player.speed; player.facing = -1; }
-  if (keys["d"]) { player.dx =  player.speed; player.facing =  1; }
+  if (keys["d"]) { player.dx = player.speed; player.facing = 1; }
 
   if ((keys["w"] || keys[" "]) && player.grounded) {
     player.dy = -player.jump;
@@ -169,117 +170,96 @@ function update() {
     player.atk = player.atkDuration;
   }
 
-  player.dy += gravity;
+  player.dy += 0.6;
   player.x += player.dx;
   player.y += player.dy;
 
-  cameraX = Math.max(0, player.x - canvas.width / 3);
+  cameraX = Math.max(0, player.x - canvas.width/3);
 
   generateChunks();
 
+  // collisions
   player.grounded = false;
   groundChunks.forEach(g => {
-    if (hit(player, g) && player.dy > 0) {
+    if (hit(player,g) && player.dy>0){
       player.y = g.y - player.h;
       player.dy = 0;
       player.grounded = true;
     }
   });
-
   platforms.forEach(p => {
-    if (hit(player, p) && player.dy > 0) {
+    if (hit(player,p) && player.dy>0){
       player.y = p.y - player.h;
       player.dy = 0;
       player.grounded = true;
     }
   });
 
-  if (player.attacking && --player.atk <= 0)
-    player.attacking = false;
+  if (player.attacking && --player.atk <= 0) player.attacking=false;
 
+  // enemies
   enemies.forEach(e => {
     e.x += e.dx;
-
-    if (hit(player, e)) {
+    if(hit(player,e)){
       player.health--;
-      player.x -= 20 * Math.sign(e.dx);
-      if (player.health <= 0) reset();
+      player.x -= 20*Math.sign(e.dx);
+      if(player.health <= 0) reset();
     }
-
-    if (player.attacking) {
-      const atk = {
-        x: player.x + (player.facing === 1 ? player.w : -30),
-        y: player.y + 10,
-        w: 30, h: 30
-      };
-      if (hit(atk, e)) e.hp--;
+    if(player.attacking){
+      const atk = { x:player.x+(player.facing===1?player.w:-30), y:player.y+10, w:30, h:30};
+      if(hit(atk,e)) e.hp--;
     }
   });
 
-  upgrades.forEach((u, i) => {
-    if (hit(player, u)) {
+  // upgrades
+  upgrades.forEach((u,i)=>{
+    if(hit(player,u)){
       applyUpgrade();
-      upgrades.splice(i, 1);
+      upgrades.splice(i,1);
     }
   });
 
-  const minChunk = Math.floor(player.x / CHUNK) - 2;
-  groundChunks = groundChunks.filter(c => c.index >= minChunk);
-  platforms = platforms.filter(p => p.x > minChunk * CHUNK);
-  enemies = enemies.filter(e => e.hp > 0 && e.x > minChunk * CHUNK);
-  upgrades = upgrades.filter(u => u.x > minChunk * CHUNK);
+  const minChunk = Math.floor(player.x/CHUNK)-2;
+  groundChunks = groundChunks.filter(c=>c.index>=minChunk);
+  platforms = platforms.filter(p=>p.x>minChunk*CHUNK);
+  enemies = enemies.filter(e=>e.hp>0 && e.x>minChunk*CHUNK);
+  upgrades = upgrades.filter(u=>u.x>minChunk*CHUNK);
 }
 
 // ===== DRAW =====
 function draw() {
-  const biome = getBiome(Math.floor(player.x / CHUNK));
+  const biome = getBiome(Math.floor(player.x/CHUNK));
   canvas.style.background = biome.bg;
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.save();
   ctx.translate(-cameraX,0);
 
-  groundChunks.forEach(g => {
-    ctx.fillStyle = g.color;
-    ctx.fillRect(g.x,g.y,g.w,g.h);
-  });
-
-  platforms.forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x,p.y,p.w,p.h);
-  });
-
-  ctx.fillStyle = "#9b59b6";
-  upgrades.forEach(u => ctx.fillRect(u.x,u.y,u.w,u.h));
-
-  ctx.fillStyle = "#ff4757";
+  groundChunks.forEach(g=>{ctx.fillStyle=g.color;ctx.fillRect(g.x,g.y,g.w,g.h);});
+  platforms.forEach(p=>{ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.w,p.h);});
+  upgrades.forEach(u=>{ctx.fillStyle="#9b59b6";ctx.fillRect(u.x,u.y,u.w,u.h);});
+  ctx.fillStyle="#ff4757";
   ctx.fillRect(player.x,player.y,player.w,player.h);
-
-  if (player.attacking) {
-    ctx.fillStyle = "#ffa502";
-    ctx.fillRect(
-      player.x + (player.facing===1?player.w:-30),
-      player.y+10,30,30
-    );
+  if(player.attacking){
+    ctx.fillStyle="#ffa502";
+    ctx.fillRect(player.x+(player.facing===1?player.w:-30),player.y+10,30,30);
   }
-
-  ctx.fillStyle = "#2ed573";
-  enemies.forEach(e => ctx.fillRect(e.x,e.y,e.w,e.h));
+  enemies.forEach(e=>{ctx.fillStyle="#2ed573";ctx.fillRect(e.x,e.y,e.w,e.h);});
 
   ctx.restore();
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "14px monospace";
-  ctx.fillText(`HP ${player.health}/${player.maxHealth}`, 20, 25);
-  ctx.fillText(`Speed ${player.speed.toFixed(1)}`, 20, 45);
-  ctx.fillText(`Jump ${player.jump}`, 20, 65);
-  ctx.fillText(`Atk ${player.atkDuration}`, 20, 85);
+  ctx.fillStyle="#fff";
+  ctx.font="14px monospace";
+  ctx.fillText(`HP ${player.health}/${player.maxHealth}`,20,25);
+  ctx.fillText(`Speed ${player.speed.toFixed(1)}`,20,45);
+  ctx.fillText(`Jump ${player.jump}`,20,65);
+  ctx.fillText(`Atk ${player.atkDuration}`,20,85);
 }
 
 // ===== RESET =====
 function reset() {
-  player.x = 100;
-  player.y = 0;
+  player.x=100;
+  player.y=getGroundY()-player.h;
   player.health = player.maxHealth = 5;
   player.speed = 4;
   player.jump = 12;
