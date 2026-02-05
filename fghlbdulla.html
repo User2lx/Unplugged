@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller with Dash & Double Jump</title>
+<title>Side Scroller with Biomes</title>
 <style>
   html, body { margin:0; padding:0; overflow:hidden; background:#000; }
   canvas { display:block; }
@@ -37,20 +37,40 @@ window.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
 // ===== World =====
 const CHUNK = 800;
 let groundChunks=[], platforms=[], enemies=[], upgrades=[];
+
+const biomes = [
+  {bg:"#87ceeb", ground:"#2ecc71"}, // blue sky, green ground
+  {bg:"#f6d365", ground:"#27ae60"}, // yellow sky, dark green ground
+  {bg:"#c7ecee", ground:"#16a085"}, // light cyan sky, teal ground
+  {bg:"#ff6b6b", ground:"#c0392b"}  // red sky, dark red ground
+];
+
 function getGroundY(){ return canvas.height-50; }
+function getBiome(chunk){ return biomes[Math.floor(chunk/5)%biomes.length]; }
 
 // ===== World Generation =====
 function createChunk(index){
   const baseX = index*CHUNK;
-  groundChunks.push({x:baseX, y:getGroundY(), w:CHUNK, h:50});
+  const biome = getBiome(index);
+  // Ground
+  groundChunks.push({x:baseX, y:getGroundY(), w:CHUNK, h:50, color:biome.ground});
+  // Platforms (reachable: 50-120px above ground)
   for(let i=0;i<2;i++){
-    platforms.push({x:baseX+100+Math.random()*500, y:getGroundY()-150-Math.random()*100, w:80+Math.random()*80, h:20});
+    platforms.push({
+      x:baseX+100+Math.random()*500,
+      y:getGroundY() - 50 - Math.random()*70,
+      w:80+Math.random()*80,
+      h:20,
+      color:biome.ground
+    });
   }
+  // Enemies
   if(Math.random()<0.6){
     enemies.push({x:baseX+300+Math.random()*300, y:getGroundY()-40, w:40, h:40, dx:(Math.random()<0.5?-1:1), hp:1});
   }
+  // Upgrades
   if(Math.random()<0.3){
-    upgrades.push({x:baseX+300+Math.random()*200, y:getGroundY()-220, w:25, h:25});
+    upgrades.push({x:baseX+300+Math.random()*200, y:getGroundY()-120-Math.random()*50, w:25, h:25});
   }
 }
 
@@ -73,22 +93,18 @@ function applyUpgrade(){
 // ===== Update =====
 function update(){
   // Horizontal movement
-  player.dx = 0;
+  player.dx=0;
   if(keys["a"]) player.dx=-player.speed;
   if(keys["d"]) player.dx=player.speed;
 
-  // Jump
+  // Jump & double jump
   if((keys["w"]||keys[" "]) && player.grounded){ player.dy=-player.jump; player.grounded=false; player.canDoubleJump=true; }
   else if((keys["w"]||keys[" "]) && !player.grounded && player.canDoubleJump){ player.dy=-player.jump; player.canDoubleJump=false; }
 
-  // Dash (Shift)
-  if(keys["shift"] && player.dashCooldown<=0 && !player.dashing){
-    player.dashing = true;
-    player.dashTime = 10;
-    player.dashCooldown = 30;
-  }
+  // Dash
+  if(keys["shift"] && player.dashCooldown<=0 && !player.dashing){ player.dashing=true; player.dashTime=10; player.dashCooldown=30; }
   if(player.dashing){
-    player.dx = 15 * player.facing;
+    player.dx = 15*player.facing;
     player.dashTime--;
     if(player.dashTime<=0) player.dashing=false;
   }
@@ -103,7 +119,7 @@ function update(){
   player.y += player.dy;
 
   // Camera
-  const cameraX = Math.max(0,player.x - canvas.width/3);
+  const cameraX = Math.max(0, player.x - canvas.width/3);
 
   generateChunks();
 
@@ -131,7 +147,7 @@ function update(){
       if(player.health<=0) reset();
     }
     if(player.attacking){
-      const atk = {x:player.x+(player.facing===1?player.w:-30), y:player.y+10, w:30, h:30};
+      const atk={x:player.x+(player.facing===1?player.w:-30), y:player.y+10, w:30, h:30};
       if(atk.x+atk.w>e.x && atk.x<e.x+e.w && atk.y+atk.h>e.y && atk.y<e.y+e.h) e.hp--;
     }
   });
@@ -153,21 +169,17 @@ function update(){
 
 // ===== Draw =====
 function draw(){
-  ctx.fillStyle="#87ceeb"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const biome = getBiome(Math.floor(player.x/CHUNK));
+  ctx.fillStyle=biome.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  const cameraX = Math.max(0,player.x - canvas.width/3);
-  ctx.save();
-  ctx.translate(-cameraX,0);
+  const cameraX = Math.max(0, player.x - canvas.width/3);
+  ctx.save(); ctx.translate(-cameraX,0);
 
-  // Ground & Platforms
-  groundChunks.forEach(g=>{ ctx.fillStyle="#2ecc71"; ctx.fillRect(g.x,g.y,g.w,g.h); });
-  platforms.forEach(p=>{ ctx.fillStyle="#27ae60"; ctx.fillRect(p.x,p.y,p.w,p.h); });
-
-  // Upgrades & Enemies
+  groundChunks.forEach(g=>{ ctx.fillStyle=g.color; ctx.fillRect(g.x,g.y,g.w,g.h); });
+  platforms.forEach(p=>{ ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,p.w,p.h); });
   upgrades.forEach(u=>{ ctx.fillStyle="#f1c40f"; ctx.fillRect(u.x,u.y,u.w,u.h); });
   enemies.forEach(e=>{ ctx.fillStyle="#2ed573"; ctx.fillRect(e.x,e.y,e.w,e.h); });
 
-  // Player
   ctx.fillStyle="#ff4757"; ctx.fillRect(player.x,player.y,player.w,player.h);
   if(player.attacking) ctx.fillStyle="#ffa502", ctx.fillRect(player.x+(player.facing===1?player.w:-30),player.y+10,30,30);
 
