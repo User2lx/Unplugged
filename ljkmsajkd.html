@@ -18,7 +18,7 @@ const ctx = canvas.getContext('2d');
 // Game state
 let frame=0, score=0, highScore=Number(localStorage.getItem('flappyHighScore'))||0;
 let gameOver=false, inMenu=true;
-let animationFrameId; // For controlling update loop
+let animationFrameId;
 
 // Bird
 let bird = {
@@ -50,10 +50,13 @@ function jump(){
     restart();
     return;
   }
-  if(!gameOver){
-    bird.velocity = bird.jump;
-    bird.rotation = -Math.PI/6;
+  if(gameOver){
+    inMenu = true; // Return to menu after death
+    return;
   }
+  // Normal jump during gameplay
+  bird.velocity = bird.jump;
+  bird.rotation = -Math.PI/6;
 }
 
 // Helpers
@@ -70,21 +73,17 @@ function createPipe(){
 
 // Draw
 function draw(){
-  // Sky
   const sky=ctx.createLinearGradient(0,0,0,canvas.height); 
   sky.addColorStop(0,'#4ec0ca'); sky.addColorStop(1,'#3aa5b0'); 
   ctx.fillStyle=sky; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // Clouds
   clouds.forEach(c=>{ctx.globalAlpha=c.alpha; roundRect(c.x,c.y,c.width,c.height,15,'#fff'); ctx.globalAlpha=1;});
 
-  // Menu
   if(inMenu){
     ctx.fillStyle='#FFD93D'; ctx.font='48px Arial'; ctx.fillText('FLAPPY BIRD',40,200);
     ctx.fillStyle='#06d6a0'; ctx.font='28px Arial'; ctx.fillText('Click/Space to Play',40,300);
     ctx.fillText(`High Score: ${highScore}`,40,350);
 
-    // Bird float
     ctx.save(); ctx.translate(bird.x+bird.width/2,bird.y+bird.height/2+bird.bounce); ctx.rotate(bird.rotation);
     roundRect(-bird.width/2,-bird.height/2,bird.width,bird.height,6,bird.color);
     ctx.fillStyle='#f4c542'; ctx.fillRect(-bird.width/2-5,bird.wingOffset-5,10,10); ctx.fillRect(bird.width/2-5,-bird.wingOffset-5,10,10);
@@ -92,13 +91,11 @@ function draw(){
     return;
   }
 
-  // Bird
   ctx.save(); ctx.translate(bird.x+bird.width/2,bird.y+bird.height/2+bird.bounce); ctx.rotate(bird.rotation);
   roundRect(-bird.width/2,-bird.height/2,bird.width,bird.height,6,bird.color);
   ctx.fillStyle='#f4c542'; ctx.fillRect(-bird.width/2-5,bird.wingOffset-5,10,10); ctx.fillRect(bird.width/2-5,-bird.wingOffset-5,10,10);
   ctx.restore();
 
-  // Pipes
   pipes.forEach(pipe=>{
     roundRect(pipe.x,0,pipeWidth,pipe.top,10,pipe.color); 
     roundRect(pipe.x,pipe.bottom,pipeWidth,canvas.height-pipe.bottom-groundHeight,10,pipe.color);
@@ -106,13 +103,11 @@ function draw(){
     ctx.fillRect(pipe.x,pipe.bottom,pipeWidth,10);
   });
 
-  // Ground
   groundX-=groundSpeed; if(groundX<=-canvas.width) groundX=0;
   ctx.fillStyle='#8d5524'; ctx.fillRect(groundX,canvas.height-groundHeight,canvas.width,groundHeight); 
   ctx.fillRect(groundX+canvas.width,canvas.height-groundHeight,canvas.width,groundHeight);
   for(let i=0;i<20;i++){ctx.fillStyle='#7a4320'; ctx.fillRect((i*20+groundX)%canvas.width,canvas.height-20,10,10);}
 
-  // Score
   ctx.fillStyle='#fff'; ctx.font='28px Arial'; ctx.fillText(`Score: ${score}`,10,35); 
   ctx.fillText(`High: ${highScore}`,10,70);
 
@@ -123,7 +118,6 @@ function draw(){
 function update(){
   frame++;
 
-  // Menu animation
   if(inMenu){
     bird.wingOffset+=0.3*bird.wingDir; if(bird.wingOffset>6||bird.wingOffset<-6) bird.wingDir*=-1;
     bird.bounce+=0.1*bird.bounceDir; if(bird.bounce>3||bird.bounce<-3) bird.bounceDir*=-1;
@@ -134,7 +128,7 @@ function update(){
   if(!gameOver){
     bird.velocity+=bird.gravity; 
     bird.y+=bird.velocity; 
-    bird.rotation += (Math.min(Math.PI/4,bird.velocity/10)-bird.rotation)*0.1; // smooth rotation
+    bird.rotation += (Math.min(Math.PI/4,bird.velocity/10)-bird.rotation)*0.1;
     bird.wingOffset+=0.3*bird.wingDir; if(bird.wingOffset>6||bird.wingOffset<-6) bird.wingDir*=-1;
     bird.bounce+=0.1*bird.bounceDir; if(bird.bounce>2||bird.bounce<-2) bird.bounceDir*=-1;
 
@@ -156,7 +150,6 @@ function update(){
 
 // Restart
 function restart(){
-  // Reset all bird & game states
   bird.y = 300;
   bird.velocity = 0;
   bird.rotation = 0;
@@ -173,13 +166,11 @@ function restart(){
 
   clouds.forEach(c => { c.x = Math.random() * canvas.width; c.alpha = 1; });
 
-  // Cancel previous loop to avoid multiple loops
   if(animationFrameId) cancelAnimationFrame(animationFrameId);
 
   update();
 }
 
-// Start
 update();
 </script>
 </body>
