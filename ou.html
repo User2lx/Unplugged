@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple Pong Game</title>
+  <title>Glitchy Pong with Music</title>
   <style>
     body {
       background: #000;
-      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -27,37 +26,33 @@
     const canvas = document.getElementById("pong");
     const ctx = canvas.getContext("2d");
 
-    // Paddle properties
     const paddleWidth = 10, paddleHeight = 100;
     let player = { x: 0, y: canvas.height/2 - paddleHeight/2, dy: 0, speed: 6 };
     let ai = { x: canvas.width - paddleWidth, y: canvas.height/2 - paddleHeight/2, dy: 3 };
 
-    // Ball properties
-    let ball = { 
-      x: canvas.width/2, 
-      y: canvas.height/2, 
-      radius: 10, 
-      speed: 5, 
-      dx: 5, 
-      dy: 3 
-    };
+    let ball = { x: canvas.width/2, y: canvas.height/2, radius: 10, speed: 5, dx: 5, dy: 3 };
 
-    // Draw rectangle (paddles)
+    // Random color generator
+    function randomColor() {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `rgb(${r},${g},${b})`;
+    }
+
     function drawRect(x, y, w, h, color = "#fff") {
       ctx.fillStyle = color;
       ctx.fillRect(x, y, w, h);
     }
 
-    // Draw ball
     function drawCircle(x, y, r, color = "#fff") {
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI*2, false);
+      ctx.arc(x, y, r, 0, Math.PI*2);
       ctx.closePath();
       ctx.fill();
     }
 
-    // Move paddles
     function movePlayer() {
       player.y += player.dy;
       if(player.y < 0) player.y = 0;
@@ -65,38 +60,26 @@
     }
 
     function moveAI() {
-      // Simple AI follows the ball
       if(ball.y < ai.y + paddleHeight/2) ai.y -= ai.dy;
       if(ball.y > ai.y + paddleHeight/2) ai.y += ai.dy;
-
       if(ai.y < 0) ai.y = 0;
       if(ai.y + paddleHeight > canvas.height) ai.y = canvas.height - paddleHeight;
     }
 
-    // Move ball
     function moveBall() {
       ball.x += ball.dx;
       ball.y += ball.dy;
 
-      // Top & bottom collision
-      if(ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
-        ball.dy = -ball.dy;
-      }
+      if(ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) ball.dy = -ball.dy;
 
-      // Paddle collision
       if(ball.x - ball.radius < player.x + paddleWidth &&
          ball.y > player.y &&
-         ball.y < player.y + paddleHeight) {
-        ball.dx = -ball.dx;
-      }
+         ball.y < player.y + paddleHeight) ball.dx = -ball.dx;
 
       if(ball.x + ball.radius > ai.x &&
          ball.y > ai.y &&
-         ball.y < ai.y + paddleHeight) {
-        ball.dx = -ball.dx;
-      }
+         ball.y < ai.y + paddleHeight) ball.dx = -ball.dx;
 
-      // Score reset
       if(ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
         ball.x = canvas.width/2;
         ball.y = canvas.height/2;
@@ -104,15 +87,15 @@
       }
     }
 
-    // Draw everything
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawRect(player.x, player.y, paddleWidth, paddleHeight);
-      drawRect(ai.x, ai.y, paddleWidth, paddleHeight);
-      drawCircle(ball.x, ball.y, ball.radius);
+      ctx.fillStyle = randomColor(); // glitchy background
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawRect(player.x, player.y, paddleWidth, paddleHeight, randomColor());
+      drawRect(ai.x, ai.y, paddleWidth, paddleHeight, randomColor());
+      drawCircle(ball.x, ball.y, ball.radius, randomColor());
     }
 
-    // Key controls
     document.addEventListener("keydown", e => {
       if(e.key === "ArrowUp") player.dy = -player.speed;
       if(e.key === "ArrowDown") player.dy = player.speed;
@@ -122,7 +105,6 @@
       if(e.key === "ArrowUp" || e.key === "ArrowDown") player.dy = 0;
     });
 
-    // Game loop
     function update() {
       movePlayer();
       moveAI();
@@ -132,6 +114,30 @@
     }
 
     update();
+
+    // ====== Glitchy background music using Web Audio API ======
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playGlitchSound() {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = Math.random() > 0.5 ? 'square' : 'sawtooth'; // glitchy waveforms
+      osc.frequency.setValueAtTime(200 + Math.random() * 1000, audioCtx.currentTime); // random pitch
+
+      gain.gain.setValueAtTime(Math.random() * 0.2, audioCtx.currentTime); // low volume
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); // quick decay
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1); // very short beep
+    }
+
+    // Loop glitchy sounds randomly
+    setInterval(() => {
+      if(Math.random() > 0.3) playGlitchSound();
+    }, 100);
   </script>
 </body>
 </html>
