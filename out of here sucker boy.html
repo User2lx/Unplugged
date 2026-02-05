@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Glitchy Pong Centered Arena</title>
+<title>Glitchy Pong Full Border</title>
 <style>
   body {
     background: #000;
@@ -35,7 +35,7 @@
 const canvas = document.getElementById("pong");
 const ctx = canvas.getContext("2d");
 
-// Center the canvas
+// Center canvas function
 function centerCanvas() {
   canvas.style.left = (window.innerWidth / 2 - canvas.width / 2) + "px";
   canvas.style.top = (window.innerHeight / 2 - canvas.height / 2) + "px";
@@ -56,22 +56,15 @@ function randomColor() {
   return `rgb(${r},${g},${b})`;
 }
 
+// Draw functions
 function drawRect(x, y, w, h, color="#fff") { ctx.fillStyle=color; ctx.fillRect(x,y,w,h); }
 function drawCircle(x, y, r, color="#fff") { ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.closePath(); ctx.fill(); }
 
-function movePlayer() {
-  player.y += player.dy;
-  if(player.y<0) player.y=0;
-  if(player.y+paddleHeight>canvas.height) player.y=canvas.height-paddleHeight;
-}
+// Paddle movement
+function movePlayer() { player.y += player.dy; if(player.y<0) player.y=0; if(player.y+paddleHeight>canvas.height) player.y=canvas.height-paddleHeight; }
+function moveAI() { if(ball.y < ai.y + paddleHeight/2) ai.y -= ai.dy; if(ball.y > ai.y + paddleHeight/2) ai.y += ai.dy; if(ai.y<0) ai.y=0; if(ai.y+paddleHeight>canvas.height) ai.y=canvas.height-paddleHeight; }
 
-function moveAI() {
-  if(ball.y < ai.y + paddleHeight/2) ai.y -= ai.dy;
-  if(ball.y > ai.y + paddleHeight/2) ai.y += ai.dy;
-  if(ai.y<0) ai.y=0;
-  if(ai.y+paddleHeight>canvas.height) ai.y=canvas.height-paddleHeight;
-}
-
+// Ball movement
 function moveBall() {
   ball.x += ball.dx; ball.y += ball.dy;
   if(ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) ball.dy=-ball.dy;
@@ -80,6 +73,7 @@ function moveBall() {
   if(ball.x - ball.radius <0 || ball.x + ball.radius>canvas.width){ ball.x=canvas.width/2; ball.y=canvas.height/2; ball.dx=-ball.dx; }
 }
 
+// Draw everything
 function draw() {
   ctx.fillStyle = randomColor();
   ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -88,6 +82,7 @@ function draw() {
   drawCircle(ball.x, ball.y, ball.radius, randomColor());
 }
 
+// Player controls
 document.addEventListener("keydown", e => { if(e.key==="ArrowUp") player.dy=-player.speed; if(e.key==="ArrowDown") player.dy=player.speed; });
 document.addEventListener("keyup", e => { if(e.key==="ArrowUp"||e.key==="ArrowDown") player.dy=0; });
 
@@ -108,27 +103,19 @@ function playGlitchSound() {
 }
 setInterval(()=>{ if(Math.random()>0.3) playGlitchSound(); },100);
 
-// ===== Glitchy text outside canvas =====
+// ===== Glitchy text outside the canvas =====
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
 const glitchContainer = document.body;
 
-function createGlitchGrid() {
-  const spacing = 20;
+function createGlitchOutsideCanvas() {
+  const spacing = 18; // space between letters
   const canvasRect = canvas.getBoundingClientRect();
 
-  // Top and Bottom
-  for(let x=0; x<window.innerWidth; x+=spacing){
-    if(x < canvasRect.left || x > canvasRect.right){
-      createGlitchChar(x, 0); // top
-      createGlitchChar(x, window.innerHeight - spacing); // bottom
-    }
-  }
-
-  // Left and Right
   for(let y=0; y<window.innerHeight; y+=spacing){
-    if(y < canvasRect.top || y > canvasRect.bottom){
-      createGlitchChar(0, y); // left
-      createGlitchChar(window.innerWidth - spacing, y); // right
+    for(let x=0; x<window.innerWidth; x+=spacing){
+      // Skip area inside canvas
+      if(x > canvasRect.left && x < canvasRect.right && y > canvasRect.top && y < canvasRect.bottom) continue;
+      createGlitchChar(x, y);
     }
   }
 }
@@ -144,7 +131,9 @@ function createGlitchChar(x, y){
   setTimeout(()=>{ glitchContainer.removeChild(span); },300);
 }
 
-setInterval(createGlitchGrid, 100);
+// Refresh glitch text frequently
+setInterval(createGlitchOutsideCanvas, 100);
+
 </script>
 </body>
 </html>
