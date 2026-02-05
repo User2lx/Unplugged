@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glitchy Pong Surrounded by Text</title>
+<style>
+  body {
+    background: #000;
+    margin: 0;
+    overflow: hidden;
+    position: relative;
+    font-family: monospace;
+  }
+  canvas {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid #fff;
+    z-index: 1;
+    background: #000;
+  }
+  .glitch-text {
+    position: absolute;
+    font-weight: bold;
+    pointer-events: none;
+    user-select: none;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="pong" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("pong");
+const ctx = canvas.getContext("2d");
+
+// Paddles and ball
+const paddleWidth = 10, paddleHeight = 100;
+let player = { x: 0, y: canvas.height/2 - paddleHeight/2, dy: 0, speed: 6 };
+let ai = { x: canvas.width - paddleWidth, y: canvas.height/2 - paddleHeight/2, dy: 3 };
+let ball = { x: canvas.width/2, y: canvas.height/2, radius: 10, dx: 5, dy: 3 };
+
+function randomColor() {
+  const r = Math.floor(Math.random() * 256);
+  const g = Math.floor(Math.random() * 256);
+  const b = Math.floor(Math.random() * 256);
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawRect(x, y, w, h, color="#fff") { ctx.fillStyle=color; ctx.fillRect(x,y,w,h); }
+function drawCircle(x, y, r, color="#fff") { ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.closePath(); ctx.fill(); }
+
+function movePlayer() {
+  player.y += player.dy;
+  if(player.y<0) player.y=0;
+  if(player.y+paddleHeight>canvas.height) player.y=canvas.height-paddleHeight;
+}
+
+function moveAI() {
+  if(ball.y < ai.y + paddleHeight/2) ai.y -= ai.dy;
+  if(ball.y > ai.y + paddleHeight/2) ai.y += ai.dy;
+  if(ai.y<0) ai.y=0;
+  if(ai.y+paddleHeight>canvas.height) ai.y=canvas.height-paddleHeight;
+}
+
+function moveBall() {
+  ball.x += ball.dx; ball.y += ball.dy;
+  if(ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) ball.dy=-ball.dy;
+  if(ball.x - ball.radius < player.x + paddleWidth && ball.y>player.y && ball.y<player.y+paddleHeight) ball.dx=-ball.dx;
+  if(ball.x + ball.radius > ai.x && ball.y>ai.y && ball.y<ai.y+paddleHeight) ball.dx=-ball.dx;
+  if(ball.x - ball.radius <0 || ball.x + ball.radius>canvas.width){ ball.x=canvas.width/2; ball.y=canvas.height/2; ball.dx=-ball.dx; }
+}
+
+function draw() {
+  ctx.fillStyle = randomColor();
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawRect(player.x, player.y, paddleWidth, paddleHeight, randomColor());
+  drawRect(ai.x, ai.y, paddleWidth, paddleHeight, randomColor());
+  drawCircle(ball.x, ball.y, ball.radius, randomColor());
+}
+
+document.addEventListener("keydown", e => { if(e.key==="ArrowUp") player.dy=-player.speed; if(e.key==="ArrowDown") player.dy=player.speed; });
+document.addEventListener("keyup", e => { if(e.key==="ArrowUp"||e.key==="ArrowDown") player.dy=0; });
+
+function update() {
+  movePlayer(); moveAI(); moveBall(); draw();
+  requestAnimationFrame(update);
+}
+update();
+
+// ===== Glitchy background sound =====
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playGlitchSound() {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = Math.random()>0.5?'square':'sawtooth';
+  osc.frequency.setValueAtTime(200 + Math.random()*1000, audioCtx.currentTime);
+  gain.gain.setValueAtTime(Math.random()*0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.1);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+0.1);
+}
+setInterval(()=>{ if(Math.random()>0.3) playGlitchSound(); },100);
+
+// ===== Glitchy text outside canvas =====
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+const glitchContainer = document.body;
+
+function createGlitchGrid() {
+  const padding = 2;
+  const spacing = 20;
+
+  const canvasRect = canvas.getBoundingClientRect();
+
+  // Top
+  for(let x = 0; x < window.innerWidth; x += spacing){
+    if(x >= canvasRect.left && x <= canvasRect.right) continue;
+    createGlitchChar(x, 0);
+  }
+  // Bottom
+  for(let x = 0; x < window.innerWidth; x += spacing){
+    if(x >= canvasRect.left && x <= canvasRect.right) continue;
+    createGlitchChar(x, window.innerHeight - spacing);
+  }
+  // Left
+  for(let y = 0; y < window.innerHeight; y += spacing){
+    if(y >= canvasRect.top && y <= canvasRect.bottom) continue;
+    createGlitchChar(0, y);
+  }
+  // Right
+  for(let y = 0; y < window.innerHeight; y += spacing){
+    if(y >= canvasRect.top && y <= canvasRect.bottom) continue;
+    createGlitchChar(window.innerWidth - spacing, y);
+  }
+}
+
+function createGlitchChar(x, y){
+  const span = document.createElement('span');
+  span.className = 'glitch-text';
+  span.style.color = randomColor();
+  span.style.left = x + 'px';
+  span.style.top = y + 'px';
+  span.textContent = chars.charAt(Math.floor(Math.random()*chars.length));
+  glitchContainer.appendChild(span);
+  setTimeout(()=>{ glitchContainer.removeChild(span); },300);
+}
+
+setInterval(createGlitchGrid, 100);
+
+</script>
+</body>
+</html>
