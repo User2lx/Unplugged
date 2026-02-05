@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Glitchy Pong with Music</title>
+  <title>Glitchy Pong with Text</title>
   <style>
     body {
       background: #000;
@@ -11,11 +11,23 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      font-family: sans-serif;
+      font-family: monospace;
+      color: #fff;
+      overflow: hidden;
+      position: relative;
     }
     canvas {
       border: 2px solid #fff;
       background: #000;
+      z-index: 1;
+      position: relative;
+    }
+    .glitch-text {
+      position: absolute;
+      font-size: 14px;
+      font-weight: bold;
+      pointer-events: none;
+      user-select: none;
     }
   </style>
 </head>
@@ -29,10 +41,8 @@
     const paddleWidth = 10, paddleHeight = 100;
     let player = { x: 0, y: canvas.height/2 - paddleHeight/2, dy: 0, speed: 6 };
     let ai = { x: canvas.width - paddleWidth, y: canvas.height/2 - paddleHeight/2, dy: 3 };
-
     let ball = { x: canvas.width/2, y: canvas.height/2, radius: 10, speed: 5, dx: 5, dy: 3 };
 
-    // Random color generator
     function randomColor() {
       const r = Math.floor(Math.random() * 256);
       const g = Math.floor(Math.random() * 256);
@@ -115,29 +125,41 @@
 
     update();
 
-    // ====== Glitchy background music using Web Audio API ======
+    // ===== Glitchy background sound =====
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
     function playGlitchSound() {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-
-      osc.type = Math.random() > 0.5 ? 'square' : 'sawtooth'; // glitchy waveforms
-      osc.frequency.setValueAtTime(200 + Math.random() * 1000, audioCtx.currentTime); // random pitch
-
-      gain.gain.setValueAtTime(Math.random() * 0.2, audioCtx.currentTime); // low volume
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); // quick decay
-
+      osc.type = Math.random() > 0.5 ? 'square' : 'sawtooth';
+      osc.frequency.setValueAtTime(200 + Math.random()*1000, audioCtx.currentTime);
+      gain.gain.setValueAtTime(Math.random()*0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.1); // very short beep
+      osc.stop(audioCtx.currentTime + 0.1);
+    }
+    setInterval(() => { if(Math.random() > 0.3) playGlitchSound(); }, 100);
+
+    // ===== Glitchy text outside canvas =====
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    const glitchContainer = document.body;
+
+    function createGlitchText() {
+      const span = document.createElement('span');
+      span.className = 'glitch-text';
+      span.style.color = randomColor();
+      span.style.left = Math.random() * window.innerWidth + 'px';
+      span.style.top = Math.random() * window.innerHeight + 'px';
+      span.textContent = chars.charAt(Math.floor(Math.random() * chars.length));
+      glitchContainer.appendChild(span);
+
+      setTimeout(() => {
+        glitchContainer.removeChild(span);
+      }, 300); // disappears quickly
     }
 
-    // Loop glitchy sounds randomly
-    setInterval(() => {
-      if(Math.random() > 0.3) playGlitchSound();
-    }, 100);
+    setInterval(createGlitchText, 50); // many glitchy letters appearing randomly
   </script>
 </body>
 </html>
