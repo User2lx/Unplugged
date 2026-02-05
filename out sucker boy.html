@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Glitchy Pong Surrounded by Text</title>
+<title>Glitchy Pong Centered Arena</title>
 <style>
   body {
     background: #000;
@@ -14,11 +14,8 @@
   canvas {
     display: block;
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    border: 2px solid #fff;
     z-index: 1;
+    border: 2px solid #fff;
     background: #000;
   }
   .glitch-text {
@@ -37,6 +34,14 @@
 <script>
 const canvas = document.getElementById("pong");
 const ctx = canvas.getContext("2d");
+
+// Center the canvas
+function centerCanvas() {
+  canvas.style.left = (window.innerWidth / 2 - canvas.width / 2) + "px";
+  canvas.style.top = (window.innerHeight / 2 - canvas.height / 2) + "px";
+}
+centerCanvas();
+window.addEventListener("resize", centerCanvas);
 
 // Paddles and ball
 const paddleWidth = 10, paddleHeight = 100;
@@ -86,13 +91,10 @@ function draw() {
 document.addEventListener("keydown", e => { if(e.key==="ArrowUp") player.dy=-player.speed; if(e.key==="ArrowDown") player.dy=player.speed; });
 document.addEventListener("keyup", e => { if(e.key==="ArrowUp"||e.key==="ArrowDown") player.dy=0; });
 
-function update() {
-  movePlayer(); moveAI(); moveBall(); draw();
-  requestAnimationFrame(update);
-}
+function update() { movePlayer(); moveAI(); moveBall(); draw(); requestAnimationFrame(update); }
 update();
 
-// ===== Glitchy background sound =====
+// ===== Glitchy sound =====
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playGlitchSound() {
   const osc = audioCtx.createOscillator();
@@ -111,46 +113,38 @@ const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
 const glitchContainer = document.body;
 
 function createGlitchGrid() {
-  const padding = 2;
   const spacing = 20;
-
   const canvasRect = canvas.getBoundingClientRect();
 
-  // Top
-  for(let x = 0; x < window.innerWidth; x += spacing){
-    if(x >= canvasRect.left && x <= canvasRect.right) continue;
-    createGlitchChar(x, 0);
+  // Top and Bottom
+  for(let x=0; x<window.innerWidth; x+=spacing){
+    if(x < canvasRect.left || x > canvasRect.right){
+      createGlitchChar(x, 0); // top
+      createGlitchChar(x, window.innerHeight - spacing); // bottom
+    }
   }
-  // Bottom
-  for(let x = 0; x < window.innerWidth; x += spacing){
-    if(x >= canvasRect.left && x <= canvasRect.right) continue;
-    createGlitchChar(x, window.innerHeight - spacing);
-  }
-  // Left
-  for(let y = 0; y < window.innerHeight; y += spacing){
-    if(y >= canvasRect.top && y <= canvasRect.bottom) continue;
-    createGlitchChar(0, y);
-  }
-  // Right
-  for(let y = 0; y < window.innerHeight; y += spacing){
-    if(y >= canvasRect.top && y <= canvasRect.bottom) continue;
-    createGlitchChar(window.innerWidth - spacing, y);
+
+  // Left and Right
+  for(let y=0; y<window.innerHeight; y+=spacing){
+    if(y < canvasRect.top || y > canvasRect.bottom){
+      createGlitchChar(0, y); // left
+      createGlitchChar(window.innerWidth - spacing, y); // right
+    }
   }
 }
 
 function createGlitchChar(x, y){
   const span = document.createElement('span');
-  span.className = 'glitch-text';
-  span.style.color = randomColor();
-  span.style.left = x + 'px';
-  span.style.top = y + 'px';
-  span.textContent = chars.charAt(Math.floor(Math.random()*chars.length));
+  span.className='glitch-text';
+  span.style.color=randomColor();
+  span.style.left=x+'px';
+  span.style.top=y+'px';
+  span.textContent=chars.charAt(Math.floor(Math.random()*chars.length));
   glitchContainer.appendChild(span);
   setTimeout(()=>{ glitchContainer.removeChild(span); },300);
 }
 
 setInterval(createGlitchGrid, 100);
-
 </script>
 </body>
 </html>
