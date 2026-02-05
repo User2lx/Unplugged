@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flappy Bird Flat Alive Slow</title>
+<title>Flappy Bird Slow</title>
 <style>
 body {margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#4ec0ca; font-family:sans-serif;}
 canvas {border:2px solid #333; display:block;}
@@ -20,7 +20,7 @@ let frame=0, score=0, highScore=Number(localStorage.getItem('flappyHighScore'))|
 let gameOver=false, inMenu=true;
 
 // Bird
-let bird = {x:80,y:300,width:30,height:30,gravity:0.4,velocity:0,jump:-7,color:'#FFD93D',rotation:0,wingOffset:0,wingDir:1,bounce:0,bounceDir:1};
+let bird = {x:80,y:300,width:30,height:30,gravity:0.4,velocity:0,jump:-6,color:'#FFD93D',rotation:0,wingOffset:0,wingDir:1,bounce:0,bounceDir:1};
 
 // Pipes
 let pipes=[], pipeWidth=60, pipeGap=150, pipeSpeed=2, pipeSpawnRate=120;
@@ -29,14 +29,14 @@ let pipes=[], pipeWidth=60, pipeGap=150, pipeSpeed=2, pipeSpawnRate=120;
 let clouds=[{x:50,y:80,width:60,height:30,speed:0.3,alpha:1,fadeDir:-0.005},{x:200,y:120,width:80,height:40,speed:0.2,alpha:1,fadeDir:0.003},{x:350,y:60,width:50,height:25,speed:0.25,alpha:1,fadeDir:-0.004}];
 
 // Ground
-const groundHeight=80; let groundX=0, groundSpeed=1.5;
+const groundHeight=80; let groundX=0, groundSpeed=0.2;
 
 // Controls
-document.addEventListener('keydown', e => { if(e.code==='Space') handleClick(); });
-canvas.addEventListener('click', handleClick);
-function handleClick(){
-  if(inMenu){ inMenu=false; restart(); }
-  else if(!gameOver){ bird.velocity=bird.jump; }
+document.addEventListener('keydown', e => { if(e.code==='Space') jump(); });
+canvas.addEventListener('click', jump);
+function jump(){
+  if(inMenu){ inMenu=false; restart(); return; }
+  if(!gameOver){ bird.velocity=bird.jump; }
   else{ inMenu=true; }
 }
 
