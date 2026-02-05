@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flappy Bird Slow Motion</title>
+<title>Flappy Bird Slow Motion Fixed</title>
 <style>
 body {margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#4ec0ca; font-family:sans-serif;}
 canvas {border:2px solid #333; display:block;}
@@ -18,6 +18,7 @@ const ctx = canvas.getContext('2d');
 // Game state
 let frame=0, score=0, highScore=Number(localStorage.getItem('flappyHighScore'))||0;
 let gameOver=false, inMenu=true;
+let animationFrameId; // For controlling update loop
 
 // Bird
 let bird = {
@@ -44,9 +45,15 @@ document.addEventListener('keydown', e => { if(e.code==='Space') jump(); });
 canvas.addEventListener('click', jump);
 
 function jump(){
-  if(inMenu){ inMenu=false; restart(); return; }
-  if(!gameOver){ bird.velocity=bird.jump; bird.rotation=-Math.PI/6; }
-  else{ inMenu=true; }
+  if(inMenu){
+    inMenu = false;
+    restart();
+    return;
+  }
+  if(!gameOver){
+    bird.velocity = bird.jump;
+    bird.rotation = -Math.PI/6;
+  }
 }
 
 // Helpers
@@ -81,7 +88,8 @@ function draw(){
     ctx.save(); ctx.translate(bird.x+bird.width/2,bird.y+bird.height/2+bird.bounce); ctx.rotate(bird.rotation);
     roundRect(-bird.width/2,-bird.height/2,bird.width,bird.height,6,bird.color);
     ctx.fillStyle='#f4c542'; ctx.fillRect(-bird.width/2-5,bird.wingOffset-5,10,10); ctx.fillRect(bird.width/2-5,-bird.wingOffset-5,10,10);
-    ctx.restore(); return;
+    ctx.restore(); 
+    return;
   }
 
   // Bird
@@ -118,33 +126,56 @@ function update(){
   // Menu animation
   if(inMenu){
     bird.wingOffset+=0.3*bird.wingDir; if(bird.wingOffset>6||bird.wingOffset<-6) bird.wingDir*=-1;
-    bird.bounce+=0.2*bird.bounceDir; if(bird.bounce>3||bird.bounce<-3) bird.bounceDir*=-1;
+    bird.bounce+=0.1*bird.bounceDir; if(bird.bounce>3||bird.bounce<-3) bird.bounceDir*=-1;
     clouds.forEach(c=>{c.x-=c.speed; if(c.x+c.width<0)c.x=canvas.width; c.alpha+=c.fadeDir; if(c.alpha>1||c.alpha<0.4)c.fadeDir*=-1;});
-    draw(); requestAnimationFrame(update); return;
+    draw(); animationFrameId = requestAnimationFrame(update); return;
   }
 
   if(!gameOver){
     bird.velocity+=bird.gravity; 
     bird.y+=bird.velocity; 
-    bird.rotation+= (Math.min(Math.PI/4,bird.velocity/10)-bird.rotation)*0.1; // smooth rotation
+    bird.rotation += (Math.min(Math.PI/4,bird.velocity/10)-bird.rotation)*0.1; // smooth rotation
     bird.wingOffset+=0.3*bird.wingDir; if(bird.wingOffset>6||bird.wingOffset<-6) bird.wingDir*=-1;
     bird.bounce+=0.1*bird.bounceDir; if(bird.bounce>2||bird.bounce<-2) bird.bounceDir*=-1;
 
     clouds.forEach(c=>{c.x-=c.speed; if(c.x+c.width<0)c.x=canvas.width; c.alpha+=c.fadeDir; if(c.alpha>1||c.alpha<0.4)c.fadeDir*=-1;});
 
     if(frame%pipeSpawnRate===0) createPipe();
-    pipes.forEach((p,i)=>{p.x-=pipeSpeed; if(checkCollision(p)) gameOver=true; if(p.x+pipeWidth===bird.x) score++; if(p.x+pipeWidth<0)pipes.splice(i,1);});
+    pipes.forEach((p,i)=>{
+      p.x-=pipeSpeed; 
+      if(checkCollision(p)) gameOver=true; 
+      if(p.x+pipeWidth===bird.x) score++; 
+      if(p.x+pipeWidth<0) pipes.splice(i,1);
+    });
   }
 
   if(score>highScore){ highScore=score; localStorage.setItem('flappyHighScore',highScore);}
-  draw(); requestAnimationFrame(update);
+  draw();
+  animationFrameId = requestAnimationFrame(update);
 }
 
 // Restart
 function restart(){
-  bird.y=300; bird.velocity=0; bird.rotation=0; bird.wingOffset=0; bird.wingDir=1; bird.bounce=0; bird.bounceDir=1;
-  pipes=[]; score=0; frame=0; gameOver=false; groundX=0;
-  clouds.forEach(c=>{c.x=Math.random()*canvas.width;c.alpha=1;});
+  // Reset all bird & game states
+  bird.y = 300;
+  bird.velocity = 0;
+  bird.rotation = 0;
+  bird.wingOffset = 0;
+  bird.wingDir = 1;
+  bird.bounce = 0;
+  bird.bounceDir = 1;
+
+  pipes = [];
+  score = 0;
+  frame = 0;
+  gameOver = false;
+  groundX = 0;
+
+  clouds.forEach(c => { c.x = Math.random() * canvas.width; c.alpha = 1; });
+
+  // Cancel previous loop to avoid multiple loops
+  if(animationFrameId) cancelAnimationFrame(animationFrameId);
+
   update();
 }
 
