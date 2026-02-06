@@ -18,7 +18,7 @@ window.addEventListener('resize',resize);
 resize();
 
 // ===== Player =====
-const player={x:100,y:0,w:40,h:50,dx:0,dy:0,grounded:false,speed:5,jump:12,health:5,maxHealth:5,facing:1};
+const player={x:100,y:0,w:40,h:50,dx:0,dy:0,grounded:false,speed:5,jump:12,health:5,maxHealth:5,facing:1,slowed:0};
 
 // ===== Controls =====
 const keys={};
@@ -34,10 +34,10 @@ let ground=[],platforms=[],hazards=[],particles=[],enemies=[],upgrades=[],bullet
 
 // ===== Biomes =====
 const biomes=[
-    {bg:"#87ceeb",ground:"#2ecc71",platform:"#27ae60",hazard:"spike",particle:"leaf",bullet:"#fff"},
-    {bg:"#f6d365",ground:"#27ae60",platform:"#27ae60",hazard:"quicksand",particle:"sand",bullet:"#0ff"},
-    {bg:"#ff6b6b",ground:"#c0392b",platform:"#e74c3c",hazard:"lava",particle:"flame",bullet:"#f90"},
-    {bg:"#c7ecee",ground:"#16a085",platform:"#1abc9c",hazard:"icepatch",particle:"snow",bullet:"#0f0"}
+    {bg:"#87ceeb",ground:"#2ecc71",platform:"#27ae60",hazard:"spike",particle:"#2ecc71",bullet:"#fff"},
+    {bg:"#f6d365",ground:"#27ae60",platform:"#27ae60",hazard:"quicksand",particle:"#f1c40f",bullet:"#0ff"},
+    {bg:"#ff6b6b",ground:"#c0392b",platform:"#e74c3c",hazard:"lava",particle:"#ff4500",bullet:"#f90"},
+    {bg:"#c7ecee",ground:"#16a085",platform:"#1abc9c",hazard:"icepatch",particle:"#fff",bullet:"#0f0"}
 ];
 let currentBiomeIndex=-1;
 
@@ -103,7 +103,7 @@ function generateAhead(){
     }
 
     // Particles
-    for(let i=0;i<5;i++){
+    for(let i=0;i<10;i++){
         const px=player.x+Math.random()*canvas.width,py=Math.random()*canvas.height/2;
         particles.push({x:px,y:py,dx:(Math.random()-0.5)*1,dy:Math.random()*1+0.2,type:biome.particle,life:100+Math.random()*50});
     }
@@ -133,6 +133,7 @@ function update(){
     if((keys['w']||keys[' ']) && player.grounded){player.dy=-player.jump;player.grounded=false;}
     if(keys['j']) shoot();
     if(shootCooldown>0) shootCooldown--;
+    if(player.slowed>0) player.slowed--; else player.slowed=0;
 
     // Physics
     player.dy+=0.6;
@@ -177,6 +178,7 @@ function update(){
     enemyBullets.forEach(b=>{
         if(player.x+player.w>b.x && player.x<b.x+b.w && player.y+player.h>b.y && player.y<b.y+b.h){
             player.health--;
+            if(b.type==="ice") player.slowed=120;
             b.hit=true;
             if(player.health<=0) reset();
         }
@@ -190,12 +192,15 @@ function update(){
     hazards.forEach(h=>{
         if(player.x+player.w>h.x && player.x<h.x+h.w && player.y+player.h>h.y && player.y<h.y+h.h){
             if(h.type==="spike") player.health-=0.1;
-            else if(h.type==="quicksand") player.dx*=0.5;
+            else if(h.type==="quicksand") player.slowed=60;
             else if(h.type==="lava") player.health-=0.5;
+            else if(h.type==="icepatch") player.dx*=1.2;
             if(player.health<=0) reset();
         }
     });
 
+    // Move particles
+    particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;});
     generateAhead();
     if(player.y>canvas.height) reset();
     distanceScore=Math.floor(player.x/CHUNK);
@@ -223,10 +228,8 @@ function draw(){
     enemies.forEach(e=>{ctx.fillStyle=e.hitTimer>0?"#ff0":e.type==="boss"?"#9b59b6":e.type==="fast"?"#e67e22":"#2ed573";ctx.fillRect(e.x,e.y,e.w,e.h);});
     bullets.forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);});
     enemyBullets.forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);});
-    particles.forEach(p=>{ctx.fillStyle="#fff";ctx.fillRect(p.x,p.y,5,5);});
-
+    particles.forEach(p=>{ctx.fillStyle=p.type;ctx.fillRect(p.x,p.y,5,5);});
     ctx.fillStyle="#ff4757"; ctx.fillRect(player.x,player.y,player.w,player.h);
-
     ctx.restore();
 
     ctx.fillStyle="#fff"; ctx.font="14px monospace";
@@ -240,7 +243,7 @@ function draw(){
 // ===== Reset =====
 function reset(){
     player.x=100;player.y=canvas.height-50-player.h;player.dx=0;player.dy=0;player.grounded=false;
-    player.health=player.maxHealth=5; player.speed=5; player.jump=12;
+    player.health=player.maxHealth=5; player.speed=5; player.jump=12; player.slowed=0;
     platforms=[]; ground=[{x:0,y:canvas.height-50,w:canvas.width*2,h:50}];
     hazards=[]; enemies=[]; upgrades=[]; bullets=[]; enemyBullets=[]; particles=[];
     distanceScore=0; enemyScore=0; currentBiomeIndex=-1;
