@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Stable Load</title>
+<title>Side Scroller Stable Ground</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#000;}
 canvas{display:block;}
 </style>
-</head>
 <body>
 <canvas id="game" width="800" height="600"></canvas>
 <script>
@@ -33,6 +32,7 @@ window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 let platforms = [];
 let enemies = [];
 let upgrades = [];
+let ground = [];
 
 const CHUNK = 400;
 const biomes = [
@@ -45,14 +45,23 @@ function getBiome(idx){ return biomes[idx % biomes.length]; }
 
 // ===== Initialization =====
 function initWorld(){
-  platforms = [{x:0, y:550, w:800, h:50}];
+  // Initial ground
+  ground.push({x:0, y:550, w:800, h:50});
+  platforms = [];
   generateAhead();
 }
 
 // ===== Procedural generation =====
 function generateAhead(){
-  while(platforms[platforms.length-1].x < player.x + 800){
-    const last = platforms[platforms.length-1];
+  // Ensure continuous ground
+  while(ground[ground.length-1].x < player.x + 1600){
+    const last = ground[ground.length-1];
+    ground.push({x:last.x + last.w, y:550, w:800, h:50});
+  }
+
+  // Platforms ahead
+  while(platforms.length === 0 || platforms[platforms.length-1].x < player.x + 800){
+    const last = platforms.length ? platforms[platforms.length-1] : {x:0, y:550, w:0};
     const x = last.x + last.w + Math.random()*100 + 50;
     const y = 400 + Math.random()*100;
     platforms.push({x, y, w:100, h:20});
@@ -99,7 +108,7 @@ function update(){
 
   // Collision with platforms
   player.grounded = false;
-  platforms.forEach(p=>{
+  [...ground, ...platforms].forEach(p=>{
     if(player.x + player.w > p.x && player.x < p.x + p.w &&
        player.y + player.h >= p.y && player.y + player.h <= p.y + 20){
       player.y = p.y - player.h;
@@ -140,11 +149,9 @@ function update(){
   platforms = platforms.filter(p => p.x + p.w > player.x - 100);
   enemies = enemies.filter(e => e.x + e.w > player.x - 100);
   upgrades = upgrades.filter(u => u.x + u.w > player.x - 100);
+  ground = ground.filter(g => g.x + g.w > player.x - 100);
 
   generateAhead();
-
-  // Reset if fall
-  if(player.y > 600) reset();
 }
 
 // ===== Draw =====
@@ -155,8 +162,12 @@ function draw(){
   const camX = Math.max(0, player.x - 800/3);
   ctx.save(); ctx.translate(-camX,0);
 
-  // Platforms
+  // Draw ground
   ctx.fillStyle = biome.ground;
+  ground.forEach(g=>ctx.fillRect(g.x, g.y, g.w, g.h));
+
+  // Platforms
+  ctx.fillStyle = "#2ecc71";
   platforms.forEach(p=>ctx.fillRect(p.x, p.y, p.w, p.h));
 
   // Enemies
@@ -192,7 +203,8 @@ function reset(){
   player.grounded=false; player.health=player.maxHealth=5;
   player.speed=4; player.jump=12;
   player.attacking=false;
-  platforms = [{x:0, y:550, w:800, h:50}];
+  ground = [{x:0, y:550, w:800, h:50}];
+  platforms = [];
   enemies = [];
   upgrades = [];
   generateAhead();
