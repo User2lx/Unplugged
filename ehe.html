@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Stable Side Scroller with Enemies & Upgrades</title>
+<title>Side Scroller Stable Load</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#000;}
 canvas{display:block;}
@@ -30,7 +30,7 @@ window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 // ===== World =====
-let platforms = [{x:0, y:550, w:800, h:50}];
+let platforms = [];
 let enemies = [];
 let upgrades = [];
 
@@ -43,14 +43,17 @@ const biomes = [
 ];
 function getBiome(idx){ return biomes[idx % biomes.length]; }
 
+// ===== Initialization =====
+function initWorld(){
+  platforms = [{x:0, y:550, w:800, h:50}];
+  generateAhead();
+}
+
 // ===== Procedural generation =====
 function generateAhead(){
-  const lastPlatform = platforms[platforms.length-1];
-  const playerChunk = Math.floor(player.x / CHUNK);
-  
-  // Platforms
-  while(lastPlatform.x < player.x + 800){
-    const x = lastPlatform.x + lastPlatform.w + Math.random()*100 + 50;
+  while(platforms[platforms.length-1].x < player.x + 800){
+    const last = platforms[platforms.length-1];
+    const x = last.x + last.w + Math.random()*100 + 50;
     const y = 400 + Math.random()*100;
     platforms.push({x, y, w:100, h:20});
   }
@@ -192,7 +195,11 @@ function reset(){
   platforms = [{x:0, y:550, w:800, h:50}];
   enemies = [];
   upgrades = [];
+  generateAhead();
 }
+
+// ===== Initialize =====
+initWorld();
 
 // ===== Loop =====
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
