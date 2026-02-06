@@ -2,28 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Crash-Proof Full-Screen Side Scroller</title>
+<title>Stable Fixed-Size Side Scroller</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#000;}
 canvas{display:block;}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
+<canvas id="game" width="800" height="600"></canvas>
 <script>
-// ===== Virtual game size =====
-const VWIDTH=800;
-const VHEIGHT=600;
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-
-// ===== Scaling =====
-function resize(){
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
-}
-window.addEventListener("resize",resize);
-resize();
 
 // ===== Player =====
 const player={
@@ -49,7 +38,7 @@ const biomes=[
   {bg:"#ff6b6b",ground:"#c0392b"},
   {bg:"#c7ecee",ground:"#16a085"}
 ];
-function getGroundY(){return VHEIGHT-50;}
+function getGroundY(){return 550;}
 function getBiome(idx){return biomes[idx%biomes.length];}
 
 // ===== Chunk Generation =====
@@ -148,28 +137,22 @@ function update(){
     });
   });
 
-  if(player.y>VHEIGHT) reset();
+  if(player.y>600) reset();
 }
 
 // ===== Draw =====
 function draw(){
-  // Scale canvas
-  const scaleX=canvas.width/VWIDTH;
-  const scaleY=canvas.height/VHEIGHT;
-  ctx.save();
-  ctx.scale(scaleX,scaleY);
-
   const biome=getBiome(Math.floor(player.x/CHUNK));
-  ctx.fillStyle=biome.bg; ctx.fillRect(0,0,VWIDTH,VHEIGHT);
+  ctx.fillStyle=biome.bg; ctx.fillRect(0,0,800,600);
 
-  const camX=Math.max(0,player.x-VWIDTH/3);
+  const camX=Math.max(0,player.x-800/3);
   ctx.save(); ctx.translate(-camX,0);
 
   chunks.forEach(c=>{
     ctx.fillStyle=c.ground.color; ctx.fillRect(c.ground.x,c.ground.y,c.ground.w,c.ground.h);
-    c.platforms.forEach(p=>{ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,p.w,p.h);});
-    c.enemies.forEach(e=>{ctx.fillStyle="#2ed573"; ctx.fillRect(e.x,e.y,e.w,e.h);});
-    c.upgrades.forEach(u=>{ctx.fillStyle="#f1c40f"; ctx.fillRect(u.x,u.y,u.w,u.h);});
+    c.platforms.forEach(p=>{ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.w,p.h);});
+    c.enemies.forEach(e=>{ctx.fillStyle="#2ed573";ctx.fillRect(e.x,e.y,e.w,e.h);});
+    c.upgrades.forEach(u=>{ctx.fillStyle="#f1c40f";ctx.fillRect(u.x,u.y,u.w,u.h);});
   });
 
   ctx.fillStyle="#ff4757"; ctx.fillRect(player.x,player.y,player.w,player.h);
@@ -182,8 +165,6 @@ function draw(){
   ctx.fillText(`Jump: ${player.jump}`,20,65);
   ctx.fillText(`Atk: ${player.atkDuration}`,20,85);
   ctx.fillText(`Dash CD: ${player.dashCooldown}`,20,105);
-
-  ctx.restore();
 }
 
 // ===== Reset =====
