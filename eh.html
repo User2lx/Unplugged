@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stable Side Scroller with Enemies & Upgrades</title>
+<style>
+html,body{margin:0;padding:0;overflow:hidden;background:#000;}
+canvas{display:block;}
+</style>
+</head>
+<body>
+<canvas id="game" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// ===== Player =====
+const player = {
+  x:100, y:500, w:40, h:50, dx:0, dy:0,
+  speed:4, jump:12,
+  grounded:false,
+  health:5, maxHealth:5,
+  attacking:false, atkDuration:10, atk:0,
+  facing:1
+};
+
+// ===== Controls =====
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// ===== World =====
+let platforms = [{x:0, y:550, w:800, h:50}];
+let enemies = [];
+let upgrades = [];
+
+const CHUNK = 400;
+const biomes = [
+  {bg:"#87ceeb", ground:"#2ecc71"},
+  {bg:"#f6d365", ground:"#27ae60"},
+  {bg:"#ff6b6b", ground:"#c0392b"},
+  {bg:"#c7ecee", ground:"#16a085"}
+];
+function getBiome(idx){ return biomes[idx % biomes.length]; }
+
+// ===== Procedural generation =====
+function generateAhead(){
+  const lastPlatform = platforms[platforms.length-1];
+  const playerChunk = Math.floor(player.x / CHUNK);
+  
+  // Platforms
+  while(lastPlatform.x < player.x + 800){
+    const x = lastPlatform.x + lastPlatform.w + Math.random()*100 + 50;
+    const y = 400 + Math.random()*100;
+    platforms.push({x, y, w:100, h:20});
+  }
+
+  // Enemies: max 1 per visible screen
+  if(enemies.length < 1){
+    const x = player.x + 500 + Math.random()*200;
+    enemies.push({x, y:platforms[platforms.length-1].y-40, w:40, h:40, hp:1, dx:(Math.random()<0.5?-1:1)});
+  }
+
+  // Upgrades: max 1 per visible screen
+  if(upgrades.length < 1){
+    const x = player.x + 600 + Math.random()*150;
+    upgrades.push({x, y:platforms[platforms.length-1].y-50, w:25, h:25});
+  }
+}
+
+// ===== Upgrades =====
+function applyUpgrade(){
+  const roll = Math.floor(Math.random()*3);
+  if(roll===0){ player.maxHealth++; player.health=player.maxHealth; }
+  else if(roll===1){ player.speed+=0.5; }
+  else{ player.jump+=2; }
+}
+
+// ===== Update =====
+function update(){
+  player.dx = 0;
+  if(keys['a']){ player.dx = -player.speed; player.facing=-1; }
+  if(keys['d']){ player.dx = player.speed; player.facing=1; }
+
+  if((keys['w']||keys[' ']) && player.grounded){
+    player.dy = -player.jump;
+    player.grounded=false;
+  }
+
+  if(keys['j'] && !player.attacking){ player.attacking = true; player.atk = player.atkDuration; }
+  if(player.attacking && --player.atk <= 0) player.attacking=false;
+
+  player.dy += 0.6;
+  player.x += player.dx;
+  player.y += player.dy;
+
+  // Collision with platforms
+  player.grounded = false;
+  platforms.forEach(p=>{
+    if(player.x + player.w > p.x && player.x < p.x + p.w &&
+       player.y + player.h >= p.y && player.y + player.h <= p.y + 20){
+      player.y = p.y - player.h;
+      player.dy = 0;
+      player.grounded = true;
+    }
+  });
+
+  // Enemies movement & collision
+  enemies.forEach(e=>{
+    e.x += e.dx * 2;
+    if(player.x + player.w > e.x && player.x < e.x + e.w &&
+       player.y + player.h > e.y && player.y < e.y + e.h){
+      player.health--;
+      player.x -= 20 * player.facing;
+      if(player.health <= 0) reset();
+    }
+    // Attack collision
+    if(player.attacking){
+      const atk = {x:player.x + (player.facing===1?player.w:-30), y:player.y+10, w:30, h:30};
+      if(atk.x + atk.w > e.x && atk.x < e.x + e.w &&
+         atk.y + atk.h > e.y && atk.y < e.y + e.h) e.hp--;
+    }
+  });
+  enemies = enemies.filter(e => e.hp > 0);
+
+  // Upgrades collection
+  upgrades = upgrades.filter(u=>{
+    if(player.x + player.w > u.x && player.x < u.x + u.w &&
+       player.y + player.h > u.y && player.y < u.y + u.h){
+      applyUpgrade();
+      return false;
+    }
+    return true;
+  });
+
+  // Remove off-screen objects
+  platforms = platforms.filter(p => p.x + p.w > player.x - 100);
+  enemies = enemies.filter(e => e.x + e.w > player.x - 100);
+  upgrades = upgrades.filter(u => u.x + u.w > player.x - 100);
+
+  generateAhead();
+
+  // Reset if fall
+  if(player.y > 600) reset();
+}
+
+// ===== Draw =====
+function draw(){
+  const biome = getBiome(Math.floor(player.x / CHUNK));
+  ctx.fillStyle = biome.bg; ctx.fillRect(0,0,800,600);
+
+  const camX = Math.max(0, player.x - 800/3);
+  ctx.save(); ctx.translate(-camX,0);
+
+  // Platforms
+  ctx.fillStyle = biome.ground;
+  platforms.forEach(p=>ctx.fillRect(p.x, p.y, p.w, p.h));
+
+  // Enemies
+  ctx.fillStyle = "#2ed573";
+  enemies.forEach(e=>ctx.fillRect(e.x, e.y, e.w, e.h));
+
+  // Upgrades
+  ctx.fillStyle = "#f1c40f";
+  upgrades.forEach(u=>ctx.fillRect(u.x, u.y, u.w, u.h));
+
+  // Player
+  ctx.fillStyle = "#ff4757";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // Attack
+  if(player.attacking){
+    ctx.fillStyle = "#ffa502";
+    ctx.fillRect(player.x + (player.facing===1?player.w:-30), player.y+10, 30,30);
+  }
+
+  ctx.restore();
+
+  // HUD
+  ctx.fillStyle = "#fff"; ctx.font="14px monospace";
+  ctx.fillText(`HP: ${player.health}/${player.maxHealth}`,20,25);
+  ctx.fillText(`Speed: ${player.speed.toFixed(1)}`,20,45);
+  ctx.fillText(`Jump: ${player.jump}`,20,65);
+}
+
+// ===== Reset =====
+function reset(){
+  player.x=100; player.y=500; player.dx=0; player.dy=0;
+  player.grounded=false; player.health=player.maxHealth=5;
+  player.speed=4; player.jump=12;
+  player.attacking=false;
+  platforms = [{x:0, y:550, w:800, h:50}];
+  enemies = [];
+  upgrades = [];
+}
+
+// ===== Loop =====
+(function loop(){ update(); draw(); requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
