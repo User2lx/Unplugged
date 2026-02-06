@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ultra Flat Galaga — Capture</title>
+<style>
+  body {
+    margin: 0;
+    background: #020617;
+    color: #e5e7eb;
+    font-family: system-ui, sans-serif;
+    text-align: center;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+    background: #020617;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="480" height="640"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+/* Colors */
+const BG = "#020617";
+const PLAYER = "#22d3ee";
+const ENEMY = "#fb7185";
+const BULLET = "#fde047";
+
+/* Player */
+const player = {
+  x: 240, y: 580, size: 18, speed: 6,
+  alive: true, lives: 3,
+  captured: false,
+  dual: false
+};
+
+/* State */
+let bullets = [];
+let enemyBullets = [];
+let enemies = [];
+let keys = {};
+let cooldown = 0;
+let score = 0;
+let gameOver = false;
+
+/* Input */
+addEventListener("keydown", e => {
+  keys[e.code] = true;
+  if (gameOver && e.code === "Space") resetGame();
+});
+addEventListener("keyup", e => keys[e.code] = false);
+
+/* Spawn enemies (with boss) */
+function spawnEnemies() {
+  enemies = [];
+  enemyBullets = [];
+
+  for (let c = 0; c < 5; c++) {
+    enemies.push({
+      x: 120 + c * 50,
+      y: 70,
+      baseX: 120 + c * 50,
+      baseY: 70,
+      size: 18,
+      boss: true,
+      alive: true,
+      diving: false,
+      beam: false
+    });
+  }
+
+  for (let r = 1; r < 4; r++) {
+    for (let c = 0; c < 7; c++) {
+      enemies.push({
+        x: 80 + c * 45,
+        y: 70 + r * 45,
+        baseX: 80 + c * 45,
+        baseY: 70 + r * 45,
+        size: 14,
+        boss: false,
+        alive: true,
+        diving: false
+      });
+    }
+  }
+}
+spawnEnemies();
+
+/* Shooting */
+function shoot() {
+  if (cooldown > 0 || !player.alive || gameOver) return;
+  if (player.dual) {
+    bullets.push({ x: player.x - 6, y: player.y });
+    bullets.push({ x: player.x + 6, y: player.y });
+  } else {
+    bullets.push({ x: player.x, y: player.y });
+  }
+  cooldown = 12;
+}
+
+/* Update */
+function update() {
+  if (gameOver || player.captured) return;
+
+  if (keys.ArrowLeft && player.x > 20) player.x -= player.speed;
+  if (keys.ArrowRight && player.x < canvas.width - 20) player.x += player.speed;
+  if (keys.Space) shoot();
+  cooldown--;
+
+  bullets.forEach(b => b.y -= 8);
+  bullets = bullets.filter(b => b.y > 0);
+
+  /* Boss capture logic */
+  enemies.forEach(e => {
+    if (!e.alive || !e.boss || e.diving) return;
+    if (Math.random() < 0.002 && player.alive && !player.dual) {
+      e.diving = true;
+      e.beam = true;
+    }
+  });
+
+  enemies.forEach(e => {
+    if (!e.alive || !e.diving) return;
+
+    e.y += 2;
+
+    if (e.beam && Math.abs(e.x - player.x) < 16 && Math.abs(e.y - player.y) < 40) {
+      player.captured = true;
+      player.alive = false;
+      e.beam = false;
+    }
+
+    if (e.y > canvas.height) {
+      e.diving = false;
+      e.y = e.baseY;
+    }
+  });
+
+  /* Bullet hits */
+  bullets.forEach(b => {
+    enemies.forEach(e => {
+      if (
+        e.alive &&
+        Math.abs(b.x - e.x) < e.size &&
+        Math.abs(b.y - e.y) < e.size
+      ) {
+        e.alive = false;
+        b.y = -100;
+        score += e.boss ? 300 : 100;
+
+        if (player.captured && e.boss) {
+          player.captured = false;
+          player.alive = true;
+          player.dual = true;
+        }
+      }
+    });
+  });
+
+  if (enemies.every(e => !e.alive)) spawnEnemies();
+}
+
+/* Reset */
+function resetGame() {
+  score = 0;
+  player.lives = 3;
+  player.alive = true;
+  player.dual = false;
+  player.captured = false;
+  gameOver = false;
+  bullets = [];
+  spawnEnemies();
+}
+
+/* Draw helpers */
+function triangle(x, y, s, c) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x, y - s);
+  ctx.lineTo(x - s, y + s);
+  ctx.lineTo(x + s, y + s);
+  ctx.closePath();
+  ctx.fill();
+}
+function diamond(x, y, s, c) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x, y - s);
+  ctx.lineTo(x + s, y);
+  ctx.lineTo(x, y + s);
+  ctx.lineTo(x - s, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/* Render */
+function draw() {
+  ctx.fillStyle = BG;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  if (player.alive) {
+    triangle(player.x, player.y, player.size, PLAYER);
+    if (player.dual)
+      triangle(player.x + 22, player.y, player.size, PLAYER);
+  }
+
+  ctx.fillStyle = BULLET;
+  bullets.forEach(b => ctx.fillRect(b.x - 2, b.y, 4, 10));
+
+  enemies.forEach(e => {
+    if (!e.alive) return;
+    diamond(e.x, e.y, e.size, ENEMY);
+
+    if (e.beam) {
+      ctx.fillStyle = "rgba(253,224,71,0.25)";
+      ctx.fillRect(e.x - 6, e.y, 12, canvas.height);
+    }
+  });
+
+  ctx.fillStyle = "#e5e7eb";
+  ctx.fillText(`Score ${score}`, 12, 20);
+
+  if (player.captured) {
+    ctx.fillText("CAPTURED!", canvas.width/2 - 30, canvas.height/2);
+  }
+}
+
+/* Loop */
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
