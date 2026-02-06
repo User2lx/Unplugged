@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Shooter Working</title>
+<title>Side Scroller Shooter Persistent Enemies</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb;}
 canvas{display:block;}
@@ -173,10 +173,15 @@ function update(){
     platforms=platforms.filter(p=>p.x+p.w>camX-100);
     hazards=hazards.filter(h=>h.x+h.w>camX-100);
     upgrades=upgrades.filter(u=>u.x+u.w>camX-100);
-    enemies=enemies.filter(e=>e.x+e.w>camX-200);
-    bullets=bullets.filter(b=>b.x+b.w>camX-200 && b.x<player.x+canvas.width+200);
-    enemyBullets=enemyBullets.filter(b=>b.x+b.w>camX-200 && b.x<player.x+canvas.width+200 && b.y+b.h>0 && b.y<canvas.height);
-    particles=particles.filter(p=>p.life>0);
+
+    // Enemy persistence fix: keep them far behind
+    enemies = enemies.filter(e => e.x + e.w > camX - 1000 && e.x < player.x + canvas.width + 500);
+
+    // Bullets persistence
+    bullets = bullets.filter(b => b.x + b.w > camX - 500 && b.x < player.x + canvas.width + 500);
+    enemyBullets = enemyBullets.filter(b => b.x + b.w > camX - 500 && b.x < player.x + canvas.width + 500 && b.y + b.h > 0 && b.y < canvas.height);
+
+    particles = particles.filter(p=>p.life>0);
 
     // Move bullets
     bullets.forEach(b=>b.x+=b.dx);
