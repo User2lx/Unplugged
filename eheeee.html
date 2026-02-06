@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller with Gun</title>
+<title>Side Scroller with Enemy Types and Bosses</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#000;}
 canvas{display:block;}
@@ -50,24 +50,35 @@ const biomes = [
   {bg:"#ff6b6b", ground:"#c0392b"},
   {bg:"#c7ecee", ground:"#16a085"}
 ];
-function getBiome(idx){ return biomes[idx % biomes.length]; }
+
+// ===== Biome function (changes every 50 chunks) =====
+function getBiome(idx){
+  const biomeIndex = Math.floor(idx / 50) % biomes.length;
+  return biomes[biomeIndex];
+}
+
+// ===== Score =====
+let distanceScore = 0;
+let enemyScore = 0;
 
 // ===== Initialization =====
 function initWorld(){
   ground.push({x:0, y:canvas.height-50, w:800, h:50});
   platforms = [];
   generateAhead();
+  distanceScore = 0;
+  enemyScore = 0;
 }
 
 // ===== Procedural generation =====
 function generateAhead(){
-  // Continuous ground
+  // Ground
   while(ground[ground.length-1].x < player.x + canvas.width*2){
     const last = ground[ground.length-1];
     ground.push({x:last.x + last.w, y:canvas.height-50, w:800, h:50});
   }
 
-  // Platforms ahead
+  // Platforms
   while(platforms.length === 0 || platforms[platforms.length-1].x < player.x + canvas.width){
     const last = platforms.length ? platforms[platforms.length-1] : {x:0, y:canvas.height-50, w:0};
     const x = last.x + last.w + Math.random()*100 + 50;
@@ -75,13 +86,22 @@ function generateAhead(){
     platforms.push({x, y, w:100, h:20});
   }
 
-  // Enemies: max 1 per screen
-  if(enemies.length < 1){
+  // Spawn normal enemies
+  if(enemies.length < 2){
+    const type = Math.random()<0.7 ? "normal":"fast"; // 70% normal, 30% fast
     const x = player.x + 500 + Math.random()*200;
-    enemies.push({x, y:platforms[platforms.length-1].y-40, w:40, h:40, hp:1, dx:(Math.random()<0.5?-1:1), hitTimer:0});
+    let hp = type==="normal"?1:2;
+    let dx = type==="normal"?1:3;
+    enemies.push({x, y:platforms[platforms.length-1].y-40, w:40, h:40, hp, dx, type, hitTimer:0});
   }
 
-  // Upgrades: max 1 per screen
+  // Spawn boss every 30 chunks
+  if(Math.floor(player.x/CHUNK) % 30 === 0 && !enemies.some(e=>e.type==="boss")){
+    const x = player.x + 800;
+    enemies.push({x, y:platforms[platforms.length-1].y-80, w:80, h:80, hp:20, dx:1, type:"boss", hitTimer:0});
+  }
+
+  // Upgrades
   if(upgrades.length < 1){
     const x = player.x + 600 + Math.random()*150;
     upgrades.push({x, y:platforms[platforms.length-1].y-50, w:25, h:25});
@@ -106,12 +126,11 @@ function shoot(){
     w:10, h:10,
     dx: 15*player.facing
   });
-  shootCooldown = 10; // frames between shots
+  shootCooldown = 10;
 }
 
 // ===== Update =====
 function update(){
-  // Movement
   player.dx = 0;
   if(keys['a']){ player.dx = -player.speed; player.facing=-1; }
   if(keys['d']){ player.dx = player.speed; player.facing=1; }
@@ -128,7 +147,6 @@ function update(){
   player.x += player.dx;
   player.y += player.dy;
 
-  // Collision with platforms
   player.grounded = false;
   [...ground, ...platforms].forEach(p=>{
     if(player.x + player.w > p.x && player.x < p.x + p.w &&
@@ -139,13 +157,11 @@ function update(){
     }
   });
 
-  // Update bullets
   bullets.forEach(b => b.x += b.dx);
   bullets = bullets.filter(b => b.x + b.w > player.x - 200 && b.x < player.x + canvas.width + 200);
 
-  // Enemies movement & collision
   enemies.forEach(e=>{
-    e.x += e.dx * 2;
+    e.x += e.dx * (e.type==="fast"?2:1);
     if(player.x + player.w > e.x && player.x < e.x + e.w &&
        player.y + player.h > e.y && player.y < e.y + e.h){
       player.health--;
@@ -153,13 +169,17 @@ function update(){
       if(player.health <= 0) reset();
     }
 
-    // Bullet collision
     bullets.forEach(b=>{
       if(b.x + b.w > e.x && b.x < e.x + e.w &&
          b.y + b.h > e.y && b.y < e.y + e.h){
         e.hp--;
-        e.hitTimer = 5; // flash 5 frames
+        e.hitTimer = 5;
         b.hit = true;
+        if(e.hp <= 0){
+          if(e.type==="normal") enemyScore += 10;
+          else if(e.type==="fast") enemyScore += 20;
+          else if(e.type==="boss") enemyScore += 100;
+        }
       }
     });
 
@@ -169,7 +189,6 @@ function update(){
   bullets = bullets.filter(b => !b.hit);
   enemies = enemies.filter(e => e.hp > 0);
 
-  // Upgrades collection
   upgrades = upgrades.filter(u=>{
     if(player.x + player.w > u.x && player.x < u.x + u.w &&
        player.y + player.h > u.y && player.y < u.y + u.h){
@@ -179,7 +198,6 @@ function update(){
     return true;
   });
 
-  // Remove off-screen objects
   platforms = platforms.filter(p => p.x + p.w > player.x - 100);
   enemies = enemies.filter(e => e.x + e.w > player.x - 100);
   upgrades = upgrades.filter(u => u.x + u.w > player.x - 100);
@@ -187,8 +205,10 @@ function update(){
 
   generateAhead();
 
-  // Reset if fall
   if(player.y > canvas.height) reset();
+
+  // ===== Score update =====
+  distanceScore = Math.floor(player.x / CHUNK);
 }
 
 // ===== Draw =====
@@ -199,39 +219,25 @@ function draw(){
   const camX = Math.max(0, player.x - canvas.width/3);
   ctx.save(); ctx.translate(-camX,0);
 
-  // Draw ground
-  ctx.fillStyle = biome.ground;
-  ground.forEach(g=>ctx.fillRect(g.x, g.y, g.w, g.h));
-
-  // Platforms
-  ctx.fillStyle = "#2ecc71";
-  platforms.forEach(p=>ctx.fillRect(p.x, p.y, p.w, p.h));
-
-  // Enemies
+  ground.forEach(g=>{ ctx.fillStyle=biome.ground; ctx.fillRect(g.x, g.y, g.w, g.h); });
+  platforms.forEach(p=>{ ctx.fillStyle="#2ecc71"; ctx.fillRect(p.x, p.y, p.w, p.h); });
   enemies.forEach(e=>{
-    ctx.fillStyle = e.hitTimer>0 ? "#ff0" : "#2ed573"; // flash yellow when hit
+    ctx.fillStyle = e.hitTimer>0 ? "#ff0" : e.type==="boss" ? "#9b59b6" : e.type==="fast" ? "#e67e22" : "#2ed573";
     ctx.fillRect(e.x, e.y, e.w, e.h);
   });
-
-  // Upgrades
-  ctx.fillStyle = "#f1c40f";
-  upgrades.forEach(u=>ctx.fillRect(u.x, u.y, u.w, u.h));
-
-  // Player
-  ctx.fillStyle = "#ff4757";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-
-  // Bullets
-  ctx.fillStyle = "#fff";
-  bullets.forEach(b=>ctx.fillRect(b.x, b.y, b.w, b.h));
+  upgrades.forEach(u=>{ ctx.fillStyle="#f1c40f"; ctx.fillRect(u.x, u.y, u.w, u.h); });
+  ctx.fillStyle="#ff4757"; ctx.fillRect(player.x, player.y, player.w, player.h);
+  bullets.forEach(b=>{ ctx.fillStyle="#fff"; ctx.fillRect(b.x, b.y, b.w, b.h); });
 
   ctx.restore();
 
-  // HUD
-  ctx.fillStyle = "#fff"; ctx.font="14px monospace";
+  ctx.fillStyle="#fff"; ctx.font="14px monospace";
   ctx.fillText(`HP: ${player.health}/${player.maxHealth}`,20,25);
   ctx.fillText(`Speed: ${player.speed.toFixed(1)}`,20,45);
   ctx.fillText(`Jump: ${player.jump}`,20,65);
+  ctx.fillText(`Distance Score (chunks): ${distanceScore}`,20,85);
+  ctx.fillText(`Enemy Score: ${enemyScore}`,20,105);
+  ctx.fillText(`Total Score: ${distanceScore + enemyScore}`,20,125);
 }
 
 // ===== Reset =====
@@ -239,18 +245,15 @@ function reset(){
   player.x=100; player.y=500; player.dx=0; player.dy=0;
   player.grounded=false; player.health=player.maxHealth=5;
   player.speed=4; player.jump=12;
-  platforms = [];
-  ground = [{x:0, y:canvas.height-50, w:800, h:50}];
-  enemies = [];
-  upgrades = [];
-  bullets = [];
+  platforms=[]; ground=[{x:0,y:canvas.height-50,w:800,h:50}];
+  enemies=[]; upgrades=[]; bullets=[];
+  distanceScore = 0;
+  enemyScore = 0;
   generateAhead();
 }
 
 // ===== Initialize =====
 initWorld();
-
-// ===== Loop =====
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
 </body>
