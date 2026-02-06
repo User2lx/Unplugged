@@ -31,7 +31,7 @@ function playTone(freq,duration=0.1,type="square",volume=0.2){
 }
 
 // ===== Player =====
-const player = { x:100, y:canvas.height-100, w:40, h:50, dx:0, dy:0, speed:4, jump:12, grounded:false, health:5, maxHealth:5, facing:1, slowed:0 };
+const player = { x:100, y:0, w:40, h:50, dx:0, dy:0, speed:4, jump:12, grounded:false, health:5, maxHealth:5, facing:1, slowed:0 };
 
 // ===== Controls =====
 const keys = {};
@@ -40,7 +40,6 @@ window.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
 
 // ===== World =====
 let platforms=[], enemies=[], upgrades=[], ground=[], bullets=[], enemyBullets=[], hazards=[], particles=[];
-
 const CHUNK = 400;
 
 // ===== Biomes =====
@@ -51,20 +50,24 @@ const biomes = [
   {bg:"#c7ecee", ground:"#16a085", enemyMultiplier:2, platformColor:"#1abc9c", bulletType:"ice", bossBullet:"ice", hazard:"icepatch", particle:"snow", sound:330}
 ];
 let currentBiomeIndex = -1;
-function getBiome(idx){ return biomes[Math.floor(idx/50) % biomes.length]; }
 
 // ===== Scores =====
 let distanceScore=0, enemyScore=0;
 
+// ===== Camera =====
+let camX = 0;
+
 // ===== World Generation =====
 function initWorld(){
-  ground = [{x:0, y:canvas.height-50, w:canvas.width, h:50}];
-  platforms = [{x:200, y:canvas.height-150, w:100, h:20, color:biomes[0].platformColor}];
+  ground = [{ x:0, y:canvas.height - 50, w: canvas.width*2, h:50 }];
+  platforms = [{ x:200, y:canvas.height-150, w:100, h:20, color:biomes[0].platformColor }];
+  player.y = canvas.height - 50 - player.h; // player on ground
   generateAhead();
 }
 
+function getBiome(idx){ return biomes[Math.floor(idx/50) % biomes.length]; }
+
 function generateAhead(){
-  const camX = Math.max(0, player.x - canvas.width/3);
   const biome = getBiome(Math.floor(player.x/CHUNK));
 
   // Biome change sound
@@ -125,7 +128,7 @@ function applyUpgrade(){
   playTone(880,0.1);
 }
 
-// ===== Shoot =====
+// ===== Shooting =====
 let shootCooldown=0;
 function shoot(){
   if(shootCooldown>0) return;
@@ -166,10 +169,11 @@ function update(){
   enemyBullets.forEach(b=>{b.x+=b.dx;b.y+=b.dy;});
   particles.forEach(p=>{ p.x+=p.dx; p.y+=p.dy; p.life--; });
 
-  const camX=Math.max(0, player.x-canvas.width/3);
+  camX = Math.max(0, player.x - canvas.width/4);
+
   ground=ground.filter(g=>g.x+g.w>camX-100);
   platforms=platforms.filter(p=>p.x+p.w>camX-100);
-  enemies=enemies.filter(e=>e.x+e.w>camX-200); // Only despawn when far off-screen
+  enemies=enemies.filter(e=>e.x+e.w>camX-200);
   upgrades=upgrades.filter(u=>u.x+u.w>camX-100);
   bullets=bullets.filter(b=>b.x+b.w>camX-200 && b.x<player.x+canvas.width+200);
   enemyBullets=enemyBullets.filter(b=>b.x+b.w>camX-200 && b.x<player.x+canvas.width+200 && b.y+b.h>0 && b.y<canvas.height);
@@ -213,7 +217,6 @@ function draw(){
   const biome=getBiome(Math.floor(player.x/CHUNK));
   ctx.fillStyle=biome.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  const camX=Math.max(0,player.x-canvas.width/3);
   ctx.save(); ctx.translate(-camX,0);
 
   ground.forEach(g=>ctx.fillStyle=biome.ground,ctx.fillRect(g.x,g.y,g.w,g.h));
@@ -227,7 +230,6 @@ function draw(){
     else if(h.type==="icepatch") ctx.fillStyle="#0ff";
     ctx.fillRect(h.x,h.y,h.w,h.h);
   });
-
   particles.forEach(p=>{
     if(p.type==="leaf") ctx.fillStyle="#2ecc71";
     else if(p.type==="sand") ctx.fillStyle="#f1c40f";
@@ -235,13 +237,12 @@ function draw(){
     else if(p.type==="snow") ctx.fillStyle="#fff";
     ctx.fillRect(p.x,p.y,5,5);
   });
-
   ctx.fillStyle="#ff4757"; ctx.fillRect(player.x,player.y,player.w,player.h);
-
   bullets.forEach(b=>ctx.fillStyle=b.type==="normal"?"#fff":b.type==="fast"?"#0ff":b.type==="fire"?"#f90":"#0f0",ctx.fillRect(b.x,b.y,b.w,b.h));
   enemyBullets.forEach(b=>ctx.fillStyle=b.type==="normal"?"#fff":b.type==="fast"?"#0ff":b.type==="fire"?"#f90":"#0f0",ctx.fillRect(b.x,b.y,b.w,b.h));
 
   ctx.restore();
+
   ctx.fillStyle="#fff"; ctx.font="14px monospace";
   ctx.fillText(`HP: ${player.health.toFixed(1)}/${player.maxHealth}`,20,25);
   ctx.fillText(`Speed: ${player.speed.toFixed(1)}`,20,45);
@@ -254,9 +255,9 @@ function draw(){
 
 // ===== Reset =====
 function reset(){
-  player.x=100; player.y=canvas.height-100; player.dx=0; player.dy=0; player.grounded=false;
+  player.x=100; player.y=canvas.height-50-player.h; player.dx=0; player.dy=0; player.grounded=false;
   player.health=player.maxHealth=5; player.speed=4; player.jump=12; player.slowed=0;
-  platforms=[]; ground=[{x:0,y:canvas.height-50,w:canvas.width,h:50}];
+  platforms=[]; ground=[{x:0,y:canvas.height-50,w:canvas.width*2,h:50}];
   enemies=[]; upgrades=[]; bullets=[]; enemyBullets=[]; hazards=[]; particles=[];
   distanceScore=0; enemyScore=0; currentBiomeIndex=-1;
   generateAhead();
