@@ -2,35 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Shooter Fixed</title>
-<style>
-html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb;}
-canvas{display:block;}
-</style>
+<title>Fixed Side Scroller Shooter</title>
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb}canvas{display:block}</style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <script>
-const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d');
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
 function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-window.addEventListener('resize',resize);
-resize();
+window.addEventListener("resize",resize);resize();
 
 // ===== Player =====
 const player={x:100,y:0,w:40,h:50,dx:0,dy:0,grounded:false,speed:5,jump:12,health:5,maxHealth:5,facing:1};
 
 // ===== Controls =====
 const keys={};
-window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
-window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+window.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+window.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
 // ===== Camera =====
 let camX=0;
 
 // ===== World =====
-let CHUNK=400;
-let ground=[],platforms=[],hazards=[],particles=[],enemies=[],upgrades=[],bullets=[],enemyBullets=[];
+let CHUNK=400,ground=[],platforms=[],hazards=[],particles=[],enemies=[],upgrades=[],bullets=[],enemyBullets=[];
 
 // ===== Biomes =====
 const biomes=[
@@ -47,38 +41,25 @@ let distanceScore=0,enemyScore=0;
 // ===== Init World =====
 function initWorld(){
     ground=[{x:0,y:canvas.height-50,w:canvas.width*2,h:50}];
-    platforms=[
-        {x:150,y:canvas.height-150,w:100,h:20,color:biomes[0].platform},
-        {x:350,y:canvas.height-200,w:100,h:20,color:biomes[0].platform}
-    ];
-    player.x=100;
-    player.y=canvas.height-50-player.h;
+    platforms=[{x:150,y:canvas.height-150,w:100,h:20,color:biomes[0].platform},{x:350,y:canvas.height-200,w:100,h:20,color:biomes[0].platform}];
+    player.x=100;player.y=canvas.height-50-player.h;
     generateAhead();
 }
 
-// ===== Get Biome =====
+// ===== Biome helper =====
 function getBiome(chunkIdx){return biomes[Math.floor(chunkIdx/50)%biomes.length];}
 
-// ===== Spawn Enemy =====
-function spawnEnemy(x, y, type){
+// ===== Spawn enemy =====
+function spawnEnemy(x,y,type){
     let hp = type==="boss"?20:type==="fast"?2:1;
-    enemies.push({
-        x, y,
-        w: type==="boss"?80:40,
-        h: type==="boss"?80:40,
-        hp,
-        dx: type==="fast"?3:1,
-        type,
-        hitTimer:0,
-        shootCooldown:60
-    });
+    enemies.push({x,y,w:type==="boss"?80:40,h:type==="boss"?80:40,hp,maxHp:hp,dx:type==="fast"?3:1,type,shootCooldown:60});
 }
 
-// ===== Generate Chunks =====
+// ===== Generate chunks =====
 function generateAhead(){
     const chunkIdx=Math.floor(player.x/CHUNK);
     const biome=getBiome(chunkIdx);
-    if(chunkIdx!==currentBiomeIndex){currentBiomeIndex=chunkIdx;}
+    if(chunkIdx!==currentBiomeIndex) currentBiomeIndex=chunkIdx;
 
     // Ground
     while(ground[ground.length-1].x<player.x+canvas.width*2){
@@ -94,13 +75,12 @@ function generateAhead(){
         platforms.push({x,y,w:100,h:20,color:biome.platform});
     }
 
-    // Enemies: spawn only once per chunk
-    const hasEnemy = enemies.some(e => Math.floor(e.x/CHUNK) === chunkIdx);
-    if(!hasEnemy){
+    // Enemies: spawn once per chunk
+    if(!enemies.some(e=>Math.floor(e.x/CHUNK)===chunkIdx)){
         const typeRand=Math.random();
-        const type = typeRand<0.1?"boss":typeRand<0.4?"fast":"normal";
-        const x = chunkIdx*CHUNK + 200 + Math.random()*200;
-        const y = platforms[platforms.length-1].y - 40;
+        const type=typeRand<0.1?"boss":typeRand<0.4?"fast":"normal";
+        const x=chunkIdx*CHUNK+200+Math.random()*200;
+        const y=platforms[platforms.length-1].y-40;
         spawnEnemy(x,y,type);
     }
 
@@ -117,44 +97,23 @@ function generateAhead(){
         const x=player.x+600+Math.random()*150;
         upgrades.push({x,y:platforms[platforms.length-1].y-50,w:25,h:25});
     }
-
-    // Particles
-    for(let i=0;i<10;i++){
-        const px=player.x+Math.random()*canvas.width,py=Math.random()*canvas.height/2;
-        particles.push({x:px,y:py,dx:(Math.random()-0.5)*1,dy:Math.random()*1+0.2,type:biome.particle,life:100+Math.random()*50});
-    }
 }
 
-// ===== Shoot =====
+// ===== Shooting =====
 let shootCooldown=0;
 function shoot(){
     if(shootCooldown>0) return;
     const biome=getBiome(Math.floor(player.x/CHUNK));
-    bullets.push({
-        x:player.facing===1?player.x+player.w:player.x-10,
-        y:player.y+player.h/2-5,
-        w:10,h:10,
-        dx:15*player.facing,
-        color:biome.bullet,
-        type:"player",
-        hit:false
-    });
+    bullets.push({x:player.facing===1?player.x+player.w:player.x-10,y:player.y+player.h/2-5,w:10,h:10,dx:15*player.facing,color:biome.bullet});
     shootCooldown=10;
 }
 
-// ===== Enemy Shoot =====
+// ===== Enemy shooting =====
 function enemyShoot(e){
     const biome=getBiome(Math.floor(player.x/CHUNK));
     const dx=(player.x+player.w/2-e.x-e.w/2)/20;
     const dy=(player.y+player.h/2-e.y-e.h/2)/20;
-    enemyBullets.push({
-        x:e.x+e.w/2, y:e.y+e.h/2,
-        w:10,h:10,
-        dx, dy,
-        color:biome.bullet,
-        type:"enemy",
-        hit:false
-    });
+    enemyBullets.push({x:e.x+e.w/2,y:e.y+e.h/2,w:10,h:10,dx,dy,color:biome.bullet});
 }
 
 // ===== Update =====
@@ -166,88 +125,55 @@ function update(){
     if(shootCooldown>0) shootCooldown--;
 
     // Physics
-    player.dy+=0.6;
-    player.x+=player.dx; player.y+=player.dy;
-    player.grounded=false;
+    player.dy+=0.6; player.x+=player.dx; player.y+=player.dy; player.grounded=false;
     [...ground,...platforms].forEach(p=>{
         if(player.x+player.w>p.x && player.x<p.x+p.w && player.y+player.h>=p.y && player.y+player.h<=p.y+20){
-            player.y=p.y-player.h;
-            player.dy=0;
-            player.grounded=true;
+            player.y=p.y-player.h; player.dy=0; player.grounded=true;
         }
     });
 
     // Camera
     camX=Math.max(0,player.x-canvas.width/4);
 
-    // Cleanup offscreen
+    // Offscreen cleanup
     ground=ground.filter(g=>g.x+g.w>camX-100);
     platforms=platforms.filter(p=>p.x+p.w>camX-100);
     hazards=hazards.filter(h=>h.x+h.w>camX-100);
     upgrades=upgrades.filter(u=>u.x+u.w>camX-100);
-
-    enemies=enemies.filter(e=>e.x+e.w>camX-1000 && e.x<player.x+canvas.width+500);
     bullets=bullets.filter(b=>b.x+b.w>camX-500 && b.x<player.x+canvas.width+500);
     enemyBullets=enemyBullets.filter(b=>b.x+b.w>camX-500 && b.x<player.x+canvas.width+500 && b.y+b.h>0 && b.y<canvas.height);
-    particles=particles.filter(p=>p.life>0);
+    enemies=enemies.filter(e=>e.x+e.w>camX-1000 && e.x<player.x+canvas.width+500);
 
     // Move bullets
     bullets.forEach(b=>b.x+=b.dx);
     enemyBullets.forEach(b=>{b.x+=b.dx;b.y+=b.dy;});
 
-    // Enemy AI & damage
+    // Enemy AI and shooting
     enemies.forEach(e=>{
         e.x+=e.dx*(e.type==="fast"?2:1);
         if(e.type==="boss"){ e.shootCooldown--; if(e.shootCooldown<=0){enemyShoot(e);e.shootCooldown=60;} }
+
+        // Bullet collision
         bullets.forEach(b=>{
-            if(b.type==="player" && b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h && !b.hit){
-                e.hp--; e.hitTimer=5; b.hit=true;
-                if(e.hp<=0){
-                    enemyScore += e.type==="boss"?100:e.type==="fast"?20:10;
-                }
+            if(b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h){
+                e.hp--; b.dx=0; b.dy=0; // Mark bullet stopped
             }
         });
-        if(e.hitTimer>0) e.hitTimer--;
     });
-    bullets=bullets.filter(b=>!b.hit);
+
+    // Remove dead enemies
+    enemies=enemies.filter(e=>e.hp>0);
 
     // Enemy bullets damage player
     enemyBullets.forEach(b=>{
         if(player.x+player.w>b.x && player.x<b.x+b.w && player.y+player.h>b.y && player.y<b.y+b.h){
-            player.health--;
-            b.hit=true;
-            if(player.health<=0) reset();
-        }
-    });
-    enemyBullets=enemyBullets.filter(b=>!b.hit);
-
-    // Player upgrades
-    upgrades=upgrades.filter(u=>!(player.x+player.w>u.x && player.x<u.x+u.w && player.y+player.h>u.y && player.y<u.y+u.h && applyUpgrade()));
-
-    // Hazards
-    hazards.forEach(h=>{
-        if(player.x+player.w>h.x && player.x<h.x+h.w && player.y+player.h>h.y && player.y<h.y+h.h){
-            if(h.type==="spike") player.health-=0.1;
-            else if(h.type==="quicksand") player.dx*=0.5;
-            else if(h.type==="lava") player.health-=0.5;
+            player.health--; b.dx=0; b.dy=0;
             if(player.health<=0) reset();
         }
     });
 
-    // Particles
-    particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;});
     generateAhead();
-    if(player.y>canvas.height) reset();
     distanceScore=Math.floor(player.x/CHUNK);
-}
-
-// ===== Upgrades =====
-function applyUpgrade(){
-    const roll=Math.floor(Math.random()*3);
-    if(roll===0){player.maxHealth++;player.health=player.maxHealth;}
-    else if(roll===1){player.speed+=0.5;}
-    else{player.jump+=2;}
-    return true;
 }
 
 // ===== Draw =====
@@ -259,28 +185,23 @@ function draw(){
     ground.forEach(g=>{ctx.fillStyle=biome.ground;ctx.fillRect(g.x,g.y,g.w,g.h);});
     platforms.forEach(p=>{ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.w,p.h);});
     hazards.forEach(h=>{ctx.fillStyle="#444";ctx.fillRect(h.x,h.y,h.w,h.h);});
-    upgrades.forEach(u=>{ctx.fillStyle="#f1c40f";ctx.fillRect(u.x,u.y,u.w,u.h);});
-    enemies.forEach(e=>{ctx.fillStyle=e.hitTimer>0?"#ff0":e.type==="boss"?"#9b59b6":e.type==="fast"?"#e67e22":"#2ed573";ctx.fillRect(e.x,e.y,e.w,e.h);});
     bullets.forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);});
     enemyBullets.forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);});
-    particles.forEach(p=>{ctx.fillStyle=p.type;ctx.fillRect(p.x,p.y,5,5);});
+    enemies.forEach(e=>{ctx.fillStyle=e.hp>0?"#f00":"#555";ctx.fillRect(e.x,e.y,e.w,e.h);});
     ctx.fillStyle="#ff4757"; ctx.fillRect(player.x,player.y,player.w,player.h);
     ctx.restore();
 
     ctx.fillStyle="#fff"; ctx.font="14px monospace";
-    ctx.fillText(`HP: ${player.health.toFixed(1)}/${player.maxHealth}`,20,25);
-    ctx.fillText(`Speed: ${player.speed.toFixed(1)}`,20,45);
-    ctx.fillText(`Jump: ${player.jump}`,20,65);
-    ctx.fillText(`Distance Score: ${distanceScore}`,20,85);
-    ctx.fillText(`Enemy Score: ${enemyScore}`,20,105);
+    ctx.fillText(`HP: ${player.health}/${player.maxHealth}`,20,25);
+    ctx.fillText(`Distance: ${distanceScore}`,20,45);
 }
 
 // ===== Reset =====
 function reset(){
-    player.x=100;player.y=canvas.height-50-player.h;player.dx=0;player.dy=0;player.grounded=false;
+    player.x=100; player.y=canvas.height-50-player.h; player.dx=0; player.dy=0; player.grounded=false;
     player.health=player.maxHealth=5; player.speed=5; player.jump=12; player.facing=1;
-    platforms=[]; ground=[{x:0,y:canvas.height-50,w:canvas.width*2,h:50}];
-    hazards=[]; enemies=[]; upgrades=[]; bullets=[]; enemyBullets=[]; particles=[];
+    ground=[{x:0,y:canvas.height-50,w:canvas.width*2,h:50}];
+    platforms=[]; hazards=[]; bullets=[]; enemyBullets=[]; enemies=[]; upgrades=[]; particles=[];
     distanceScore=0; enemyScore=0; currentBiomeIndex=-1;
     generateAhead();
 }
