@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Shooter</title>
+<title>Side Scroller Shooter Fixed</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb;}
 canvas{display:block;}
@@ -18,7 +18,7 @@ window.addEventListener('resize',resize);
 resize();
 
 // ===== Player =====
-const player={x:100,y:0,w:40,h:50,dx:0,dy:0,grounded:false,speed:5,jump:12,health:5,maxHealth:5,facing:1,slowed:0};
+const player={x:100,y:0,w:40,h:50,dx:0,dy:0,grounded:false,speed:5,jump:12,health:5,maxHealth:5,facing:1};
 
 // ===== Controls =====
 const keys={};
@@ -114,7 +114,15 @@ let shootCooldown=0;
 function shoot(){
     if(shootCooldown>0) return;
     const biome=getBiome(Math.floor(player.x/CHUNK));
-    bullets.push({x:player.facing===1?player.x+player.w:player.x-10,y:player.y+player.h/2-5,w:10,h:10,dx:15*player.facing,color:biome.bullet});
+    bullets.push({
+        x:player.facing===1?player.x+player.w:player.x-10,
+        y:player.y+player.h/2-5,
+        w:10,h:10,
+        dx:15*player.facing,
+        color:biome.bullet,
+        type:"player",
+        hit:false
+    });
     shootCooldown=10;
 }
 
@@ -123,17 +131,22 @@ function enemyShoot(e){
     const biome=getBiome(Math.floor(player.x/CHUNK));
     const dx=(player.x+player.w/2-e.x-e.w/2)/20;
     const dy=(player.y+player.h/2-e.y-e.h/2)/20;
-    enemyBullets.push({x:e.x+e.w/2,y:e.y+e.h/2,w:10,h:10,dx,dy,color:biome.bullet});
+    enemyBullets.push({
+        x:e.x+e.w/2,y:e.y+e.h/2,w:10,h:10,dx,dy,color:biome.bullet,type:"enemy",hit:false
+    });
 }
 
 // ===== Update =====
 function update(){
+    // Update facing
+    if(keys['a']) player.facing=-1;
+    if(keys['d']) player.facing=1;
+
     // Controls
     player.dx=(keys['a']?-1:0)+(keys['d']?1:0); player.dx*=player.speed;
     if((keys['w']||keys[' ']) && player.grounded){player.dy=-player.jump;player.grounded=false;}
     if(keys['j']) shoot();
     if(shootCooldown>0) shootCooldown--;
-    if(player.slowed>0) player.slowed--; else player.slowed=0;
 
     // Physics
     player.dy+=0.6;
@@ -165,7 +178,7 @@ function update(){
         e.x+=e.dx*(e.type==="fast"?2:1);
         if(e.type==="boss"){ e.shootCooldown--; if(e.shootCooldown<=0){enemyShoot(e);e.shootCooldown=60;} }
         bullets.forEach(b=>{
-            if(b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h){
+            if(b.type==="player" && b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h){
                 e.hp--; e.hitTimer=5; b.hit=true;
                 if(e.hp<=0) enemyScore+=e.type==="boss"?100:e.type==="fast"?20:10;
             }
@@ -174,11 +187,10 @@ function update(){
     });
     bullets=bullets.filter(b=>!b.hit);
 
-    // Bullet collision with player
+    // Enemy bullets damage
     enemyBullets.forEach(b=>{
         if(player.x+player.w>b.x && player.x<b.x+b.w && player.y+player.h>b.y && player.y<b.y+b.h){
             player.health--;
-            if(b.type==="ice") player.slowed=120;
             b.hit=true;
             if(player.health<=0) reset();
         }
@@ -192,9 +204,8 @@ function update(){
     hazards.forEach(h=>{
         if(player.x+player.w>h.x && player.x<h.x+h.w && player.y+player.h>h.y && player.y<h.y+h.h){
             if(h.type==="spike") player.health-=0.1;
-            else if(h.type==="quicksand") player.slowed=60;
+            else if(h.type==="quicksand") player.dx*=0.5;
             else if(h.type==="lava") player.health-=0.5;
-            else if(h.type==="icepatch") player.dx*=1.2;
             if(player.health<=0) reset();
         }
     });
@@ -243,7 +254,7 @@ function draw(){
 // ===== Reset =====
 function reset(){
     player.x=100;player.y=canvas.height-50-player.h;player.dx=0;player.dy=0;player.grounded=false;
-    player.health=player.maxHealth=5; player.speed=5; player.jump=12; player.slowed=0;
+    player.health=player.maxHealth=5; player.speed=5; player.jump=12; player.facing=1;
     platforms=[]; ground=[{x:0,y:canvas.height-50,w:canvas.width*2,h:50}];
     hazards=[]; enemies=[]; upgrades=[]; bullets=[]; enemyBullets=[]; particles=[];
     distanceScore=0; enemyScore=0; currentBiomeIndex=-1;
