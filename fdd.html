@@ -173,9 +173,10 @@ function update(){
     if(e.type==="boss"){ e.shootCooldown--; if(e.shootCooldown<=0){enemyShoot(e);e.shootCooldown=60;} }
 
     // Bullet collision
-    bullets.forEach(b=>{
+    bullets.forEach((b,i)=>{
       if(b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h && e.hp>0){
-        e.hp--; b.dx=0; b.dy=0;
+        e.hp--;
+        bullets.splice(i,1); // <-- DELETE the bullet after hitting enemy
         createParticles(e.x+e.w/2,e.y+e.h/2,"#f00");
         if(e.hp<=0){enemyScore+=e.type==="boss"?100:e.type==="fast"?20:10;}
       }
