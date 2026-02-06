@@ -31,7 +31,7 @@ function playTone(freq,duration=0.1,type="square",volume=0.2){
 }
 
 // ===== Player =====
-const player = { x:100, y:500, w:40, h:50, dx:0, dy:0, speed:4, jump:12, grounded:false, health:5, maxHealth:5, facing:1, slowed:0 };
+const player = { x:100, y:canvas.height-100, w:40, h:50, dx:0, dy:0, speed:4, jump:12, grounded:false, health:5, maxHealth:5, facing:1, slowed:0 };
 
 // ===== Controls =====
 const keys = {};
@@ -57,11 +57,16 @@ function getBiome(idx){ return biomes[Math.floor(idx/50) % biomes.length]; }
 let distanceScore=0, enemyScore=0;
 
 // ===== World Generation =====
-function initWorld(){ ground.push({x:0,y:canvas.height-50,w:800,h:50}); generateAhead(); }
+function initWorld(){
+  ground = [{x:0, y:canvas.height-50, w:canvas.width, h:50}];
+  platforms = [{x:200, y:canvas.height-150, w:100, h:20, color:biomes[0].platformColor}];
+  generateAhead();
+}
 
 function generateAhead(){
   const camX = Math.max(0, player.x - canvas.width/3);
   const biome = getBiome(Math.floor(player.x/CHUNK));
+
   // Biome change sound
   const biomeIdx = Math.floor(player.x/CHUNK);
   if(biomeIdx !== currentBiomeIndex){ playTone(biome.sound,0.15); currentBiomeIndex = biomeIdx; }
@@ -249,9 +254,9 @@ function draw(){
 
 // ===== Reset =====
 function reset(){
-  player.x=100; player.y=500; player.dx=0; player.dy=0; player.grounded=false;
+  player.x=100; player.y=canvas.height-100; player.dx=0; player.dy=0; player.grounded=false;
   player.health=player.maxHealth=5; player.speed=4; player.jump=12; player.slowed=0;
-  platforms=[]; ground=[{x:0,y:canvas.height-50,w:800,h:50}];
+  platforms=[]; ground=[{x:0,y:canvas.height-50,w:canvas.width,h:50}];
   enemies=[]; upgrades=[]; bullets=[]; enemyBullets=[]; hazards=[]; particles=[];
   distanceScore=0; enemyScore=0; currentBiomeIndex=-1;
   generateAhead();
