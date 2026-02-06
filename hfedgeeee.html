@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Shooter Persistent Enemies</title>
+<title>Side Scroller Shooter Fixed</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb;}
 canvas{display:block;}
@@ -59,6 +59,21 @@ function initWorld(){
 // ===== Get Biome =====
 function getBiome(chunkIdx){return biomes[Math.floor(chunkIdx/50)%biomes.length];}
 
+// ===== Spawn Enemy =====
+function spawnEnemy(x, y, type){
+    let hp = type==="boss"?20:type==="fast"?2:1;
+    enemies.push({
+        x, y,
+        w: type==="boss"?80:40,
+        h: type==="boss"?80:40,
+        hp,
+        dx: type==="fast"?3:1,
+        type,
+        hitTimer:0,
+        shootCooldown:60
+    });
+}
+
 // ===== Generate Chunks =====
 function generateAhead(){
     const biome=getBiome(Math.floor(player.x/CHUNK));
@@ -81,11 +96,11 @@ function generateAhead(){
 
     // Enemies
     if(enemies.length<2){
-        const typeRand=Math.random(),type=typeRand<0.1?"boss":typeRand<0.4?"fast":"normal";
-        const x=player.x+500+Math.random()*300,y=platforms[platforms.length-1].y-40;
-        const hp=type==="normal"?1:type==="fast"?2:20;
-        const dx=type==="normal"?1:type==="fast"?3:1;
-        enemies.push({x,y,w:type==="boss"?80:40,h:type==="boss"?80:40,hp,dx,type,hitTimer:0,shootCooldown:60});
+        const typeRand=Math.random();
+        const type = typeRand<0.1?"boss":typeRand<0.4?"fast":"normal";
+        const x=player.x+500+Math.random()*300;
+        const y=platforms[platforms.length-1].y-40;
+        spawnEnemy(x,y,type);
     }
 
     // Hazards
@@ -174,27 +189,29 @@ function update(){
     hazards=hazards.filter(h=>h.x+h.w>camX-100);
     upgrades=upgrades.filter(u=>u.x+u.w>camX-100);
 
-    // Enemy persistence fix: keep them far behind
-    enemies = enemies.filter(e => e.x + e.w > camX - 1000 && e.x < player.x + canvas.width + 500);
+    // Enemy persistence
+    enemies=enemies.filter(e=>e.x+e.w>camX-1000 && e.x<player.x+canvas.width+500);
 
     // Bullets persistence
-    bullets = bullets.filter(b => b.x + b.w > camX - 500 && b.x < player.x + canvas.width + 500);
-    enemyBullets = enemyBullets.filter(b => b.x + b.w > camX - 500 && b.x < player.x + canvas.width + 500 && b.y + b.h > 0 && b.y < canvas.height);
+    bullets=bullets.filter(b=>b.x+b.w>camX-500 && b.x<player.x+canvas.width+500);
+    enemyBullets=enemyBullets.filter(b=>b.x+b.w>camX-500 && b.x<player.x+canvas.width+500 && b.y+b.h>0 && b.y<canvas.height);
 
-    particles = particles.filter(p=>p.life>0);
+    particles=particles.filter(p=>p.life>0);
 
     // Move bullets
     bullets.forEach(b=>b.x+=b.dx);
     enemyBullets.forEach(b=>{b.x+=b.dx;b.y+=b.dy;});
 
-    // Enemy AI
+    // Enemy AI & damage
     enemies.forEach(e=>{
         e.x+=e.dx*(e.type==="fast"?2:1);
         if(e.type==="boss"){ e.shootCooldown--; if(e.shootCooldown<=0){enemyShoot(e);e.shootCooldown=60;} }
         bullets.forEach(b=>{
-            if(b.type==="player" && b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h){
+            if(b.type==="player" && b.x+b.w>e.x && b.x<e.x+e.w && b.y+b.h>e.y && b.y<e.y+e.h && !b.hit){
                 e.hp--; e.hitTimer=5; b.hit=true;
-                if(e.hp<=0) enemyScore+=e.type==="boss"?100:e.type==="fast"?20:10;
+                if(e.hp<=0){
+                    enemyScore += e.type==="boss"?100:e.type==="fast"?20:10;
+                }
             }
         });
         if(e.hitTimer>0) e.hitTimer--;
