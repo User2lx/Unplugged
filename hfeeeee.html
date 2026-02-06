@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Shooter Fixed</title>
+<title>Side Scroller Shooter Working</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb;}
 canvas{display:block;}
@@ -132,7 +132,12 @@ function enemyShoot(e){
     const dx=(player.x+player.w/2-e.x-e.w/2)/20;
     const dy=(player.y+player.h/2-e.y-e.h/2)/20;
     enemyBullets.push({
-        x:e.x+e.w/2,y:e.y+e.h/2,w:10,h:10,dx,dy,color:biome.bullet,type:"enemy",hit:false
+        x:e.x+e.w/2, y:e.y+e.h/2,
+        w:10,h:10,
+        dx, dy,
+        color:biome.bullet,
+        type:"enemy",
+        hit:false
     });
 }
 
@@ -173,6 +178,10 @@ function update(){
     enemyBullets=enemyBullets.filter(b=>b.x+b.w>camX-200 && b.x<player.x+canvas.width+200 && b.y+b.h>0 && b.y<canvas.height);
     particles=particles.filter(p=>p.life>0);
 
+    // Move bullets
+    bullets.forEach(b=>b.x+=b.dx);
+    enemyBullets.forEach(b=>{b.x+=b.dx;b.y+=b.dy;});
+
     // Enemy AI
     enemies.forEach(e=>{
         e.x+=e.dx*(e.type==="fast"?2:1);
@@ -187,7 +196,7 @@ function update(){
     });
     bullets=bullets.filter(b=>!b.hit);
 
-    // Enemy bullets damage
+    // Enemy bullets damage player
     enemyBullets.forEach(b=>{
         if(player.x+player.w>b.x && player.x<b.x+b.w && player.y+player.h>b.y && player.y<b.y+b.h){
             player.health--;
