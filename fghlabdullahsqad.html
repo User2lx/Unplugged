@@ -11,10 +11,13 @@ canvas{display:block;}
 <body>
 <canvas id="game"></canvas>
 <script>
+// ===== Virtual game size =====
+const VWIDTH=800;
+const VHEIGHT=600;
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
-// ===== Resize =====
+// ===== Scaling =====
 function resize(){
   canvas.width=window.innerWidth;
   canvas.height=window.innerHeight;
@@ -24,8 +27,7 @@ resize();
 
 // ===== Player =====
 const player={
-  x:100,y:0,w:40,h:50,
-  dx:0,dy:0,speed:4,jump:12,
+  x:100,y:0,w:40,h:50,dx:0,dy:0,speed:4,jump:12,
   grounded:false,canDoubleJump:true,
   dashCooldown:0,dashing:false,dashTime:0,
   health:5,maxHealth:5,
@@ -47,7 +49,7 @@ const biomes=[
   {bg:"#ff6b6b",ground:"#c0392b"},
   {bg:"#c7ecee",ground:"#16a085"}
 ];
-function getGroundY(){return canvas.height-50;}
+function getGroundY(){return VHEIGHT-50;}
 function getBiome(idx){return biomes[idx%biomes.length];}
 
 // ===== Chunk Generation =====
@@ -146,15 +148,21 @@ function update(){
     });
   });
 
-  if(player.y>canvas.height) reset();
+  if(player.y>VHEIGHT) reset();
 }
 
 // ===== Draw =====
 function draw(){
-  const biome=getBiome(Math.floor(player.x/CHUNK));
-  ctx.fillStyle=biome.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Scale canvas
+  const scaleX=canvas.width/VWIDTH;
+  const scaleY=canvas.height/VHEIGHT;
+  ctx.save();
+  ctx.scale(scaleX,scaleY);
 
-  const camX=Math.max(0,player.x-canvas.width/3);
+  const biome=getBiome(Math.floor(player.x/CHUNK));
+  ctx.fillStyle=biome.bg; ctx.fillRect(0,0,VWIDTH,VHEIGHT);
+
+  const camX=Math.max(0,player.x-VWIDTH/3);
   ctx.save(); ctx.translate(-camX,0);
 
   chunks.forEach(c=>{
@@ -166,7 +174,6 @@ function draw(){
 
   ctx.fillStyle="#ff4757"; ctx.fillRect(player.x,player.y,player.w,player.h);
   if(player.attacking){ctx.fillStyle="#ffa502";ctx.fillRect(player.x+(player.facing===1?player.w:-30),player.y+10,30,30);}
-
   ctx.restore();
 
   ctx.fillStyle="#fff"; ctx.font="14px monospace";
@@ -175,6 +182,8 @@ function draw(){
   ctx.fillText(`Jump: ${player.jump}`,20,65);
   ctx.fillText(`Atk: ${player.atkDuration}`,20,85);
   ctx.fillText(`Dash CD: ${player.dashCooldown}`,20,105);
+
+  ctx.restore();
 }
 
 // ===== Reset =====
