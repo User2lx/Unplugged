@@ -76,8 +76,8 @@ function spawnEnemy(x, y, type){
 
 // ===== Generate Chunks =====
 function generateAhead(){
-    const biome=getBiome(Math.floor(player.x/CHUNK));
     const chunkIdx=Math.floor(player.x/CHUNK);
+    const biome=getBiome(chunkIdx);
     if(chunkIdx!==currentBiomeIndex){currentBiomeIndex=chunkIdx;}
 
     // Ground
@@ -94,12 +94,13 @@ function generateAhead(){
         platforms.push({x,y,w:100,h:20,color:biome.platform});
     }
 
-    // Enemies
-    if(enemies.length<2){
+    // Enemies: spawn only once per chunk
+    const hasEnemy = enemies.some(e => Math.floor(e.x/CHUNK) === chunkIdx);
+    if(!hasEnemy){
         const typeRand=Math.random();
         const type = typeRand<0.1?"boss":typeRand<0.4?"fast":"normal";
-        const x=player.x+500+Math.random()*300;
-        const y=platforms[platforms.length-1].y-40;
+        const x = chunkIdx*CHUNK + 200 + Math.random()*200;
+        const y = platforms[platforms.length-1].y - 40;
         spawnEnemy(x,y,type);
     }
 
@@ -158,10 +159,6 @@ function enemyShoot(e){
 
 // ===== Update =====
 function update(){
-    // Update facing
-    if(keys['a']) player.facing=-1;
-    if(keys['d']) player.facing=1;
-
     // Controls
     player.dx=(keys['a']?-1:0)+(keys['d']?1:0); player.dx*=player.speed;
     if((keys['w']||keys[' ']) && player.grounded){player.dy=-player.jump;player.grounded=false;}
@@ -189,13 +186,9 @@ function update(){
     hazards=hazards.filter(h=>h.x+h.w>camX-100);
     upgrades=upgrades.filter(u=>u.x+u.w>camX-100);
 
-    // Enemy persistence
     enemies=enemies.filter(e=>e.x+e.w>camX-1000 && e.x<player.x+canvas.width+500);
-
-    // Bullets persistence
     bullets=bullets.filter(b=>b.x+b.w>camX-500 && b.x<player.x+canvas.width+500);
     enemyBullets=enemyBullets.filter(b=>b.x+b.w>camX-500 && b.x<player.x+canvas.width+500 && b.y+b.h>0 && b.y<canvas.height);
-
     particles=particles.filter(p=>p.life>0);
 
     // Move bullets
@@ -228,7 +221,7 @@ function update(){
     });
     enemyBullets=enemyBullets.filter(b=>!b.hit);
 
-    // Player touches upgrades
+    // Player upgrades
     upgrades=upgrades.filter(u=>!(player.x+player.w>u.x && player.x<u.x+u.w && player.y+player.h>u.y && player.y<u.y+u.h && applyUpgrade()));
 
     // Hazards
@@ -241,7 +234,7 @@ function update(){
         }
     });
 
-    // Move particles
+    // Particles
     particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;});
     generateAhead();
     if(player.y>canvas.height) reset();
