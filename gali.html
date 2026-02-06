@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Galaga (Faithful Recreation)</title>
+<style>
+  body {
+    background: black;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" width="224" height="288"></canvas>
+
+<script>
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+/* --- SCALE --- */
+const SCALE = 3;
+c.style.width = c.width * SCALE + "px";
+c.style.height = c.height * SCALE + "px";
+
+/* --- COLORS (Galaga-accurate) --- */
+const COLORS = {
+  bg: "#000000",
+  ship: "#00ffff",
+  bee: "#ff0000",
+  bullet: "#ffff00",
+  text: "#ffffff"
+};
+
+/* --- PLAYER --- */
+const player = { x: 112, y: 250, alive: true };
+
+/* --- ENEMIES --- */
+let enemies = [];
+let t = 0;
+
+/* --- BULLETS --- */
+let bullets = [];
+let enemyBullets = [];
+
+/* --- INPUT --- */
+let keys = {};
+addEventListener("keydown", e => keys[e.code] = true);
+addEventListener("keyup", e => keys[e.code] = false);
+
+/* --- PIXEL SHAPES --- */
+function drawShip(x, y) {
+  ctx.fillStyle = COLORS.ship;
+  ctx.fillRect(x-4,y,8,2);
+  ctx.fillRect(x-2,y-2,4,2);
+  ctx.fillRect(x-1,y-4,2,2);
+}
+
+function drawBee(x,y) {
+  ctx.fillStyle = COLORS.bee;
+  ctx.fillRect(x-4,y-2,8,4);
+  ctx.fillRect(x-2,y-4,4,2);
+  ctx.fillRect(x-2,y+2,4,2);
+}
+
+/* --- SPAWN FORMATION --- */
+function spawn() {
+  enemies = [];
+  for (let r=0;r<4;r++) {
+    for (let c=0;c<8;c++) {
+      enemies.push({
+        bx: 32 + c*20,
+        by: 40 + r*16,
+        x: 0, y: 0,
+        alive: true,
+        dive: false,
+        phase: Math.random()*Math.PI*2
+      });
+    }
+  }
+}
+spawn();
+
+/* --- GAME LOOP --- */
+function update() {
+  t++;
+
+  /* Player */
+  if (keys.ArrowLeft) player.x -= 2;
+  if (keys.ArrowRight) player.x += 2;
+  player.x = Math.max(8, Math.min(216, player.x));
+
+  if (keys.Space && t % 10 === 0) {
+    bullets.push({x:player.x,y:player.y});
+  }
+
+  bullets.forEach(b => b.y -= 4);
+  enemyBullets.forEach(b => b.y += 3);
+
+  bullets = bullets.filter(b => b.y > 0);
+  enemyBullets = enemyBullets.filter(b => b.y < 288);
+
+  /* Enemy logic */
+  enemies.forEach(e => {
+    if (!e.alive) return;
+
+    if (!e.dive) {
+      e.x = e.bx + Math.sin(t*0.02 + e.phase)*6;
+      e.y = e.by;
+      if (Math.random() < 0.001) e.dive = true;
+    } else {
+      e.y += 2;
+      e.x += Math.sin(t*0.15)*2;
+      if (t % 30 === 0) enemyBullets.push({x:e.x,y:e.y});
+      if (e.y > 300) e.dive = false;
+    }
+  });
+
+  /* Collisions */
+  bullets.forEach(b=>{
+    enemies.forEach(e=>{
+      if(e.alive && Math.abs(b.x-e.x)<6 && Math.abs(b.y-e.y)<6){
+        e.alive=false;
+        b.y=-100;
+      }
+    });
+  });
+}
+
+function draw() {
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0,0,224,288);
+
+  drawShip(player.x,player.y);
+
+  bullets.forEach(b=>{
+    ctx.fillStyle = COLORS.bullet;
+    ctx.fillRect(b.x-1,b.y,2,4);
+  });
+
+  enemyBullets.forEach(b=>{
+    ctx.fillStyle = COLORS.bee;
+    ctx.fillRect(b.x-1,b.y,2,4);
+  });
+
+  enemies.forEach(e=>{
+    if(e.alive) drawBee(e.x,e.y);
+  });
+
+  ctx.fillStyle = COLORS.text;
+  ctx.fillText("SCORE 00000", 8, 10);
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
