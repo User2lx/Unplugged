@@ -2,16 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Side Scroller Stable Ground</title>
+<title>Side Scroller with Gun</title>
 <style>
 html,body{margin:0;padding:0;overflow:hidden;background:#000;}
 canvas{display:block;}
 </style>
+</head>
 <body>
-<canvas id="game" width="800" height="600"></canvas>
+<canvas id="game"></canvas>
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
+// ===== Full-screen setup =====
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 // ===== Player =====
 const player = {
@@ -19,7 +28,6 @@ const player = {
   speed:4, jump:12,
   grounded:false,
   health:5, maxHealth:5,
-  attacking:false, atkDuration:10, atk:0,
   facing:1
 };
 
@@ -33,6 +41,7 @@ let platforms = [];
 let enemies = [];
 let upgrades = [];
 let ground = [];
+let bullets = [];
 
 const CHUNK = 400;
 const biomes = [
@@ -45,35 +54,34 @@ function getBiome(idx){ return biomes[idx % biomes.length]; }
 
 // ===== Initialization =====
 function initWorld(){
-  // Initial ground
-  ground.push({x:0, y:550, w:800, h:50});
+  ground.push({x:0, y:canvas.height-50, w:800, h:50});
   platforms = [];
   generateAhead();
 }
 
 // ===== Procedural generation =====
 function generateAhead(){
-  // Ensure continuous ground
-  while(ground[ground.length-1].x < player.x + 1600){
+  // Continuous ground
+  while(ground[ground.length-1].x < player.x + canvas.width*2){
     const last = ground[ground.length-1];
-    ground.push({x:last.x + last.w, y:550, w:800, h:50});
+    ground.push({x:last.x + last.w, y:canvas.height-50, w:800, h:50});
   }
 
   // Platforms ahead
-  while(platforms.length === 0 || platforms[platforms.length-1].x < player.x + 800){
-    const last = platforms.length ? platforms[platforms.length-1] : {x:0, y:550, w:0};
+  while(platforms.length === 0 || platforms[platforms.length-1].x < player.x + canvas.width){
+    const last = platforms.length ? platforms[platforms.length-1] : {x:0, y:canvas.height-50, w:0};
     const x = last.x + last.w + Math.random()*100 + 50;
-    const y = 400 + Math.random()*100;
+    const y = canvas.height-150 - Math.random()*100;
     platforms.push({x, y, w:100, h:20});
   }
 
-  // Enemies: max 1 per visible screen
+  // Enemies: max 1 per screen
   if(enemies.length < 1){
     const x = player.x + 500 + Math.random()*200;
-    enemies.push({x, y:platforms[platforms.length-1].y-40, w:40, h:40, hp:1, dx:(Math.random()<0.5?-1:1)});
+    enemies.push({x, y:platforms[platforms.length-1].y-40, w:40, h:40, hp:1, dx:(Math.random()<0.5?-1:1), hitTimer:0});
   }
 
-  // Upgrades: max 1 per visible screen
+  // Upgrades: max 1 per screen
   if(upgrades.length < 1){
     const x = player.x + 600 + Math.random()*150;
     upgrades.push({x, y:platforms[platforms.length-1].y-50, w:25, h:25});
@@ -88,8 +96,22 @@ function applyUpgrade(){
   else{ player.jump+=2; }
 }
 
+// ===== Shoot Gun =====
+let shootCooldown = 0;
+function shoot(){
+  if(shootCooldown > 0) return;
+  bullets.push({
+    x: player.facing===1 ? player.x+player.w : player.x-10,
+    y: player.y+player.h/2-5,
+    w:10, h:10,
+    dx: 15*player.facing
+  });
+  shootCooldown = 10; // frames between shots
+}
+
 // ===== Update =====
 function update(){
+  // Movement
   player.dx = 0;
   if(keys['a']){ player.dx = -player.speed; player.facing=-1; }
   if(keys['d']){ player.dx = player.speed; player.facing=1; }
@@ -99,8 +121,8 @@ function update(){
     player.grounded=false;
   }
 
-  if(keys['j'] && !player.attacking){ player.attacking = true; player.atk = player.atkDuration; }
-  if(player.attacking && --player.atk <= 0) player.attacking=false;
+  if(keys['j']) shoot();
+  if(shootCooldown > 0) shootCooldown--;
 
   player.dy += 0.6;
   player.x += player.dx;
@@ -117,6 +139,10 @@ function update(){
     }
   });
 
+  // Update bullets
+  bullets.forEach(b => b.x += b.dx);
+  bullets = bullets.filter(b => b.x + b.w > player.x - 200 && b.x < player.x + canvas.width + 200);
+
   // Enemies movement & collision
   enemies.forEach(e=>{
     e.x += e.dx * 2;
@@ -126,13 +152,21 @@ function update(){
       player.x -= 20 * player.facing;
       if(player.health <= 0) reset();
     }
-    // Attack collision
-    if(player.attacking){
-      const atk = {x:player.x + (player.facing===1?player.w:-30), y:player.y+10, w:30, h:30};
-      if(atk.x + atk.w > e.x && atk.x < e.x + e.w &&
-         atk.y + atk.h > e.y && atk.y < e.y + e.h) e.hp--;
-    }
+
+    // Bullet collision
+    bullets.forEach(b=>{
+      if(b.x + b.w > e.x && b.x < e.x + e.w &&
+         b.y + b.h > e.y && b.y < e.y + e.h){
+        e.hp--;
+        e.hitTimer = 5; // flash 5 frames
+        b.hit = true;
+      }
+    });
+
+    if(e.hitTimer>0) e.hitTimer--;
   });
+
+  bullets = bullets.filter(b => !b.hit);
   enemies = enemies.filter(e => e.hp > 0);
 
   // Upgrades collection
@@ -149,17 +183,20 @@ function update(){
   platforms = platforms.filter(p => p.x + p.w > player.x - 100);
   enemies = enemies.filter(e => e.x + e.w > player.x - 100);
   upgrades = upgrades.filter(u => u.x + u.w > player.x - 100);
-  ground = ground.filter(g => g.x + g.w > player.x - 100);
+  ground = ground.filter(g => g.x + g.w > player.x - 200);
 
   generateAhead();
+
+  // Reset if fall
+  if(player.y > canvas.height) reset();
 }
 
 // ===== Draw =====
 function draw(){
   const biome = getBiome(Math.floor(player.x / CHUNK));
-  ctx.fillStyle = biome.bg; ctx.fillRect(0,0,800,600);
+  ctx.fillStyle = biome.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  const camX = Math.max(0, player.x - 800/3);
+  const camX = Math.max(0, player.x - canvas.width/3);
   ctx.save(); ctx.translate(-camX,0);
 
   // Draw ground
@@ -171,8 +208,10 @@ function draw(){
   platforms.forEach(p=>ctx.fillRect(p.x, p.y, p.w, p.h));
 
   // Enemies
-  ctx.fillStyle = "#2ed573";
-  enemies.forEach(e=>ctx.fillRect(e.x, e.y, e.w, e.h));
+  enemies.forEach(e=>{
+    ctx.fillStyle = e.hitTimer>0 ? "#ff0" : "#2ed573"; // flash yellow when hit
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+  });
 
   // Upgrades
   ctx.fillStyle = "#f1c40f";
@@ -182,11 +221,9 @@ function draw(){
   ctx.fillStyle = "#ff4757";
   ctx.fillRect(player.x, player.y, player.w, player.h);
 
-  // Attack
-  if(player.attacking){
-    ctx.fillStyle = "#ffa502";
-    ctx.fillRect(player.x + (player.facing===1?player.w:-30), player.y+10, 30,30);
-  }
+  // Bullets
+  ctx.fillStyle = "#fff";
+  bullets.forEach(b=>ctx.fillRect(b.x, b.y, b.w, b.h));
 
   ctx.restore();
 
@@ -202,11 +239,11 @@ function reset(){
   player.x=100; player.y=500; player.dx=0; player.dy=0;
   player.grounded=false; player.health=player.maxHealth=5;
   player.speed=4; player.jump=12;
-  player.attacking=false;
-  ground = [{x:0, y:550, w:800, h:50}];
   platforms = [];
+  ground = [{x:0, y:canvas.height-50, w:800, h:50}];
   enemies = [];
   upgrades = [];
+  bullets = [];
   generateAhead();
 }
 
