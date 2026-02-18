@@ -1022,7 +1022,7 @@ start();
 
 export {
   main,
-  getActivities,
+  
   setActivityScreenTimeStart,
   setActivityScreenTimeEnd,
   clearActivities,
